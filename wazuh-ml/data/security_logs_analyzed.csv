@@ -1,0 +1,733 @@
+timestamp,agent,event_desc,src_ip,src_port,dst_ip,dst_port,event_code,agent_code,anomaly_label,anomaly_score
+2025-10-21T15:50:21.364Z,pfSense.home.arpa,sshd: authentication success.,172.16.158.1,44230.0,,,305,0,-1,-0.1735338748101003
+2025-10-21T15:22:51.788Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:21:45.851Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:21:08.775Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:21:16.826Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T09:57:41.109Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T09:57:41.109Z,wazuh-server,sshd: authentication success.,172.16.158.1,53693.0,,,305,1,-1,-0.15884451966329638
+2025-10-21T09:59:47.135Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-21T12:26:47.239Z,pfSense.home.arpa,sshd: authentication success.,172.16.158.1,40737.0,,,305,0,-1,-0.16151412566609735
+2025-10-21T12:32:25.294Z,wazuh-server,sshd: authentication success.,172.16.158.1,33941.0,,,305,1,-1,-0.10387230556205496
+2025-10-21T09:53:51.735Z,pfSense.home.arpa,Wazuh agent started.,,,,,301,0,-1,-0.004588471940243477
+2025-10-21T09:53:53.515Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:53:53.527Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:53:56.087Z,pfSense.home.arpa,Host-based anomaly detection event (rootcheck).,,,,,283,0,-1,-0.08841547294964758
+2025-10-21T12:31:17.734Z,pfSense.home.arpa,Wazuh agent started.,,,,,301,0,-1,-0.004588471940243477
+2025-10-21T12:31:19.650Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T10:00:19.141Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T09:57:01.401Z,pfSense.home.arpa,Syslogd exiting (logging stopped).,,,,,298,0,1,0.10937690061050037
+2025-10-21T09:52:16.061Z,wazuh-server,Wazuh server started.,,,,,303,1,1,0.048630565306009954
+2025-10-21T12:31:23.032Z,pfSense.home.arpa,Host-based anomaly detection event (rootcheck).,,,,,283,0,-1,-0.08841547294964758
+2025-10-21T12:38:53.355Z,pfSense.home.arpa,Suricata: Alert - GPL ICMP PING *NIX,,,,,295,0,1,0.06278024808392457
+2025-10-21T12:38:55.372Z,pfSense.home.arpa,Suricata: Alert - GPL ICMP PING *NIX,,,,,295,0,1,0.06278024808392457
+2025-10-21T12:39:14.395Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:15.513Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:35:43.355Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:35:47.407Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:36:15.726Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:19.562Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:37:55.361Z,wazuh-server,PAM: User login failed.,,,,,292,1,1,0.21833975818202828
+2025-10-21T12:37:59.363Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T12:38:36.031Z,pfSense.home.arpa,sshd: authentication success.,172.16.158.1,37861.0,,,305,0,-1,-0.15778588666160076
+2025-10-21T12:34:51.326Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T12:34:51.326Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T15:20:32.682Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-21T15:20:33.120Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-21T15:20:33.136Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-21T15:20:33.155Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-21T15:20:34.511Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-21T15:20:34.537Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-21T15:20:34.639Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-21T15:20:37.110Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:37.110Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:37.116Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:40.503Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:42.523Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:42.921Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:44.539Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:44.543Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:46.557Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:46.557Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:58.653Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:21:00.672Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:40:23.293Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:35.745Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:28.565Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:16:18.931Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-21T15:14:36.906Z,wazuh-server,sshd: Attempt to login using a non-existent user,172.16.158.1,,,,304,1,1,0.03238523851025976
+2025-10-21T09:49:36.466Z,wazuh-server,Wazuh server started.,,,,,303,1,1,0.048630565306009954
+2025-10-21T09:49:36.614Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure mounting of cramfs filesystems is disabled.,,,,,112,1,1,0.10020089161088253
+2025-10-21T09:49:36.695Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure usb-storage kernel module is not available.,,,,,274,1,1,0.12190251807839653
+2025-10-21T09:49:36.706Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure unused filesystems kernel modules are not available.,,,,,273,1,1,0.11914489190536809
+2025-10-21T09:49:36.726Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nodev option set on /tmp partition.,,,,,127,1,1,0.0986877860622245
+2025-10-21T09:49:36.736Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nosuid option set on /tmp partition.,,,,,140,1,1,0.09750218726961735
+2025-10-21T09:49:36.746Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure noexec option set on /tmp partition.,,,,,133,1,1,0.10068085348843092
+2025-10-21T09:49:36.767Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nodev option set on /dev/shm partition.,,,,,125,1,1,0.10583033892852367
+2025-10-21T09:49:36.820Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nosuid option set on /home partition.,,,,,139,1,1,0.09912666718128949
+2025-10-21T09:49:36.829Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure separate partition exists for /var.,,,,,211,1,1,0.10738353138496531
+2025-10-21T09:49:36.840Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nodev option set on /var partition.,,,,,128,1,1,0.09758808357585314
+2025-10-21T09:49:36.861Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure separate partition exists for /var/tmp.,,,,,214,1,1,0.11219171435270092
+2025-10-21T09:49:36.883Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nosuid option set on /var/tmp partition.,,,,,144,1,1,0.10810521668952616
+2025-10-21T09:49:36.914Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nodev option set on /var/log partition.,,,,,129,1,1,0.09682361567342379
+2025-10-21T09:49:36.944Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure separate partition exists for /var/log/audit.,,,,,213,1,1,0.11160941987054757
+2025-10-21T09:49:36.967Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nosuid option set on /var/log/audit partition.,,,,,143,1,1,0.1042070055733525
+2025-10-21T09:49:36.999Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure AppArmor is enabled in the bootloader configuration.,,,,,5,1,-1,-0.0034850783806626984
+2025-10-21T09:49:37.051Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure address space layout randomization is enabled.,,,,,29,1,1,0.043279940299715935
+2025-10-21T09:49:37.071Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure prelink is not installed.,,,,,189,1,1,0.10017531297973059
+2025-10-21T09:49:37.112Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure remote login warning banner is configured properly.,,,,,193,1,1,0.09838609074447524
+2025-10-21T09:49:37.226Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure GDM autorun-never is not overridden.,,,,,10,1,1,0.007707024831716036
+2025-10-21T09:49:37.310Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ldap server services are not in use.,,,,,102,1,1,0.10484804156777638
+2025-10-21T09:49:37.342Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nis server services are not in use.,,,,,120,1,1,0.10639583063372648
+2025-10-21T09:49:37.362Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure rpcbind services are not in use.,,,,,199,1,1,0.10386002550671014
+2025-10-21T09:49:37.383Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure samba file server services are not in use.,,,,,207,1,1,0.11083125897978041
+2025-10-21T09:49:37.393Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure snmp services are not in use.,,,,,217,1,1,0.11252388274174863
+2025-10-21T09:49:37.415Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure web proxy server services are not in use.,,,,,276,1,1,0.1212496199367562
+2025-10-21T09:49:37.457Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure mail transfer agent is configured for local-only mode.,,,,,107,1,1,0.10539265690932387
+2025-10-21T09:49:37.480Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure rsh client is not installed.,,,,,200,1,1,0.1016603485535561
+2025-10-21T09:49:37.509Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ldap client is not installed.,,,,,101,1,1,0.10200017587782761
+2025-10-21T09:49:37.541Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure systemd-timesyncd is enabled and running.,,,,,257,1,1,0.08666441876811681
+2025-10-21T09:49:37.614Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/cron.daily are configured.,,,,,171,1,1,0.09918433097098467
+2025-10-21T09:49:37.625Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/cron.weekly are configured.,,,,,174,1,1,0.10284648808641705
+2025-10-21T09:49:37.639Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/cron.monthly are configured.,,,,,173,1,1,0.10407334856981787
+2025-10-21T09:49:37.693Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure bluetooth services are not in use.,,,,,49,1,1,0.05831856859126061
+2025-10-21T09:49:37.745Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ip forwarding is disabled.,,,,,83,1,1,0.09142818960600962
+2025-10-21T09:49:37.765Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure bogus icmp responses are ignored.,,,,,50,1,1,0.06027365105427818
+2025-10-21T09:49:37.775Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure broadcast icmp requests are ignored.,,,,,52,1,1,0.06288540296671852
+2025-10-21T09:49:37.786Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure icmp redirects are not accepted.,,,,,81,1,1,0.09108769444867537
+2025-10-21T09:49:37.816Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure source routed packets are not accepted.,,,,,218,1,1,0.11185716821424946
+2025-10-21T09:49:37.827Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure suspicious packets are logged.,,,,,249,1,1,0.09762101181523863
+2025-10-21T09:49:37.837Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure tcp syn cookies is enabled.,,,,,259,1,1,0.08269173019149856
+2025-10-21T09:49:37.868Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ufw is installed.,,,,,267,1,1,0.10277121133414824
+2025-10-21T09:49:37.889Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ufw service is enabled.,,,,,271,1,1,0.10517513904547954
+2025-10-21T09:49:37.899Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ufw loopback traffic is configured.,,,,,270,1,1,0.09883255988034312
+2025-10-21T09:49:37.930Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ufw is uninstalled or disabled with nftables.,,,,,269,1,1,0.10438357611103688
+2025-10-21T09:49:37.940Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure iptables are flushed with nftables.,,,,,86,1,1,0.09106778200697674
+2025-10-21T09:49:38.030Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ufw is not in use with iptables.,,,,,268,1,1,0.10076780498989224
+2025-10-21T09:49:38.039Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure iptables default deny firewall policy.,,,,,87,1,1,0.0903908903741415
+2025-10-21T09:49:38.049Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure iptables loopback traffic is configured.,,,,,88,1,1,0.09474922193584912
+2025-10-21T09:49:38.102Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on SSH public host key files are configured.,,,,,188,1,1,0.10077470003505196
+2025-10-21T09:49:38.133Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd Ciphers are configured.,,,,,221,1,1,0.10794587815693152
+2025-10-21T09:49:38.164Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd GSSAPIAuthentication is disabled.,,,,,224,1,1,0.10846497644631747
+2025-10-21T09:49:38.174Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd HostbasedAuthentication is disabled.,,,,,225,1,1,0.10651443453406001
+2025-10-21T09:49:38.205Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd LoginGraceTime is configured.,,,,,229,1,1,0.11139504887107016
+2025-10-21T09:49:38.235Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd MaxAuthTries is configured.,,,,,231,1,1,0.10757281717862738
+2025-10-21T09:49:38.266Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd PermitEmptyPasswords is disabled.,,,,,234,1,1,0.1058398723008539
+2025-10-21T09:49:38.287Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd PermitUserEnvironment is disabled.,,,,,236,1,1,0.10551180664673543
+2025-10-21T09:49:38.322Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sudo commands use pty.,,,,,246,1,1,0.10487535584566199
+2025-10-21T09:49:38.350Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure re-authentication for privilege escalation is not disabled globally.,,,,,192,1,1,0.10196420277525642
+2025-10-21T09:49:38.361Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sudo authentication timeout is configured correctly.,,,,,245,1,1,0.10742123936579023
+2025-10-21T09:49:38.404Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure libpam-pwquality is installed.,,,,,104,1,1,0.10645548548708833
+2025-10-21T09:49:38.425Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure pam_faillock module is enabled.,,,,,147,1,1,0.10530003637613478
+2025-10-21T09:49:38.445Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure pam_pwhistory module is enabled.,,,,,149,1,1,0.10526541827249203
+2025-10-21T09:49:38.476Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password failed attempts lockout includes root account.,,,,,160,1,1,0.09744384259764749
+2025-10-21T09:49:38.486Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password number of changed characters is configured.,,,,,165,1,1,0.10211534574319248
+2025-10-21T09:49:38.496Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure minimum password length is configured.,,,,,111,1,1,0.10085873081210817
+2025-10-21T09:49:38.517Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password same consecutive characters is configured.,,,,,168,1,1,0.10483077316753975
+2025-10-21T09:49:38.548Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password quality checking is enforced.,,,,,166,1,1,0.10258066243933872
+2025-10-21T09:49:38.558Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password quality is enforced for the root user.,,,,,167,1,1,0.10414128266541867
+2025-10-21T09:49:38.589Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure pam_pwhistory includes use_authtok.,,,,,148,1,1,0.10651902553502446
+2025-10-21T09:49:38.651Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure minimum password days is configured.,,,,,110,1,1,0.09978076683183545
+2025-10-21T09:49:38.672Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure strong password hashing algorithm is configured.,,,,,239,1,1,0.0996365243595072
+2025-10-21T09:49:38.683Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure inactive password lock is configured.,,,,,82,1,1,0.09385630045566995
+2025-10-21T09:49:38.759Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure default user shell timeout is configured.,,,,,62,1,1,0.07132354929603135
+2025-10-21T09:49:38.779Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure journald service is enabled and active.,,,,,98,1,1,0.09063128084753003
+2025-10-21T09:49:38.831Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure systemd-journal-remote service is not in use.,,,,,253,1,1,0.09929682224599079
+2025-10-21T09:49:38.841Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure journald ForwardToSyslog is disabled.,,,,,94,1,1,0.09027035469358546
+2025-10-21T09:49:38.912Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure rsyslog log file creation mode is configured.,,,,,205,1,1,0.11195667386146163
+2025-10-21T09:49:38.937Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure rsyslog is not configured to receive logs from a remote client.,,,,,204,1,1,0.10883794817726017
+2025-10-21T09:49:38.948Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure access to all logfiles has been configured.,,,,,24,1,1,0.034480538401503225
+2025-10-21T09:49:38.968Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure auditd service is enabled and active.,,,,,45,1,1,0.05550025351595367
+2025-10-21T09:49:39.035Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure system warns when audit logs are low on space.,,,,,251,1,1,0.09516140039568155
+2025-10-21T09:49:39.045Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure changes to system administration scope (sudoers) is collected.,,,,,53,1,1,0.06581818840750464
+2025-10-21T09:49:39.065Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure events that modify the sudo log file are collected.,,,,,69,1,1,0.08533578201861391
+2025-10-21T09:49:39.108Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure events that modify user/group information are collected.,,,,,72,1,1,0.08652086104230439
+2025-10-21T09:49:39.120Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure discretionary access control permission modification events are collected.,,,,,65,1,1,0.08254444799306693
+2025-10-21T09:49:39.141Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure session initiation information is collected.,,,,,215,1,1,0.11085302659300988
+2025-10-21T09:49:39.152Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure login and logout events are collected.,,,,,106,1,1,0.10616677576809691
+2025-10-21T09:49:39.163Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure file deletion events by users are collected.,,,,,73,1,1,0.09254441100214328
+2025-10-21T09:49:39.221Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure successful and unsuccessful attempts to use the usermod command are collected.,,,,,243,1,1,0.1080227912144816
+2025-10-21T09:49:39.243Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure the audit configuration is immutable.,,,,,262,1,1,0.08760610753431386
+2025-10-21T09:49:39.273Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure audit configuration files mode is configured.,,,,,35,1,1,0.04814904299110412
+2025-10-21T09:49:39.285Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure audit configuration files owner is configured.,,,,,36,1,1,0.044224007890296346
+2025-10-21T09:49:39.311Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure audit tools mode is configured.,,,,,41,1,1,0.0559286344022113
+2025-10-21T09:49:39.319Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure audit tools owner is configured.,,,,,42,1,1,0.06223648103567436
+2025-10-21T09:49:39.375Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/passwd are configured.,,,,,180,1,1,0.10302240169681942
+2025-10-21T09:49:39.385Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/passwd- are configured.,,,,,181,1,1,0.0997724725934589
+2025-10-21T09:49:39.420Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/shadow are configured.,,,,,183,1,1,0.10096304492672137
+2025-10-21T09:49:39.440Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/gshadow are configured.,,,,,178,1,1,0.10129269319136747
+2025-10-21T09:49:44.593Z,pfSense.home.arpa,Wazuh agent stopped.,,,,,302,0,-1,-0.04447139253897492
+2025-10-21T09:49:49.159Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:49:49.160Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:49:49.166Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:49:49.167Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:49:58.540Z,wazuh-server,SCA summary: CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Score less than 50% (43),,,,,293,1,1,0.20380800395005744
+2025-10-21T09:50:43.454Z,wazuh-server,New dpkg (Debian Package) requested to install.,,,,,286,1,1,0.18466277836123074
+2025-10-21T09:51:15.459Z,wazuh-server,Dpkg (Debian Package) half configured.,,,,,280,1,1,0.1481371785286234
+2025-10-21T09:51:15.485Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T09:51:15.486Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T09:51:17.459Z,wazuh-server,New dpkg (Debian Package) installed.,,,,,285,1,1,0.17935275485341823
+2025-10-21T09:51:17.486Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T09:51:17.486Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-22T02:32:36.718Z,pfSense.home.arpa,sshd: authentication success.,172.16.158.1,42922.0,,,305,0,-1,-0.16567370986935825
+2025-10-22T02:32:13.808Z,wazuh-server,File deleted.,,,,,281,1,1,0.16390929277610816
+2025-10-22T02:32:13.809Z,wazuh-server,File deleted.,,,,,281,1,1,0.16390929277610816
+2025-10-22T02:32:13.810Z,wazuh-server,File deleted.,,,,,281,1,1,0.16390929277610816
+2025-10-22T02:32:13.810Z,wazuh-server,File deleted.,,,,,281,1,1,0.16390929277610816
+2025-10-27T15:24:22.360Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-27T15:22:14.683Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-27T15:21:09.916Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-27T15:20:38.357Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-27T15:20:14.138Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-27T12:06:58.792Z,pfSense.home.arpa,Suricata: Alert - GPL ICMP PING *NIX,,,,,295,0,1,0.06278024808392457
+2025-10-27T12:06:59.955Z,pfSense.home.arpa,Suricata: Alert - GPL ICMP PING *NIX,,,,,295,0,1,0.06278024808392457
+2025-10-27T12:06:06.105Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-27T12:06:06.109Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-27T12:06:06.896Z,pfSense.home.arpa,Integrity checksum changed.,,,,,284,0,-1,-0.08019025525349577
+2025-10-27T12:06:07.013Z,pfSense.home.arpa,Integrity checksum changed.,,,,,284,0,-1,-0.08019025525349577
+2025-10-27T12:06:07.013Z,pfSense.home.arpa,Integrity checksum changed.,,,,,284,0,-1,-0.08019025525349577
+2025-10-27T12:09:32.771Z,pfSense.home.arpa,Suricata: Alert - GPL ICMP PING *NIX,,,,,295,0,1,0.06278024808392457
+2025-10-27T13:46:01.405Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:46:01.405Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:50:47.482Z,wazuh-server,PAM: User login failed.,,,,,292,1,1,0.21833975818202828
+2025-10-27T13:50:51.482Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:24:39.873Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:51:11.487Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:51:17.489Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:51:17.489Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T11:48:57.373Z,wazuh-server,Apparmor DENIED mknod operation.,,,,,0,1,1,0.0
+2025-10-27T11:48:57.373Z,wazuh-server,Apparmor DENIED mknod operation.,,,,,0,1,1,0.0
+2025-10-27T11:48:57.374Z,wazuh-server,Apparmor DENIED mknod operation.,,,,,0,1,1,0.0
+2025-10-27T12:16:15.772Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:50:15.474Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T15:19:13.051Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-27T15:20:06.867Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-27T14:22:20.512Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:22:20.512Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:18:04.449Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:18:04.449Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:22:06.509Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:26:56.587Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:16:28.431Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:20:22.490Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:13:02.376Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:50:28.316Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T12:42:20.173Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:42:42.181Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T12:43:04.187Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:43:10.190Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:43:18.192Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:43:36.197Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:25:33.886Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:25:33.886Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:36:21.216Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:37:17.885Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-27T13:37:49.264Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:38:21.274Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:40:33.310Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:41:03.319Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:41:09.321Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:57:43.584Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:57:45.584Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:57:47.585Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:58:49.606Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:58:51.607Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:59:01.609Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:59:05.610Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:59:29.619Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:59:29.619Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:01:49.658Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:01:49.658Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:01:49.658Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:01:49.658Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:02:15.663Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:02:15.663Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:55:59.560Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:55:59.560Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:56:03.560Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:52:43.504Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:55:37.555Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:01:49.658Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:55:51.558Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:57:25.579Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:06:34.279Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:06:34.279Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:06:34.279Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:06:34.279Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:06:48.284Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:06:16.275Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:06:16.275Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:06:26.277Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:09:34.324Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:09:34.324Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:12:18.357Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:12:18.356Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:04:34.249Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:04:11.689Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:04:19.691Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:02:55.671Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:03:11.680Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:12:46.361Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:02:33.667Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T15:24:53.238Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:24:59.817Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:22:49.767Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:21:47.861Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:21:41.109Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:21:14.816Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:35:15.092Z,pfSense.home.arpa,Suricata: Alert - GPL ICMP PING *NIX,,,,,295,0,1,0.06278024808392457
+2025-10-21T12:32:29.295Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T12:32:29.295Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-21T12:31:17.269Z,pfSense.home.arpa,Wazuh agent stopped.,,,,,302,0,-1,-0.04447139253897492
+2025-10-21T12:31:19.633Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T12:31:19.648Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T12:31:19.652Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:59:41.134Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T09:59:47.135Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T09:58:03.113Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T10:00:05.138Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T09:57:45.110Z,wazuh-server,First time user executed sudo.,,,,,282,1,1,0.16675683371037447
+2025-10-21T09:58:35.118Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T09:58:35.118Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T09:53:53.513Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T12:37:49.360Z,wazuh-server,sshd: authentication success.,172.16.158.1,53825.0,,,305,1,-1,-0.15884451966329638
+2025-10-21T12:37:49.360Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T12:37:50.744Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:38:54.185Z,pfSense.home.arpa,Suricata: Alert - GPL ICMP PING *NIX,,,,,295,0,1,0.06278024808392457
+2025-10-21T12:39:19.603Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:20.446Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:20.569Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:23.669Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:27.688Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:35:43.800Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:36:46.573Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:35:51.430Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:35:59.508Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:13.496Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:32.458Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-21T15:20:32.684Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-21T15:20:34.554Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-21T15:20:52.608Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:52.649Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:50.589Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:44.894Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:40:17.255Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:15:44.924Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-21T15:14:20.902Z,wazuh-server,sshd: Attempt to login using a non-existent user,172.16.158.1,44322.0,,,304,1,-1,-0.14166230437459026
+2025-10-21T15:14:26.904Z,wazuh-server,sshd: Attempt to login using a non-existent user,172.16.158.1,,,,304,1,1,0.03238523851025976
+2025-10-21T15:14:48.910Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T15:11:24.779Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T09:49:36.624Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure freevxfs kernel module is not available.,,,,,75,1,1,0.09621376131802051
+2025-10-21T09:49:36.664Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure overlayfs kernel module is not available.,,,,,145,1,1,0.10756129502753053
+2025-10-21T09:49:36.675Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure squashfs kernel module is not available.,,,,,219,1,1,0.10948882652529113
+2025-10-21T09:49:36.685Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure udf kernel module is not available.,,,,,265,1,1,0.095322896747285
+2025-10-21T09:49:36.716Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure /tmp is a separate partition.,,,,,3,1,-1,-0.007874532501069731
+2025-10-21T09:49:36.757Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure /dev/shm is a separate partition.,,,,,1,1,-1,-0.013759447688356019
+2025-10-21T09:49:36.798Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure separate partition exists for /home.,,,,,210,1,1,0.10959355475419075
+2025-10-21T09:49:36.809Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nodev option set on /home partition.,,,,,126,1,1,0.10238560142324515
+2025-10-21T09:49:36.851Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nosuid option set on /var partition.,,,,,141,1,1,0.09973316601998594
+2025-10-21T09:49:36.893Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure noexec option set on /var/tmp partition.,,,,,136,1,1,0.10163156254136396
+2025-10-21T09:49:36.934Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure noexec option set on /var/log partition.,,,,,134,1,1,0.0992915270992385
+2025-10-21T09:49:36.957Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nodev option set on /var/log/audit partition.,,,,,130,1,1,0.09584125380787789
+2025-10-21T09:49:36.977Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure noexec option set on /var/log/audit partition.,,,,,135,1,1,0.09852646512909358
+2025-10-21T09:49:36.988Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure AppArmor is installed.,,,,,6,1,1,0.006366614993688402
+2025-10-21T09:49:37.019Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure all AppArmor Profiles are enforcing.,,,,,30,1,1,0.04407456776791385
+2025-10-21T09:49:37.040Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure access to bootloader config is configured.,,,,,25,1,1,0.035985137119235455
+2025-10-21T09:49:37.061Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure core dumps are restricted.,,,,,57,1,1,0.07213389204611187
+2025-10-21T09:49:37.082Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure Automatic Error Reporting is not enabled.,,,,,7,1,1,0.0072359685475359425
+2025-10-21T09:49:37.123Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure access to /etc/motd is configured.,,,,,23,1,1,0.028112163618318586
+2025-10-21T09:49:37.133Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure access to /etc/issue is configured.,,,,,21,1,1,0.032229254717819344
+2025-10-21T09:49:37.164Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure GDM login banner is configured.,,,,,14,1,1,0.02439575354850032
+2025-10-21T09:49:37.195Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure GDM automatic mounting of removable media is disabled.,,,,,8,1,1,0.005709343503185416
+2025-10-21T09:49:37.216Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure GDM autorun-never is enabled.,,,,,9,1,1,0.008538402850771676
+2025-10-21T09:49:37.246Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure autofs services are not in use.,,,,,47,1,1,0.052380259847459865
+2025-10-21T09:49:37.257Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure avahi daemon services are not in use.,,,,,48,1,1,0.052247260976394205
+2025-10-21T09:49:37.289Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure dnsmasq services are not in use.,,,,,67,1,1,0.08398240560747383
+2025-10-21T09:49:37.300Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ftp server services are not in use.,,,,,77,1,1,0.09175917001435407
+2025-10-21T09:49:37.320Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure message access server services are not in use.,,,,,108,1,1,0.10401723956715425
+2025-10-21T09:49:37.331Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure network file system services are not in use.,,,,,113,1,1,0.10094601710607953
+2025-10-21T09:49:37.403Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure tftp server services are not in use.,,,,,261,1,1,0.08161395173253327
+2025-10-21T09:49:37.441Z,wazuh-server,Dpkg (Debian Package) half configured.,,,,,280,1,1,0.1481371785286234
+2025-10-21T09:49:37.441Z,wazuh-server,New dpkg (Debian Package) requested to install.,,,,,286,1,1,0.18466277836123074
+2025-10-21T09:49:37.467Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure NIS Client is not installed.,,,,,16,1,1,0.027985872320323013
+2025-10-21T09:49:37.520Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ftp client is not installed.,,,,,76,1,1,0.09074647551364357
+2025-10-21T09:49:37.551Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure chrony is configured with authorized timeserver.,,,,,54,1,1,0.07073475318454969
+2025-10-21T09:49:37.561Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure chrony is running as user _chrony.,,,,,56,1,1,0.07547502932730266
+2025-10-21T09:49:37.572Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure chrony is enabled and running.,,,,,55,1,1,0.07337969593007498
+2025-10-21T09:49:37.592Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/crontab are configured.,,,,,175,1,1,0.09604594137510591
+2025-10-21T09:49:37.663Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure crontab is restricted to authorized users.,,,,,59,1,1,0.06980174783540272
+2025-10-21T09:49:37.796Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure secure icmp redirects are not accepted.,,,,,209,1,1,0.11195356878968571
+2025-10-21T09:49:37.847Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ipv6 router advertisements are not accepted.,,,,,91,1,1,0.09419623422082268
+2025-10-21T09:49:37.920Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nftables is installed.,,,,,116,1,1,0.09855658784808008
+2025-10-21T09:49:37.974Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nftables default deny firewall policy.,,,,,115,1,1,0.10158542610610144
+2025-10-21T09:49:37.984Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nftables service is enabled.,,,,,119,1,1,0.10407153498178068
+2025-10-21T09:49:37.994Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nftables rules are permanent.,,,,,118,1,1,0.1029366333913404
+2025-10-21T09:49:38.016Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nftables is not in use with iptables.,,,,,117,1,1,0.09863827461357255
+2025-10-21T09:49:38.082Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/ssh/sshd_config are configured.,,,,,186,1,1,0.1006998596674874
+2025-10-21T09:49:38.112Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd access is configured.,,,,,238,1,1,0.10177417967565794
+2025-10-21T09:49:38.143Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured.,,,,,222,1,1,0.10889524401943612
+2025-10-21T09:49:38.153Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd DisableForwarding is enabled.,,,,,223,1,1,0.10938503461707116
+2025-10-21T09:49:38.184Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd IgnoreRhosts is enabled.,,,,,226,1,1,0.11058689774733149
+2025-10-21T09:49:38.194Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd KexAlgorithms is configured.,,,,,227,1,1,0.11140295029644498
+2025-10-21T09:49:38.277Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd PermitRootLogin is disabled.,,,,,235,1,1,0.10372870937381717
+2025-10-21T09:49:38.297Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd UsePAM is enabled.,,,,,237,1,1,0.10473668443625406
+2025-10-21T09:49:38.307Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sudo is installed.,,,,,247,1,1,0.10235215796354658
+2025-10-21T09:49:38.329Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sudo log file exists.,,,,,248,1,1,0.09993905788929969
+2025-10-21T09:49:38.340Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure users must provide password for privilege escalation.,,,,,275,1,1,0.11954837903766613
+2025-10-21T09:49:38.384Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure latest version of pam is installed.,,,,,100,1,1,0.09809667385810283
+2025-10-21T09:49:38.455Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password failed attempts lockout is configured.,,,,,161,1,1,0.0982083404919305
+2025-10-21T09:49:38.466Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password unlock time is configured.,,,,,169,1,1,0.10364505903293586
+2025-10-21T09:49:38.507Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password complexity is configured.,,,,,156,1,1,0.09402471650462985
+2025-10-21T09:49:38.537Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password dictionary check is enabled.,,,,,157,1,1,0.09550795128825174
+2025-10-21T09:49:38.579Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password history is enforced for the root user.,,,,,162,1,1,0.09831120440639074
+2025-10-21T09:49:38.599Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure pam_unix does not include nullok.,,,,,151,1,1,0.10451761439221807
+2025-10-21T09:49:38.609Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure pam_unix does not include remember.,,,,,152,1,1,0.10243389381409052
+2025-10-21T09:49:38.622Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure pam_unix includes a strong password hashing algorithm.,,,,,153,1,1,0.10198084049707079
+2025-10-21T09:49:38.641Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password expiration is configured.,,,,,158,1,1,0.09225084211201795
+2025-10-21T09:49:38.705Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure root is the only GID 0 account.,,,,,196,1,1,0.10049012609240515
+2025-10-21T09:49:38.726Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure root account access is controlled.,,,,,195,1,1,0.1011866074864326
+2025-10-21T09:49:38.800Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure systemd-journal-remote is installed.,,,,,252,1,1,0.09824877137053356
+2025-10-21T09:49:38.820Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure systemd-journal-upload is enabled and active.,,,,,255,1,1,0.09221030341661751
+2025-10-21T09:49:38.857Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure journald Compress is configured.,,,,,93,1,1,0.09346699535364189
+2025-10-21T09:49:38.865Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure journald Storage is configured.,,,,,95,1,1,0.09106478808463969
+2025-10-21T09:49:38.881Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure rsyslog is installed.,,,,,203,1,1,0.1064564472066426
+2025-10-21T09:49:38.894Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure rsyslog service is enabled and active.,,,,,206,1,1,0.1110413906829057
+2025-10-21T09:49:38.924Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure rsyslog is configured to send logs to a remote log host.,,,,,202,1,1,0.10439123269946249
+2025-10-21T09:49:38.979Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure auditing for processes that start prior to auditd is enabled.,,,,,46,1,1,0.04993178904924478
+2025-10-21T09:49:39.000Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure audit log storage size is configured.,,,,,38,1,1,0.04858048941085724
+2025-10-21T09:49:39.012Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure audit logs are not automatically deleted.,,,,,39,1,1,0.05066800137054128
+2025-10-21T09:49:39.055Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure actions as another user are always logged.,,,,,28,1,1,0.04684915426335512
+2025-10-21T09:49:39.075Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure events that modify date and time information are collected.,,,,,68,1,1,0.08574995311749578
+2025-10-21T09:49:39.096Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure unsuccessful file access attempts are collected.,,,,,272,1,1,0.11019157248551809
+2025-10-21T09:49:39.131Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure successful file system mounts are collected.,,,,,244,1,1,0.10791353237979112
+2025-10-21T09:49:39.187Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure successful and unsuccessful attempts to use the chcon command are collected.,,,,,241,1,1,0.10408945666829794
+2025-10-21T09:49:39.199Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure successful and unsuccessful attempts to use the setfacl command are collected.,,,,,242,1,1,0.10683318072401576
+2025-10-21T09:49:39.209Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure successful and unsuccessful attempts to use the chacl command are collected.,,,,,240,1,1,0.10263197586557382
+2025-10-21T09:49:39.232Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure kernel module loading unloading and modification is collected.,,,,,99,1,1,0.09226347372281452
+2025-10-21T09:49:39.253Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure the running and on disk configuration is the same.,,,,,263,1,1,0.09342397965021731
+2025-10-21T09:49:39.295Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure audit configuration files group owner is configured.,,,,,34,1,1,0.04995308222642458
+2025-10-21T09:49:39.353Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure filesystem integrity is regularly checked.,,,,,74,1,1,0.09315717164568471
+2025-10-21T09:49:39.364Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure cryptographic mechanisms are used to protect the integrity of audit tools.,,,,,60,1,1,0.07168817354900336
+2025-10-21T09:49:39.408Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/group- are configured.,,,,,177,1,1,0.10006089786017447
+2025-10-21T09:49:39.461Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/shells are configured.,,,,,185,1,1,0.10090396642479427
+2025-10-21T09:49:39.481Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure accounts in /etc/passwd use shadowed passwords.,,,,,27,1,1,0.04457018011179892
+2025-10-21T09:49:39.492Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure /etc/shadow password fields are not empty.,,,,,2,1,-1,-0.013550851886722226
+2025-10-21T09:49:39.502Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure all groups in /etc/passwd exist in /etc/group.,,,,,32,1,1,0.04391052702764464
+2025-10-21T09:49:39.513Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure shadow group is empty.,,,,,216,1,1,0.11024864550319513
+2025-10-21T09:49:39.523Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure no duplicate UIDs exist.,,,,,122,1,1,0.10519004784053326
+2025-10-21T09:49:39.533Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure no duplicate GIDs exist.,,,,,121,1,1,0.10564707931796052
+2025-10-21T09:49:39.543Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure no duplicate user names exist.,,,,,124,1,1,0.10274087024538692
+2025-10-21T09:49:39.554Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure no duplicate group names exist.,,,,,123,1,1,0.10176383008167955
+2025-10-21T09:49:46.583Z,wazuh-server,SCA summary: CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Score less than 50% (43),,,,,293,1,1,0.20380800395005744
+2025-10-21T09:49:49.173Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:50:43.478Z,wazuh-server,New group added to the system.,,,,,287,1,1,0.18905255705808288
+2025-10-21T09:51:15.486Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T09:51:17.486Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-22T02:32:12.443Z,wazuh-server,Integrity checksum changed.,,,,,284,1,1,0.172897974936276
+2025-10-22T02:32:12.747Z,wazuh-server,Integrity checksum changed.,,,,,284,1,1,0.172897974936276
+2025-10-22T02:32:13.811Z,wazuh-server,File deleted.,,,,,281,1,1,0.16390929277610816
+2025-10-22T02:32:13.810Z,wazuh-server,File deleted.,,,,,281,1,1,0.16390929277610816
+2025-10-22T02:32:13.811Z,wazuh-server,File deleted.,,,,,281,1,1,0.16390929277610816
+2025-10-27T15:20:06.826Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-27T15:20:10.940Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-27T15:19:14.071Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-27T14:27:16.591Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:20:22.490Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:20:22.490Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:16:28.431Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:13:12.378Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:13:28.387Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:13:34.389Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:13:08.377Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:13:08.377Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:13:08.377Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:09:31.812Z,pfSense.home.arpa,Suricata: Alert - GPL ICMP PING *NIX,,,,,295,0,1,0.06278024808392457
+2025-10-27T12:15:51.767Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:15:51.767Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:15:51.767Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T12:11:15.711Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T12:11:15.711Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:25:01.879Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T12:08:29.678Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T11:48:57.372Z,wazuh-server,Apparmor DENIED mknod operation.,,,,,0,1,1,0.0
+2025-10-27T11:48:57.373Z,wazuh-server,Apparmor DENIED mknod operation.,,,,,0,1,1,0.0
+2025-10-27T11:48:57.373Z,wazuh-server,Apparmor DENIED mknod operation.,,,,,0,1,1,0.0
+2025-10-27T12:16:15.772Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:17:07.784Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:24:39.873Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:06:06.112Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-27T12:06:06.120Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-27T12:06:09.960Z,pfSense.home.arpa,Host-based anomaly detection event (rootcheck).,,,,,283,0,-1,-0.08841547294964758
+2025-10-27T14:04:11.689Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:04:19.691Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:04:19.691Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:57:45.584Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:57:45.584Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:59:21.617Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:59:23.618Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:59:29.619Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:06:34.279Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:06:34.279Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:06:34.279Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:57:27.580Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:57:27.580Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:02:55.671Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:01:49.658Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:01:37.655Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:04:50.257Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:10:08.331Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:50:28.316Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:50:28.316Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:42:20.173Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:42:40.179Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:42:40.179Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T12:42:42.181Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:43:10.189Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T12:43:14.191Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T12:43:14.191Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:37:39.261Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:37:39.261Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:37:41.261Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:37:49.264Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:37:49.264Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:37:57.267Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:38:09.270Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:38:09.271Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:38:21.274Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:40:07.303Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:40:07.303Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:40:33.310Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:41:03.319Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:41:03.319Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:41:23.327Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:42:12.170Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:05:33.031Z,pfSense.home.arpa,Suricata: Alert - GPL ICMP PING *NIX,,,,,295,0,1,0.06278024808392457
+2025-10-27T12:05:33.949Z,pfSense.home.arpa,Suricata: Alert - GPL ICMP PING *NIX,,,,,295,0,1,0.06278024808392457
+2025-10-27T13:51:17.489Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:49:39.466Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:55:59.560Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:56:03.560Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:56:19.568Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:55:37.554Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:50:37.479Z,wazuh-server,sshd: authentication success.,172.16.158.1,50040.0,,,305,1,-1,-0.15113268003790947
+2025-10-27T13:56:45.572Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:25:13.881Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:49:19.462Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T12:35:13.078Z,pfSense.home.arpa,Suricata: Alert - GPL ICMP PING *NIX,,,,,295,0,1,0.06278024808392457
+2025-10-21T12:35:15.092Z,pfSense.home.arpa,Suricata: Alert - GPL ICMP PING *NIX,,,,,295,0,1,0.06278024808392457
+2025-10-21T12:35:17.119Z,pfSense.home.arpa,Suricata: Alert - GPL ICMP PING *NIX,,,,,295,0,1,0.06278024808392457
+2025-10-21T10:00:05.138Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-21T10:00:05.138Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T09:58:03.113Z,wazuh-server,First time user executed sudo.,,,,,282,1,1,0.16675683371037447
+2025-10-21T09:58:03.113Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T09:53:51.403Z,pfSense.home.arpa,Wazuh agent stopped.,,,,,302,0,-1,-0.04447139253897492
+2025-10-21T09:53:53.511Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:53:53.511Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:53:53.520Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:53:53.535Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:59:41.134Z,wazuh-server,sshd: authentication success.,172.16.158.1,48991.0,,,305,1,-1,-0.15113268003790947
+2025-10-21T12:32:25.294Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T09:57:45.110Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T10:00:19.141Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T09:52:25.036Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T12:31:19.633Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T12:31:19.645Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T12:31:19.655Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T12:35:43.355Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:35:45.389Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:13.495Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:16.506Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:50.971Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:59.071Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:39:21.613Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T12:37:59.363Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-21T15:14:48.910Z,wazuh-server,sshd: authentication success.,172.16.158.1,54428.0,,,305,1,-1,-0.1614325743864472
+2025-10-21T15:14:24.903Z,wazuh-server,PAM: User login failed.,172.16.158.1,,,,292,1,1,0.21833975818202828
+2025-10-21T15:11:24.779Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T15:20:32.669Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-21T15:20:33.179Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-21T15:20:38.527Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:42.564Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:44.539Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:44.541Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:44.954Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:24:57.752Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:22:44.179Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:20:48.570Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-21T15:16:28.933Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T15:16:28.933Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T15:16:28.933Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-21T15:15:44.924Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T15:15:44.924Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T15:16:18.931Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-21T15:54:17.438Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T15:54:17.438Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-21T09:49:36.634Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure hfs kernel module is not available.,,,,,79,1,1,0.09373079439919374
+2025-10-21T09:49:36.647Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure hfsplus kernel module is not available.,,,,,80,1,1,0.0919685116043083
+2025-10-21T09:49:36.655Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure jffs2 kernel module is not available.,,,,,92,1,1,0.09032238994717423
+2025-10-21T09:49:36.777Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nosuid option set on /dev/shm partition.,,,,,138,1,1,0.10141209557384856
+2025-10-21T09:49:36.787Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure noexec option set on /dev/shm partition.,,,,,132,1,1,0.10002931689938466
+2025-10-21T09:49:36.872Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nodev option set on /var/tmp partition.,,,,,131,1,1,0.09952073057719113
+2025-10-21T09:49:36.904Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure separate partition exists for /var/log.,,,,,212,1,1,0.10937346297852202
+2025-10-21T09:49:36.924Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nosuid option set on /var/log partition.,,,,,142,1,1,0.09996312864723789
+2025-10-21T09:49:37.009Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure all AppArmor Profiles are in enforce or complain mode.,,,,,31,1,1,0.04612541438391826
+2025-10-21T09:49:37.030Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure bootloader password is set.,,,,,51,1,1,0.061016974171974825
+2025-10-21T09:49:37.092Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure message of the day is configured properly.,,,,,109,1,1,0.1022694892041921
+2025-10-21T09:49:37.102Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure local login warning banner is configured properly.,,,,,105,1,1,0.10625943942677768
+2025-10-21T09:49:37.143Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure access to /etc/issue.net is configured.,,,,,22,1,1,0.03333308645420674
+2025-10-21T09:49:37.154Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure GDM is removed.,,,,,13,1,1,0.02441644566635348
+2025-10-21T09:49:37.174Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure GDM disable-user-list option is enabled.,,,,,11,1,1,0.016516328314358786
+2025-10-21T09:49:37.184Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure GDM screen locks cannot be overridden.,,,,,15,1,1,0.022230123471334795
+2025-10-21T09:49:37.205Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure GDM disabling automatic mounting of removable media is not overridden.,,,,,12,1,1,0.022819279417204963
+2025-10-21T09:49:37.236Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure XDMCP is not enabled.,,,,,18,1,1,0.030621861135545103
+2025-10-21T09:49:37.269Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure dhcp server services are not in use.,,,,,64,1,1,0.08166994607868894
+2025-10-21T09:49:37.278Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure dns server services are not in use.,,,,,66,1,1,0.0828507566511617
+2025-10-21T09:49:37.351Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure print server services are not in use.,,,,,190,1,1,0.1003169365462877
+2025-10-21T09:49:37.372Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure rsync services are not in use.,,,,,201,1,1,0.10173772061271258
+2025-10-21T09:49:37.425Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure web server services are not in use.,,,,,277,1,1,0.12402432662001367
+2025-10-21T09:49:37.436Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure xinetd services are not in use.,,,,,279,1,1,0.13771107681109984
+2025-10-21T09:49:37.441Z,wazuh-server,New dpkg (Debian Package) installed.,,,,,285,1,1,0.17935275485341823
+2025-10-21T09:49:37.447Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure X window server services are not in use.,,,,,17,1,1,0.029487328206817986
+2025-10-21T09:49:37.488Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure talk client is not installed.,,,,,258,1,1,0.08528417169913827
+2025-10-21T09:49:37.498Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure telnet client is not installed.,,,,,260,1,1,0.07931853768482655
+2025-10-21T09:49:37.531Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure systemd-timesyncd configured with authorized timeserver.,,,,,256,1,1,0.08983693239265256
+2025-10-21T09:49:37.582Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure cron daemon is enabled and active.,,,,,58,1,1,0.07312694425495403
+2025-10-21T09:49:37.604Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/cron.hourly are configured.,,,,,172,1,1,0.10404152584470727
+2025-10-21T09:49:37.648Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/cron.d are configured.,,,,,170,1,1,0.10226583556538305
+2025-10-21T09:49:37.673Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure at is restricted to authorized users.,,,,,33,1,1,0.05121403443858574
+2025-10-21T09:49:37.683Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure wireless interfaces are disabled.,,,,,278,1,1,0.13239681321504937
+2025-10-21T09:49:37.703Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure dccp kernel module is not available.,,,,,61,1,1,0.07023668821351559
+2025-10-21T09:49:37.714Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure tipc kernel module is not available.,,,,,264,1,1,0.09418767426008423
+2025-10-21T09:49:37.724Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure rds kernel module is not available.,,,,,191,1,1,0.10066628523726129
+2025-10-21T09:49:37.734Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sctp kernel module is not available.,,,,,208,1,1,0.1098562040022007
+2025-10-21T09:49:37.755Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure packet redirect sending is disabled.,,,,,146,1,1,0.10384418013054175
+2025-10-21T09:49:37.806Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure reverse path filtering is enabled.,,,,,194,1,1,0.09785997885091713
+2025-10-21T09:49:37.858Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure a single firewall configuration utility is in use.,,,,,20,1,1,0.029515660587326575
+2025-10-21T09:49:37.879Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure iptables-persistent is not installed with ufw.,,,,,90,1,1,0.092155836594636
+2025-10-21T09:49:37.909Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ufw default deny firewall policy.,,,,,266,1,1,0.09826582432435482
+2025-10-21T09:49:37.953Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure a nftables table exists.,,,,,19,1,1,0.02854833672195889
+2025-10-21T09:49:37.963Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nftables base chains exist.,,,,,114,1,1,0.10012277307120543
+2025-10-21T09:49:38.005Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure iptables packages are installed.,,,,,89,1,1,0.09680724391889062
+2025-10-21T09:49:38.060Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ip6tables default deny firewall policy.,,,,,84,1,1,0.091187729376629
+2025-10-21T09:49:38.071Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure ip6tables loopback traffic is configured.,,,,,85,1,1,0.09337280770152812
+2025-10-21T09:49:38.092Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on SSH private host key files are configured.,,,,,187,1,1,0.10258932038599533
+2025-10-21T09:49:38.122Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd Banner is configured.,,,,,220,1,1,0.10805581967934752
+2025-10-21T09:49:38.215Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd LogLevel is configured.,,,,,228,1,1,0.11302021470786389
+2025-10-21T09:49:38.225Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd MACs are configured.,,,,,230,1,1,0.10926031834524563
+2025-10-21T09:49:38.246Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd MaxSessions is configured.,,,,,232,1,1,0.10052840676017305
+2025-10-21T09:49:38.256Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure sshd MaxStartups is configured.,,,,,233,1,1,0.1019403159714235
+2025-10-21T09:49:38.374Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure access to the su command is restricted.,,,,,26,1,1,0.0387855588522249
+2025-10-21T09:49:38.394Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure libpam-modules is installed.,,,,,103,1,1,0.10618056447602303
+2025-10-21T09:49:38.414Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure pam_unix module is enabled.,,,,,155,1,1,0.09834161981187173
+2025-10-21T09:49:38.435Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure pam_pwquality module is enabled.,,,,,150,1,1,0.10638538289473798
+2025-10-21T09:49:38.527Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password maximum sequential characters is configured.,,,,,164,1,1,0.09913408006491131
+2025-10-21T09:49:38.568Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password history remember is configured.,,,,,163,1,1,0.0980394669671163
+2025-10-21T09:49:38.631Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure pam_unix includes use_authtok.,,,,,154,1,1,0.10097636149097022
+2025-10-21T09:49:38.662Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure password expiration warning days is configured.,,,,,159,1,1,0.09641279240462042
+2025-10-21T09:49:38.694Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure root is the only UID 0 account.,,,,,197,1,1,0.09887459679934729
+2025-10-21T09:49:38.716Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure group root is the only GID 0 group.,,,,,78,1,1,0.09445050463615767
+2025-10-21T09:49:38.736Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure root user umask is configured.,,,,,198,1,1,0.10390057689042831
+2025-10-21T09:49:38.749Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure nologin is not listed in /etc/shells.,,,,,137,1,1,0.10096026317796236
+2025-10-21T09:49:38.769Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure default user umask is configured.,,,,,63,1,1,0.0756045240703126
+2025-10-21T09:49:38.794Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure journald log file rotation is configured.,,,,,97,1,1,0.0954625874937921
+2025-10-21T09:49:38.810Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure systemd-journal-upload authentication is configured.,,,,,254,1,1,0.09627158142303571
+2025-10-21T09:49:38.902Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure journald is configured to send logs to rsyslog.,,,,,96,1,1,0.09676812957972569
+2025-10-21T09:49:38.958Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure auditd packages are installed.,,,,,44,1,1,0.06214734231842012
+2025-10-21T09:49:38.990Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure audit_backlog_limit is sufficient.,,,,,43,1,1,0.06199744926421602
+2025-10-21T09:49:39.024Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure system is disabled when audit logs are full.,,,,,250,1,1,0.09641974023113076
+2025-10-21T09:49:39.086Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure events that modify the system's network environment are collected.,,,,,71,1,1,0.08338664035562149
+2025-10-21T09:49:39.174Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure events that modify the system's Mandatory Access Controls are collected.,,,,,70,1,1,0.08463225239437755
+2025-10-21T09:49:39.264Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure audit log files group owner is configured.,,,,,37,1,1,0.047462974984476936
+2025-10-21T09:49:39.330Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure audit tools group owner is configured.,,,,,40,1,1,0.05191360006950618
+2025-10-21T09:49:39.342Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure AIDE is installed.,,,,,4,1,-1,-0.005703482470460486
+2025-10-21T09:49:39.396Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/group are configured.,,,,,176,1,1,0.09924372107052615
+2025-10-21T09:49:39.430Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/shadow- are configured.,,,,,184,1,1,0.10228617724283195
+2025-10-21T09:49:39.450Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/gshadow- are configured.,,,,,179,1,1,0.10102149507289815
+2025-10-21T09:49:39.471Z,wazuh-server,CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0.: Ensure permissions on /etc/security/opasswd are configured.,,,,,182,1,1,0.10155916764615658
+2025-10-21T09:49:46.986Z,pfSense.home.arpa,New wazuh agent connected.,,,,,289,0,-1,-0.023709569956076648
+2025-10-21T09:49:49.164Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:49:49.165Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-21T09:49:52.082Z,pfSense.home.arpa,Host-based anomaly detection event (rootcheck).,,,,,283,0,-1,-0.08841547294964758
+2025-10-21T09:50:43.478Z,wazuh-server,New user added to the system.,,,,,288,1,1,0.2004066655222364
+2025-10-22T02:32:13.808Z,wazuh-server,File deleted.,,,,,281,1,1,0.16390929277610816
+2025-10-22T02:32:13.808Z,wazuh-server,File deleted.,,,,,281,1,1,0.16390929277610816
+2025-10-22T02:32:13.808Z,wazuh-server,File deleted.,,,,,281,1,1,0.16390929277610816
+2025-10-22T02:32:13.810Z,wazuh-server,File deleted.,,,,,281,1,1,0.16390929277610816
+2025-10-27T15:20:22.220Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-27T15:20:07.688Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-27T15:20:08.928Z,pfSense.home.arpa,Suricata: Alert - SURICATA STREAM FIN1 FIN with wrong seq,,,,,297,0,1,0.17918589647714578
+2025-10-27T15:19:14.033Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-27T14:26:56.587Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T12:48:44.288Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:42:20.173Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T12:42:26.174Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:42:26.174Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T12:42:30.175Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:42:40.179Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:43:12.190Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:43:36.197Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T12:51:38.336Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:51:38.336Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:36:05.211Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:36:21.216Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:36:21.216Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:37:18.984Z,pfSense.home.arpa,Suricata: Alert - SURICATA Applayer Detect protocol only one direction,,,,,296,0,1,0.1055056026510533
+2025-10-27T13:37:57.267Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:37:57.267Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:38:09.271Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:38:23.275Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:40:17.306Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:40:33.310Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:41:09.321Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:10:02.330Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:10:08.331Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:10:08.331Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:10:40.338Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:10:40.338Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:10:40.338Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:22:06.509Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:22:06.509Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:13:12.378Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:13:34.389Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:13:34.389Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:12:46.361Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:12:18.356Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:17:08.438Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:19:50.483Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:22:40.515Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:16:33.776Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T12:16:33.776Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T11:48:55.373Z,wazuh-server,Systemd: Service exited due to a failure.,,,,,300,1,1,0.0909199794063571
+2025-10-27T11:48:57.373Z,wazuh-server,Apparmor DENIED mknod operation.,,,,,0,1,1,0.0
+2025-10-27T11:48:57.373Z,wazuh-server,Apparmor DENIED mknod operation.,,,,,0,1,1,0.0
+2025-10-27T11:48:57.373Z,wazuh-server,Apparmor DENIED mknod operation.,,,,,0,1,1,0.0
+2025-10-27T11:48:57.373Z,wazuh-server,Apparmor DENIED mknod operation.,,,,,0,1,1,0.0
+2025-10-27T12:16:15.772Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:50:37.479Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:08:29.678Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:24:39.873Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:25:01.879Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:49:39.466Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T12:11:15.712Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T12:06:06.105Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-27T12:06:06.107Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-27T12:06:06.115Z,pfSense.home.arpa,System Audit event.,,,,,299,0,1,0.11235799362640281
+2025-10-27T13:57:39.583Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:57:43.583Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:57:43.584Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:57:47.585Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:58:51.607Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:59:05.610Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:59:23.618Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T13:59:23.618Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:02:39.668Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:02:39.668Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T14:02:39.668Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:04:11.689Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:01:37.655Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:01:37.655Z,wazuh-server,PAM: Login session closed.,,,,,290,1,1,0.24738585514458739
+2025-10-27T13:50:51.482Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:56:45.572Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T13:52:43.504Z,wazuh-server,Successful sudo to ROOT executed.,,,,,294,1,1,0.2270799449540694
+2025-10-27T14:04:34.249Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
+2025-10-27T14:06:34.279Z,wazuh-server,PAM: Login session opened.,,,,,291,1,1,0.2475889825412903
