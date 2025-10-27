@@ -1,4 +1,4 @@
-# Báo cáo: Xây dựng hệ thống phát hiện bất thường (Anomaly Detection) cho Wazuh + Suricata + pfSense
+# Xây dựng hệ thống phát hiện bất thường (Anomaly Detection) cho Wazuh + Suricata + pfSense
 
 ---
 
@@ -9,6 +9,8 @@ Xây dựng một hệ thống Machine Learning giúp:
 * Tự động phát hiện các hành vi bất thường (anomalies) trong log bảo mật thu thập bởi **Wazuh Server** (Suricata + pfSense).
 * Ghi lại log bất thường và có thể **gửi cảnh báo ngược trở lại Wazuh Dashboard**.
 * Mở rộng khả năng phân tích hành vi trong hệ thống SOC mini.
+* Tự động cập nhật dữ liệu và chạy mô hình Machine-Learning mà không cần can thiệp thủ công
+* Tự động hóa các rules và phản ứng lại các anomalies bằng active response.
 
 ---
 
