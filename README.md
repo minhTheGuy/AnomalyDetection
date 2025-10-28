@@ -16,13 +16,142 @@ Xây dựng một hệ thống Machine Learning giúp:
 
 ## 2. Môi trường triển khai
 
-### **Hạ tầng lab:**
+### **2.1. Hạ tầng lab:**
 
-* 01 máy ảo **pfSense** (có Suricata IDS cấu hình sẵn).
-* 01 máy ảo **Wazuh all-in-one** (gồm: Manager, Indexer, Dashboard).
-* 01 máy thật (Ubuntu) dùng để chạy môi trường Python và huấn luyện mô hình ML.
+#### **A. pfSense Firewall/Router**
 
-### **Công cụ và thư viện:**
+![pfSense Dashboard](imgs/systems/pfsense_dashboard.png.png)
+
+**Thông tin hệ thống:**
+- **Phiên bản:** pfSense 2.7.2-RELEASE (amd64)
+- **Nền tảng:** FreeBSD 14.0-CURRENT
+- **Deployment:** VMware Virtual Machine
+- **CPU:** AMD Ryzen 5 5500U (2 cores)
+- **Netgate Device ID:** 897b19f8b56db4a14c13
+
+**Cấu hình Network:**
+- **WAN Interface (em0):** 192.168.180.129/24 (kết nối Internet qua VMware NAT)
+- **LAN Interface (em1):** 172.16.158.100/24 (mạng nội bộ)
+- **DNS Servers:** 127.0.0.1, 192.168.180.2, 8.8.8.8
+
+![pfSense VMware Console](imgs/systems/pfsense_core.png.png)
+
+**Tính năng đã triển khai:**
+- Suricata IDS/IPS (phát hiện xâm nhập)
+- Firewall rules cho WAN/LAN
+- Traffic monitoring và logging
+
+---
+
+#### **B. Wazuh All-in-One Server**
+
+![Wazuh Services Status](imgs/systems/wazuh_services.png)
+
+**Thông tin hệ thống:**
+- **IP Address:** 172.16.158.150
+- **Platform:** VMware Virtual Machine
+- **OS:** Ubuntu/Debian-based Linux
+
+**Các service đang chạy:**
+
+1. **Wazuh Manager** (`wazuh-manager.service`)
+   - Status: ✅ Active (running)
+   - PID: 114087
+   - Memory: ~1.0G
+   - Modules:
+     - `wazuh-syscheckd` - File Integrity Monitoring
+     - `wazuh-remoted` - Agent communication
+     - `wazuh-logcollector` - Log collection
+     - `wazuh-monitord` - Health monitoring
+     - `wazuh-analysisd` - Event analysis
+     - `wazuh-modulesd` - Inventory & Content Manager
+
+2. **Wazuh Indexer** (`wazuh-indexer.service`)
+   - Status: ✅ Active (running)
+   - PID: 125107 (Java)
+   - Memory: ~1.5G
+   - CPU: 3min 27.261s
+   - Documentation: https://documentation.wazuh.com
+
+3. **Wazuh Dashboard** (`wazuh-dashboard.service`)
+   - Status: ✅ Active (running)
+   - PID: 114087 (Node.js)
+   - Memory: ~202.9M
+   - Port: 443 (HTTPS)
+   - Max HTTP header size: 65536
+
+![Wazuh Web Dashboard](imgs/systems/wazuh_dashboard.png.png)
+
+**Dashboard Overview (Last 24 Hours):**
+- **Active Agents:** 1
+- **Disconnected Agents:** 0
+- **Alerts Summary:**
+  - Critical (Level 15+): 0
+  - High (Level 12-14): 0
+  - Medium (Level 7-11): 20
+  - Low (Level 0-6): 302
+
+**Modules được sử dụng:**
+- **Endpoint Security:**
+  - Configuration Assessment
+  - Malware Detection
+  - File Integrity Monitoring (FIM)
+- **Threat Intelligence:**
+  - Threat Hunting
+  - Vulnerability Detection
+  - MITRE ATT&CK Framework
+- **Security Operations:**
+  - IT Hygiene
+  - PCI DSS Compliance
+- **Cloud Security:**
+  - Docker Monitoring
+  - AWS, Google Cloud, GitHub integration
+
+---
+
+#### **C. Machine Learning Environment (Ubuntu Desktop)**
+
+**Thông tin hệ thống:**
+- **Platform:** Physical machine (Ubuntu Desktop)
+- **Python Version:** 3.12
+- **Virtual Environment:** `mlenv` (created with `python3 -m venv mlenv`)
+- **IDE:** Visual Studio Code
+
+**Thư viện Python:**
+```txt
+pandas
+numpy
+scikit-learn
+joblib
+requests
+elasticsearch
+```
+
+**Network Access:**
+- Kết nối tới Wazuh Indexer: `https://172.16.158.150:9200`
+- Kết nối tới Wazuh Manager API: `https://172.16.158.150:55000`
+
+---
+
+### **2.2. Sơ đồ mạng**
+
+```
+Internet
+   |
+   | (WAN: 192.168.180.129/24)
+   |
+[pfSense Firewall]
+   |
+   | (LAN: 172.16.158.100/24)
+   |
+   +--- 172.16.158.1    (Gateway)
+   +--- 172.16.158.150  (Wazuh Server)
+   +--- 172.16.158.x    (Agents + ML Machine)
+```
+
+---
+
+### **2.3. Công cụ và thư viện:**
 
 * Python 3.12, thư viện: `pandas`, `numpy`, `scikit-learn`, `joblib`, `requests`.
 * Visual Studio Code (hoặc Jupyter Notebook) cho việc lập trình và huấn luyện.
@@ -62,28 +191,24 @@ wazuh-ml/
 
 ## 4. Quy trình thực hiện chi tiết
 
-### **Bước 1: Kết nối và thu log từ Wazuh Indexer**reload
+### **Bước 1: Kết nối và thu log từ Wazuh Indexer**
 
 * Cấu hình tài khoản đọc-only (`mlreader1234`).
 * Gọi API `_search` tới Indexer qua HTTPS:
-
-  ```bash
-  curl -u mlreader1234:MLreader123@ -k https://172.16.158.150:9200/wazuh-alerts-*/_search?size=10000
+  ```
+  https://172.16.158.150:9200/wazuh-alerts-*/_search
   ```
 * Script `export_from_es.py` tự động:
-
-  * Truy xuất log mới nhất.
-  * Lưu JSON thô (`security_logs_raw.json`).
-  * Chuyển sang bảng CSV (`security_logs.csv`).
+  * Lưu dữ liệu JSON thô (`security_logs_raw.json`)
+  * Chuyển sang bảng CSV (`security_logs.csv`)
 
 ### **Bước 2: Tiền xử lý dữ liệu**
 
 * Xóa giá trị rỗng, ép kiểu số cho port.
 * Mã hóa cột text bằng `LabelEncoder` (event_desc, agent).
 * Chọn các thuộc tính huấn luyện:
-
   ```python
-  [src_port, dst_port, event_code, agent_code]
+  features = ['rule_level', 'src_port', 'dest_port', 'event_desc_encoded', 'agent_encoded']
   ```
 
 ### **Bước 3: Huấn luyện mô hình Isolation Forest**
@@ -97,20 +222,15 @@ wazuh-ml/
 
 * Script `detect_anomaly.py` tải lại model.
 * Chấm điểm log mới và phân loại:
-
-  * `1` → bình thường.
-  * `-1` → bất thường.
+  * `1` → bình thường
+  * `-1` → bất thường
 * Xuất danh sách anomaly cùng điểm số (`anomaly_score`).
 
 ### **Bước 5: Gửi cảnh báo ngược lại Wazuh** *(tùy chọn)*
 
 * Gọi API Wazuh Manager:
-
-  ```python
-  curl -X POST https://localhost:55000/manager/logs \
-       -u wazuh:wazuh -k \
-       -H 'Content-Type: application/json' \
-       -d '{"log": "ML anomaly detected from 172.16.158.1"}'
+  ```
+  POST https://172.16.158.150:55000/events
   ```
 * Các log này sẽ hiển thị trong Dashboard dưới tab *Security events*.
 
@@ -145,22 +265,30 @@ Sau khi huấn luyện và chạy `detect_anomaly.py`:
 ## 6. Hướng phát triển tiếp theo
 
 ✅ **Hoàn thiện:**
+- [x] Thu thập log từ Wazuh Indexer
+- [x] Tiền xử lý và huấn luyện model
+- [x] Phát hiện anomaly cơ bản
+- [x] Tài liệu hóa hệ thống
 
-* Pipeline tự động hoạt động ổn định (Export → Train → Detect → Alert).
+🚀 **Cải tiến:**
+- [ ] Tự động hóa bằng systemd/cron job
+- [ ] Tích hợp Active Response
+- [ ] Thêm model Deep Learning (LSTM/Autoencoder)
+- [ ] Real-time detection với Kafka/Redis
+- [ ] Dashboard visualization cho ML metrics
+- [ ] Tối ưu hyperparameters (contamination, n_estimators)
+- [ ] Feature engineering nâng cao (timestamp patterns, sequence analysis)
 
-🚀 **Mở rộng tương lai:**
+---
 
-1. Huấn luyện riêng cho từng loại sự kiện (SSH, Suricata, FIM…).
-2. Thêm tính năng tự động phản ứng (active-response):
+## 7. Tài liệu tham khảo
 
-   * Chặn IP trên pfSense khi phát hiện tấn công SSH.
-   * Chạy các
-3. Tích hợp visualization:
+- [Wazuh Documentation](https://documentation.wazuh.com)
+- [pfSense Documentation](https://docs.netgate.com/pfsense)
+- [Scikit-learn Isolation Forest](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.IsolationForest.html)
+- [OpenSearch API](https://opensearch.org/docs/latest/api-reference/)
 
-   * Dùng Matplotlib hoặc Grafana để hiển thị phân bố anomaly_score.
-4. Cải thiện feature set:
+---
 
-   * Thêm thời gian (giờ/ngày), số lượng login theo IP, tần suất event.
-
-5. Tự động hóa bằng systemd service
-   * Tự động cập nhật dữ liệu và chạy mô hình Machine-Learning mà không cần can thiệp thủ công bằng Systemd
+**Tác giả:** Dang Minh  
+**Ngày cập nhật:** October 28, 2025
