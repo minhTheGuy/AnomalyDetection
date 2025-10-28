@@ -20,7 +20,7 @@ Xây dựng một hệ thống Machine Learning giúp:
 
 #### **A. pfSense Firewall/Router**
 
-![pfSense Dashboard](imgs/systems/pfsense_dashboard.png.png)
+![pfSense Dashboard](imgs/systems/pfsense_dashboard.png)
 
 **Thông tin hệ thống:**
 - **Phiên bản:** pfSense 2.7.2-RELEASE (amd64)
@@ -34,7 +34,7 @@ Xây dựng một hệ thống Machine Learning giúp:
 - **LAN Interface (em1):** 172.16.158.100/24 (mạng nội bộ)
 - **DNS Servers:** 127.0.0.1, 192.168.180.2, 8.8.8.8
 
-![pfSense VMware Console](imgs/systems/pfsense_core.png.png)
+![pfSense VMware Console](imgs/systems/pfsense_core.png)
 
 **Tính năng đã triển khai:**
 - Suricata IDS/IPS (phát hiện xâm nhập)
