@@ -1,6 +1,17 @@
-pandas
-numpy
-scikit-learn
-joblib
-requests
-matplotlib
+# Core data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Machine Learning
+scikit-learn>=1.3.0
+joblib>=1.3.0
+
+# HTTP Requests
+requests>=2.31.0
+urllib3>=2.0.0
+
+# Visualization (optional)
+matplotlib>=3.7.0
+
+# Date/Time utilities
+python-dateutil>=2.8.0

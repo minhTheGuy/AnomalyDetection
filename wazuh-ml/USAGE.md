@@ -82,100 +82,6 @@ python train_model.py
 train_model_with_tuning(enable_tuning=False)
 ```
 
-### 🔄 Auto-Retrain
-
-File: `auto_retrain.py`
-
-**Tự động retrain khi:**
-- Model file không tồn tại
-- CSV data mới hơn model
-- Model quá cũ (> 7 ngày mặc định)
-
-**Cách sử dụng:**
-```bash
-# Retrain tự động (nếu cần)
-python auto_retrain.py
-
-# Force retrain
-python auto_retrain.py --force
-
-# Không fetch data mới
-python auto_retrain.py --no-fetch
-
-# Không hyperparameter tuning (nhanh hơn)
-python auto_retrain.py --no-tuning
-
-# Tùy chỉnh max age
-python auto_retrain.py --max-age-days 14
-```
-
-### ⚡ Real-time Detection
-
-File: `realtime_detector.py`
-
-**Tính năng:**
-- Poll Wazuh Indexer định kỳ
-- Phát hiện anomaly ngay lập tức
-- Graceful shutdown (Ctrl+C)
-- Statistics tracking
-
-**Cách sử dụng:**
-```bash
-# Chạy với cấu hình mặc định (poll mỗi 60s, lookback 5 phút)
-python realtime_detector.py
-
-# Tùy chỉnh interval và lookback
-python realtime_detector.py --interval 30 --lookback 10
-
-# Chạy trong nền
-nohup python realtime_detector.py > realtime.log 2>&1 &
-```
-
----
-
-## 🤖 Automation Setup
-
-### Systemd Service + Cron Jobs
-
-**Cài đặt:**
-```bash
-# Chạy script setup (cần sudo)
-sudo bash setup_automation.sh
-```
-
-**Systemd Service (Real-time Detector):**
-```bash
-# Start service
-sudo systemctl start wazuh-ml-realtime
-
-# Stop service
-sudo systemctl stop wazuh-ml-realtime
-
-# Check status
-sudo systemctl status wazuh-ml-realtime
-
-# Enable auto-start on boot
-sudo systemctl enable wazuh-ml-realtime
-
-# View logs
-sudo journalctl -u wazuh-ml-realtime -f
-```
-
-**Cron Jobs:**
-- **Auto-retrain:** Daily at 2:00 AM
-- **Data export:** Every 6 hours
-
-```bash
-# Xem cron jobs
-crontab -l
-
-# Xem logs
-tail -f logs/auto_retrain.log
-tail -f logs/export.log
-```
-
----
-
 ## 📈 Model Evaluation
 
 ### Metrics
@@ -232,18 +138,6 @@ python train_model.py
 ```
 
 ### Real-time detector not detecting
-
-```bash
-# Check if there are new events
-python export_from_es.py
-
-# Check model is loaded
-ls -lh data/model_isoforest.pkl
-
-# Increase lookback window
-python realtime_detector.py --lookback 30
-```
-
 ---
 
 ## 📝 Best Practices
@@ -280,7 +174,7 @@ python realtime_detector.py --lookback 30
          │
          ▼
 ┌─────────────────┐
-│ export_from_es  │ ◄──── Cron: Every 6h
+│ export_from_es  │ ◄──── Cron: Every 6h (planning)
 └────────┬────────┘
          │
          ▼
@@ -295,12 +189,12 @@ python realtime_detector.py --lookback 30
          │
          ▼
 ┌─────────────────┐
-│ train_model     │ ◄──── auto_retrain (Daily 2AM)
+│ train_model     │ ◄──── auto_retrain (planning)
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│ detect_anomaly  │ ◄──── realtime_detector (Continuous)
+│ detect_anomaly  │ ◄──── realtime_detector (planning)
 └────────┬────────┘
          │
          ▼

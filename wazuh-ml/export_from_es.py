@@ -88,7 +88,7 @@ def fetch_logs():
 
     df = pd.DataFrame(rows)
 
-    # 🔁 CHẶN LỖI Ở ĐÂY:
+    # CHẶN LỖI Ở ĐÂY:
     # Bất kỳ ô nào là list (ví dụ ["sshd","authentication_success"]) -> convert sang chuỗi "sshd,authentication_success"
     def normalize_cell(x):
         if isinstance(x, list):
