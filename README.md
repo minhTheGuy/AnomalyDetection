@@ -234,33 +234,6 @@ wazuh-ml/
   ```
 * Các log này sẽ hiển thị trong Dashboard dưới tab *Security events*.
 
----
-
-## 5. Kết quả và phân tích
-
-Sau khi huấn luyện và chạy `detect_anomaly.py`:
-
-```
-🔎 Số sự kiện bất thường: 29
-```
-
-**Một số sự kiện đáng chú ý:**
-
-| Loại sự kiện                                     | Mô tả                                     | Nhận định                                              |
-| ------------------------------------------------ | ----------------------------------------- | ------------------------------------------------------ |
-| `sshd: authentication success`                   | Đăng nhập SSH thành công từ 172.16.158.1  | Có thể là hoạt động quản trị; cần whitelist nếu hợp lệ |
-| `Integrity checksum changed`                     | File hệ thống bị thay đổi                 | Cảnh báo nghiêm trọng, cần kiểm tra FIM                |
-| `Host-based anomaly detection (rootcheck)`       | Kiểm tra bất thường nội bộ                | Có thể là hành động an toàn định kỳ                    |
-| `sshd: Attempt to login using non-existent user` | Đăng nhập thất bại với user không tồn tại | Dấu hiệu dò quét/brute-force                           |
-| `Wazuh agent started/stopped`                    | Agent khởi động lại                       | Có thể là reboot hoặc tấn công service                 |
-
-**Mức độ hiệu quả:**
-
-* Tổng số log: ~718
-* Bị gắn nhãn bất thường: 29 (~4%) → tỷ lệ hợp lý.
-* Phát hiện đúng các hành vi hiếm và nghi ngờ.
-
----
 
 ## 6. Hướng phát triển tiếp theo
 
