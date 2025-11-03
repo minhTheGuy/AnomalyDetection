@@ -22,6 +22,44 @@ class AnomalyFilter:
                     'is_business_hours': [1],  # Chỉ trong giờ làm việc
                 }
             },
+            'dns_queries_internal': {
+                'description': 'Internal DNS queries/responses',
+                'conditions': {
+                    'proto': ['udp'],
+                    'dst_port': [53],
+                    'is_internal_src': [1],
+                    'is_internal_dst': [1]
+                }
+            },
+            'icmp_ping_internal': {
+                'description': 'ICMP echo internal monitoring',
+                'conditions': {
+                    'event_desc': ['icmp echo request', 'icmp echo reply'],
+                    'is_internal_communication': [1]
+                }
+            },
+            'ntp_sync': {
+                'description': 'NTP time synchronization',
+                'conditions': {
+                    'dst_port': [123],
+                    'proto': ['udp']
+                }
+            },
+            'dhcp_activity': {
+                'description': 'DHCP client/server traffic',
+                'conditions': {
+                    'dst_port': [67, 68],
+                    'proto': ['udp']
+                }
+            },
+            'pfSense_webui': {
+                'description': 'pfSense WebUI access from admin',
+                'conditions': {
+                    'dst_ip': ['172.16.158.100', '172.16.158.1'],
+                    'dst_port': [443, 4443],
+                    'is_internal_src': [1]
+                }
+            },
             'system_update': {
                 'description': 'System updates và package management',
                 'conditions': {
@@ -53,6 +91,31 @@ class AnomalyFilter:
                     'event_desc': ['non-existent user', 'failed password', 'invalid user'],
                 },
                 'score_multiplier': 2.0
+            },
+            'port_scan': {
+                'description': 'Potential port scanning activity',
+                'conditions': {
+                    'event_desc': ['port scan', 'nmap', 'syn scan', 'xmas scan'],
+                },
+                'score_multiplier': 2.0
+            },
+            'high_egress_to_external': {
+                'description': 'High egress bytes to external destination',
+                'conditions': {
+                    'is_internal_src': [1],
+                    'is_internal_dst': [0],
+                    'bytes': [1000000]  # handled as >= in match
+                },
+                'score_multiplier': 1.8
+            },
+            'lateral_movement': {
+                'description': 'Internal-to-internal lateral movement on high ports',
+                'conditions': {
+                    'is_internal_src': [1],
+                    'is_internal_dst': [1],
+                    'dst_port': [445, 3389, 5985, 5986]
+                },
+                'score_multiplier': 2.2
             },
             'night_activity': {
                 'description': 'Activity vào ban đêm (ngoại trừ scheduled tasks)',
@@ -107,10 +170,23 @@ class AnomalyFilter:
             if isinstance(values[0], str):
                 if not any(str(v).lower() in str(row_value).lower() for v in values):
                     return False
-            # Exact matching
+            # Numeric exact/greater-equal matching
             else:
-                if row_value not in values:
-                    return False
+                try:
+                    # If values contain a single numeric threshold and the row_value is numeric, treat as >= threshold
+                    if len(values) == 1 and (isinstance(values[0], (int, float))):
+                        try:
+                            rv = float(row_value)
+                            if rv < float(values[0]):
+                                return False
+                        except Exception:
+                            return False
+                    else:
+                        if row_value not in values:
+                            return False
+                except Exception:
+                    if row_value not in values:
+                        return False
         
         return True
     
@@ -203,6 +279,35 @@ class AnomalyFilter:
             df['anomaly_label_filtered'] = df['anomaly_label']
         
         return df
+
+
+def compute_dynamic_threshold(scores, target_anomaly_rate=0.03, min_rate=0.01, max_rate=0.10):
+    """
+    Tính dynamic threshold dựa theo percentile với guardrails
+    - scores: array-like, càng âm càng bất thường
+    - Trả về ngưỡng score, tại đó khoảng target_rate mẫu sẽ bị coi là anomaly
+    """
+    import numpy as np
+    n = len(scores)
+    if n == 0:
+        return None
+    # Clamp target rate
+    target = max(min_rate, min(max_rate, target_anomaly_rate))
+    percentile = target * 100.0
+    threshold = np.percentile(scores, percentile)
+    return float(threshold)
+
+
+def apply_threshold_to_labels(df, threshold, label_col='anomaly_label', score_col='anomaly_score'):
+    """
+    Áp dụng threshold động để (re)label anomalies
+    Note: score càng âm = càng anomaly → anomaly nếu score <= threshold
+    """
+    if threshold is None or score_col not in df.columns:
+        return df
+    df = df.copy()
+    df[label_col] = df[score_col].apply(lambda s: -1 if s <= threshold else 1)
+    return df
 
 
 def analyze_anomaly_distribution(df):

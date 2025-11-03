@@ -6,7 +6,8 @@ from config import CSV_PATH, MODEL_PATH
 from push_alert import send_alert
 from feature_engineering import engineer_all_features
 from preprocessing import preprocess_dataframe
-from anomaly_tuning import AnomalyFilter, analyze_anomaly_distribution
+from anomaly_tuning import AnomalyFilter, analyze_anomaly_distribution, compute_dynamic_threshold, apply_threshold_to_labels
+from config import DYNAMIC_THRESHOLD_ENABLE, TARGET_ANOMALY_RATE, MIN_ANOMALY_RATE, MAX_ANOMALY_RATE
 from ensemble_detector import EnsembleAnomalyDetector  # Import ensemble class
 
 def detect():
@@ -77,6 +78,21 @@ def detect():
         # Single model prediction
         df["anomaly_label"] = detector.predict(X)
         df["anomaly_score"] = detector.decision_function(X)
+
+    # Nếu bật dynamic threshold, (re)label theo threshold động trước khi filter
+    if DYNAMIC_THRESHOLD_ENABLE:
+        print("\n⚙️  Applying dynamic thresholding...")
+        # Compute threshold từ toàn bộ scores hiện tại
+        scores_for_threshold = df.get('anomaly_score')
+        if scores_for_threshold is not None is not False:
+            thr = compute_dynamic_threshold(
+                scores_for_threshold.values,
+                target_anomaly_rate=TARGET_ANOMALY_RATE,
+                min_rate=MIN_ANOMALY_RATE,
+                max_rate=MAX_ANOMALY_RATE
+            )
+            print(f"   Threshold: {thr:.4f} (target={TARGET_ANOMALY_RATE:.2%}, bounds {MIN_ANOMALY_RATE:.2%}-{MAX_ANOMALY_RATE:.2%})")
+            df = apply_threshold_to_labels(df, thr, label_col='anomaly_label', score_col='anomaly_score')
 
     # Apply filtering để giảm false positives
     print("🔧 Applying anomaly filters...")
