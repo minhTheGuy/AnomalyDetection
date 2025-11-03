@@ -10,6 +10,37 @@ source ../mlenv/bin/activate
 pip install -r requirements.txt
 ```
 
+### 1.1. Cấu hình secrets qua môi trường (.env)
+
+Tạo file `.env` (tham khảo `.env.example`) tại thư mục `wazuh-ml/`:
+
+```env
+# Wazuh Indexer (OpenSearch)
+WAZUH_INDEXER_URL=https://172.16.158.150:9200
+WAZUH_INDEX_PATTERN=wazuh-alerts-*
+INDEXER_USER=mlreader1234
+INDEXER_PASS=REPLACE_ME
+
+# Wazuh Manager API (push alerts)
+WAZUH_MANAGER_API=https://172.16.158.150:55000
+WAZUH_MANAGER_USER=wazuh
+WAZUH_MANAGER_PASS=REPLACE_ME
+
+# SSL options
+# VERIFY_SSL=true để bật kiểm tra chứng chỉ trong production
+VERIFY_SSL=false
+# Nếu VERIFY_SSL=true và dùng cert self-signed, chỉ định CA bundle (PEM)
+# CA_BUNDLE_PATH=/path/to/ca.pem
+
+# Data paths (tùy chọn)
+RAW_JSON_PATH=data/security_logs_raw.json
+CSV_PATH=data/security_logs.csv
+ANALYZED_CSV_PATH=data/security_logs_analyzed.csv
+MODEL_PATH=data/model_isoforest.pkl
+```
+
+Lưu ý: Không commit file `.env` lên git.
+
 ### 2. Chạy pipeline cơ bản
 
 ```bash

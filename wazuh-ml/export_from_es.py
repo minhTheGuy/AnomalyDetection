@@ -10,7 +10,7 @@ from config import (
     INDEXER_PASS,
     RAW_JSON_PATH,
     CSV_PATH,
-    VERIFY_SSL,
+    get_requests_verify,
 )
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -49,7 +49,7 @@ def fetch_logs():
         url,
         auth=(INDEXER_USER, INDEXER_PASS),
         json=query,
-        verify=VERIFY_SSL
+        verify=get_requests_verify()
     )
     resp.raise_for_status()
     data = resp.json()

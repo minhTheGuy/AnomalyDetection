@@ -4,7 +4,7 @@ from config import (
     WAZUH_MANAGER_API,
     WAZUH_MANAGER_USER,
     WAZUH_MANAGER_PASS,
-    VERIFY_SSL,
+    get_requests_verify,
 )
 
 def send_alert(message: str):
@@ -14,7 +14,7 @@ def send_alert(message: str):
         url,
         auth=(WAZUH_MANAGER_USER, WAZUH_MANAGER_PASS),
         json=payload,
-        verify=VERIFY_SSL
+        verify=get_requests_verify()
     )
     print("Sent:", resp.status_code, resp.text)
 
