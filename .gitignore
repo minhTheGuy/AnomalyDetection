@@ -12,6 +12,8 @@ __pycache__/
 *.pywzzz
 *.pyzzzz
 *.pywzzzz
+wazuh-ml/__pycache__/
+wazuh-ml/tests/__pycache__/
 
 # Data
 wazuh-ml/data/

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# ensemble_detector.py
 """
 Ensemble Anomaly Detection cho Wazuh Logs
 Sử dụng 3 thuật toán: Isolation Forest, LOF, One-Class SVM với voting mechanism
