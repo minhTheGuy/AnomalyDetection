@@ -37,9 +37,36 @@ RAW_JSON_PATH=data/security_logs_raw.json
 CSV_PATH=data/security_logs.csv
 ANALYZED_CSV_PATH=data/security_logs_analyzed.csv
 MODEL_PATH=data/model_isoforest.pkl
+
+# Training options
+# MODEL_TYPE: ensemble | single (mặc định: ensemble)
+MODEL_TYPE=ensemble
+# Nếu dùng single (IsolationForest), có chuẩn hóa đầu vào không? (mặc định: true)
+SINGLE_IF_NORMALIZE=true
 ```
 
-Lưu ý: Không commit file `.env` lên git.
+---
+
+## 🧠 Chọn loại mô hình và chuẩn hóa
+
+### Ensemble (mặc định)
+- Đặt trong `.env`:
+```env
+MODEL_TYPE=ensemble
+```
+- Gồm 3 thuật toán: IsolationForest + LOF + One-Class SVM, có voting (2/3 hoặc 3/3 trong quá trình train).
+- Phù hợp để giảm false positive và có đồng thuận mô hình.
+
+### IsolationForest đơn (single) với chuẩn hóa
+- Đặt trong `.env`:
+```env
+MODEL_TYPE=single
+SINGLE_IF_NORMALIZE=true
+```
+- Khi `SINGLE_IF_NORMALIZE=true`, dữ liệu đầu vào sẽ được chuẩn hóa bằng StandardScaler trong quá trình train và được áp dụng cùng scaler khi detect.
+- Nếu muốn tắt chuẩn hóa: `SINGLE_IF_NORMALIZE=false`.
+
+Gợi ý: Dùng `ensemble` cho production; `single` cho môi trường test/nhanh hoặc khi tài nguyên hạn chế.
 
 ### 2. Chạy pipeline cơ bản
 
@@ -250,7 +277,5 @@ python train_model.py
 | `realtime_detector.py` | **NEW** Real-time detection |
 | `push_alert.py` | Send alerts to Wazuh |
 | `setup_automation.sh` | (working) |
-
----
 
 **Last Updated:** October 28, 2025
