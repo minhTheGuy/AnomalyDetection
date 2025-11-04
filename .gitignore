@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*.pywz
+*.pyzz
+*.pywzz
+*.pyzzz
+*.pywzzz
+*.pyzzzz
+*.pywzzzz
+
+# Data
+wazuh-ml/data/
+
+# Logs
+wazuh-ml/logs/
+
+# Env
+wazuh-ml/.env
+
+# .gitignore
+wazuh-ml/.gitignore
