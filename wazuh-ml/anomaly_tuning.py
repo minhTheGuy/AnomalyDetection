@@ -99,6 +99,35 @@ class AnomalyFilter:
                 },
                 'score_multiplier': 2.0
             },
+            'external_rdp_attempt': {
+                'description': 'RDP access attempts from external source',
+                'conditions': {
+                    'is_internal_src': [0],
+                    'dst_port': [3389]
+                },
+                'score_multiplier': 2.5
+            },
+            'http_scan_tools': {
+                'description': 'Web scanning tools detected (nikto/sqlmap/gobuster/dirb)',
+                'conditions': {
+                    'event_desc': ['nikto', 'sqlmap', 'gobuster', 'dirb']
+                },
+                'score_multiplier': 2.2
+            },
+            'web_sql_injection_signatures': {
+                'description': 'Possible SQL injection payload patterns',
+                'conditions': {
+                    'event_desc': ["sql injection", "union select", "or 1=1", "' or '1'='1"]
+                },
+                'score_multiplier': 2.8
+            },
+            'ssh_password_spray': {
+                'description': 'Multiple SSH auth failures indicative of password spraying',
+                'conditions': {
+                    'event_desc': ['failed password', 'authentication failure']
+                },
+                'score_multiplier': 2.3
+            },
             'high_egress_to_external': {
                 'description': 'High egress bytes to external destination',
                 'conditions': {
@@ -185,8 +214,7 @@ class AnomalyFilter:
                         if row_value not in values:
                             return False
                 except Exception:
-                    if row_value not in values:
-                        return False
+                    return False
         
         return True
     
