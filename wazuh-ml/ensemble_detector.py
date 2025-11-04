@@ -13,7 +13,7 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.svm import OneClassSVM
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import ParameterGrid
-from config import CSV_PATH, MODEL_PATH, ANALYZED_CSV_PATH
+from config import CSV_PATH, MODEL_PATH, ANALYZED_CSV_PATH, ANOMALIES_CSV_PATH
 from preprocessing import preprocess_dataframe
 from feature_engineering import engineer_all_features
 
@@ -331,6 +331,14 @@ def train_ensemble_model():
     # Save analyzed data
     df.to_csv(ANALYZED_CSV_PATH, index=False)
     print(f"\nResults saved → {ANALYZED_CSV_PATH}")
+
+    # Save anomalies only
+    try:
+        anomalies_out = df[df['anomaly_label'] == -1].copy()
+        anomalies_out.to_csv(ANOMALIES_CSV_PATH, index=False)
+        print(f"Anomalies only saved → {ANOMALIES_CSV_PATH} ({len(anomalies_out)} rows)")
+    except Exception as e:
+        print(f"⚠️  Failed to save anomalies CSV: {e}")
     
     # Save model bundle
     model_bundle = {

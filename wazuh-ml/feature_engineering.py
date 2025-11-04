@@ -98,8 +98,15 @@ def extract_network_features(df):
     
     # Kiểm tra internal/external IP
     if 'src_ip' in df.columns and 'dst_ip' in df.columns:
-        df['is_internal_src'] = df['src_ip'].astype(str).str.startswith('172.16.').astype(int)
-        df['is_internal_dst'] = df['dst_ip'].astype(str).str.startswith('172.16.').astype(int)
+        def is_private(ip_str):
+            s = str(ip_str)
+            return (
+                s.startswith('10.') or
+                s.startswith('172.16.') or  # lab existing
+                s.startswith('192.168.')
+            )
+        df['is_internal_src'] = df['src_ip'].apply(lambda x: 1 if is_private(x) else 0)
+        df['is_internal_dst'] = df['dst_ip'].apply(lambda x: 1 if is_private(x) else 0)
         df['is_internal_communication'] = (df['is_internal_src'] & df['is_internal_dst']).astype(int)
     
     return df

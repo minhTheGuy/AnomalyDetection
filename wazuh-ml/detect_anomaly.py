@@ -7,7 +7,7 @@ from push_alert import send_alert
 from feature_engineering import engineer_all_features
 from preprocessing import preprocess_dataframe
 from anomaly_tuning import AnomalyFilter, analyze_anomaly_distribution, compute_dynamic_threshold, apply_threshold_to_labels
-from config import DYNAMIC_THRESHOLD_ENABLE, TARGET_ANOMALY_RATE, MIN_ANOMALY_RATE, MAX_ANOMALY_RATE
+from config import DYNAMIC_THRESHOLD_ENABLE, TARGET_ANOMALY_RATE, MIN_ANOMALY_RATE, MAX_ANOMALY_RATE, MODEL_TYPE
 from ensemble_detector import EnsembleAnomalyDetector  # Import ensemble class
 
 def detect():
@@ -15,7 +15,7 @@ def detect():
     bundle = joblib.load(MODEL_PATH)
     
     # Check model type
-    model_type = bundle.get("model_type", "single")
+    model_type = bundle.get("model_type", MODEL_TYPE or "single")
     
     if model_type == "ensemble":
         print("   ✅ Ensemble model detected (IF + LOF + SVM)")
@@ -27,13 +27,14 @@ def detect():
         print("   ✅ Single model detected (Isolation Forest)")
         detector = bundle["model"]
         is_ensemble = False
+        scaler = bundle.get("scaler")
     
     encoders = bundle["encoders"]
     feature_names = bundle.get("feature_names", [])
     
     print(f"   Model trained with {len(feature_names)} features")
 
-    # Đọc log mới nhất
+    # Đọc log mới nh
     print("Đang đọc dữ liệu từ:", CSV_PATH)
     df = pd.read_csv(CSV_PATH)
     print(f"   Loaded {len(df)} records")
@@ -76,8 +77,17 @@ def detect():
         agreement = detector.get_model_agreement(X)
     else:
         # Single model prediction
-        df["anomaly_label"] = detector.predict(X)
-        df["anomaly_score"] = detector.decision_function(X)
+        # Apply scaler if provided (single-model normalization)
+        X_infer = X
+        if not is_ensemble and scaler is not None:
+            try:
+                X_infer = scaler.transform(X)
+                print("   Applied saved StandardScaler to features")
+            except Exception as e:
+                print(f"   ⚠️  Failed to apply scaler: {e}")
+                X_infer = X
+        df["anomaly_label"] = detector.predict(X_infer)
+        df["anomaly_score"] = detector.decision_function(X_infer)
 
     # Nếu bật dynamic threshold, (re)label theo threshold động trước khi filter
     if DYNAMIC_THRESHOLD_ENABLE:
@@ -125,7 +135,7 @@ def detect():
     anomalies = anomalies_filtered
     if len(anomalies) > 0:
         print(f"\n{'='*70}")
-        print(f"TOP 15 SỰ KIỆN BẤT THƯỜNG")
+        print(f"LISTS OF ANOMALIES")
         print(f"{'='*70}\n")
         
         # Chọn columns để hiển thị
@@ -145,22 +155,22 @@ def detect():
             unanimous = anomalies[anomalies['anomaly_votes'] == 3]
             if len(unanimous) > 0:
                 print(f"🚨 UNANIMOUS ANOMALIES (3/3 models agree) - {len(unanimous)} events:\n")
-                top_unanimous = unanimous.nsmallest(10, "anomaly_score")
+                top_unanimous = unanimous.sort_values("anomaly_score", ascending=True)
                 print(top_unanimous[display_cols].to_string(index=False))
                 
                 if len(anomalies) > len(unanimous):
                     print(f"\nMAJORITY ANOMALIES (2/3 models agree):\n")
                     majority = anomalies[anomalies['anomaly_votes'] == 2]
                     if len(majority) > 0:
-                        top_majority = majority.nsmallest(5, "anomaly_score")
+                        top_majority = majority.sort_values("anomaly_score", ascending=True)
                         print(top_majority[display_cols].to_string(index=False))
             else:
                 # No unanimous, show top by score
-                top_anomalies = anomalies.nsmallest(15, "anomaly_score")
+                top_anomalies = anomalies.sort_values("anomaly_score", ascending=True)
                 print(top_anomalies[display_cols].to_string(index=False))
         else:
             # Single model - show top by score
-            top_anomalies = anomalies.nsmallest(15, "anomaly_score")
+            top_anomalies = anomalies.sort_values("anomaly_score", ascending=True)
             print(top_anomalies[display_cols].to_string(index=False))
 
         # # Uncomment để gửi cảnh báo ngược vào Wazuh Dashboard

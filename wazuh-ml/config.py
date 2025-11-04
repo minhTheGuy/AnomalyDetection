@@ -17,6 +17,7 @@ RAW_JSON_PATH = os.getenv("RAW_JSON_PATH", "data/security_logs_raw.json")
 CSV_PATH = os.getenv("CSV_PATH", "data/security_logs.csv")
 ANALYZED_CSV_PATH = os.getenv("ANALYZED_CSV_PATH", "data/security_logs_analyzed.csv")
 MODEL_PATH = os.getenv("MODEL_PATH", "data/model_isoforest.pkl")
+ANOMALIES_CSV_PATH = os.getenv("ANOMALIES_CSV_PATH", "data/anomalies.csv")
 
 # Wazuh Manager API (for pushing alerts)
 WAZUH_MANAGER_API = os.getenv("WAZUH_MANAGER_API", "https://127.0.0.1:55000")
@@ -35,3 +36,16 @@ def get_requests_verify():
     if not VERIFY_SSL:
         return False
     return CA_BUNDLE_PATH if CA_BUNDLE_PATH else True
+
+# Dynamic threshold configuration (for reducing false positives)
+DYNAMIC_THRESHOLD_ENABLE = os.getenv("DYNAMIC_THRESHOLD_ENABLE", "true").strip().lower() in ("1", "true", "yes", "on")
+TARGET_ANOMALY_RATE = float(os.getenv("TARGET_ANOMALY_RATE", "0.03"))  # 3% default
+MIN_ANOMALY_RATE = float(os.getenv("MIN_ANOMALY_RATE", "0.01"))       # 1%
+MAX_ANOMALY_RATE = float(os.getenv("MAX_ANOMALY_RATE", "0.10"))       # 10%
+
+# Training configuration
+# MODEL_TYPE: 'ensemble' | 'single'
+MODEL_TYPE = os.getenv("MODEL_TYPE", "ensemble").strip().lower()
+
+# Single-model (IsolationForest) normalization
+SINGLE_IF_NORMALIZE = os.getenv("SINGLE_IF_NORMALIZE", "true").strip().lower() in ("1", "true", "yes", "on")

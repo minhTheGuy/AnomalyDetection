@@ -4,9 +4,11 @@ import joblib
 import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import ParameterGrid
-from config import CSV_PATH, MODEL_PATH, ANALYZED_CSV_PATH
+from sklearn.preprocessing import StandardScaler
+from config import CSV_PATH, MODEL_PATH, ANALYZED_CSV_PATH, ANOMALIES_CSV_PATH, MODEL_TYPE, SINGLE_IF_NORMALIZE
 from preprocessing import preprocess_dataframe
 from feature_engineering import engineer_all_features
+from ensemble_detector import train_ensemble_model
 
 def evaluate_model(model, X, df=None):
     """
@@ -138,6 +140,9 @@ def train_model_with_tuning(enable_tuning=True):
     Args:
         enable_tuning: True để bật hyperparameter tuning, False để dùng default params
     """
+    # If ensemble is requested by config, delegate to ensemble training
+    if MODEL_TYPE == "ensemble":
+        return train_ensemble_model()
     print(f"\n{'='*60}")
     print(f"🚀 ANOMALY DETECTION MODEL TRAINING")
     print(f"{'='*60}\n")
@@ -155,6 +160,15 @@ def train_model_with_tuning(enable_tuning=True):
     print("\n🧹 Preprocessing and encoding...")
     df, X, encoders = preprocess_dataframe(df)
     
+    # Optional normalization for single IsolationForest
+    scaler = None
+    if SINGLE_IF_NORMALIZE:
+        print("\n📏 Applying StandardScaler normalization (single-model IF)...")
+        scaler = StandardScaler()
+        X_for_fit = scaler.fit_transform(X)
+    else:
+        X_for_fit = X
+
     if enable_tuning:
         # Hyperparameter grid
         param_grid = {
@@ -165,7 +179,7 @@ def train_model_with_tuning(enable_tuning=True):
         }
         
         # Tuning
-        best_model, best_params, tuning_results = hyperparameter_tuning(X, df, param_grid)
+        best_model, best_params, tuning_results = hyperparameter_tuning(X_for_fit, df, param_grid)
     else:
         # Use default parameters
         print("\nTraining with default parameters...")
@@ -176,20 +190,28 @@ def train_model_with_tuning(enable_tuning=True):
             'max_features': 1.0
         }
         best_model = IsolationForest(**best_params, random_state=42)
-        best_model.fit(X)
+        best_model.fit(X_for_fit)
         tuning_results = []
     
     # Evaluate best model
-    metrics = evaluate_model(best_model, X, df)
+    metrics = evaluate_model(best_model, X_for_fit, df)
     
     # Predict on all data
     print(f"\nMaking predictions...")
-    df["anomaly_label"] = best_model.predict(X)
-    df["anomaly_score"] = best_model.decision_function(X)
+    df["anomaly_label"] = best_model.predict(X_for_fit)
+    df["anomaly_score"] = best_model.decision_function(X_for_fit)
     
     # Save analyzed results
     df.to_csv(ANALYZED_CSV_PATH, index=False)
     print(f"✅ Saved analysis results → {ANALYZED_CSV_PATH}")
+
+    # Save anomalies only
+    try:
+        anomalies_out = df[df["anomaly_label"] == -1].copy()
+        anomalies_out.to_csv(ANOMALIES_CSV_PATH, index=False)
+        print(f"✅ Saved anomalies only → {ANOMALIES_CSV_PATH} ({len(anomalies_out)} rows)")
+    except Exception as e:
+        print(f"⚠️  Failed to save anomalies CSV: {e}")
     
     # Save model bundle
     model_bundle = {
@@ -201,7 +223,9 @@ def train_model_with_tuning(enable_tuning=True):
         "feature_names": list(X.columns),
         "training_date": pd.Timestamp.now().isoformat(),
         "n_features": X.shape[1],
-        "n_samples": X.shape[0]
+        "n_samples": X.shape[0],
+        "model_type": "single",
+        "scaler": scaler
     }
     
     joblib.dump(model_bundle, MODEL_PATH)
