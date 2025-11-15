@@ -9,7 +9,7 @@ PROJECT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, os.pardir))
 if PROJECT_DIR not in sys.path:
     sys.path.insert(0, PROJECT_DIR)
 
-from anomaly_tuning import AnomalyFilter, compute_dynamic_threshold, apply_threshold_to_labels
+from detection.anomaly_tuning import AnomalyFilter, compute_dynamic_threshold, apply_threshold_to_labels
 
 
 def test_anomalyfilter_whitelist_internal_ssh_business_hours():

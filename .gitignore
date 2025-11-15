@@ -12,6 +12,7 @@ __pycache__/
 *.pywzzz
 *.pyzzzz
 *.pywzzzz
+*.venv
 wazuh-ml/__pycache__/
 wazuh-ml/tests/__pycache__/
 
@@ -26,3 +27,18 @@ wazuh-ml/.env
 
 # .gitignore
 wazuh-ml/.gitignore
+
+# Jupyter Notebook
+*.ipynb_checkpoints
+
+# VSCode
+.vscode/
+
+#wazuh logging info
+wazuh-logging-info
+
+# script
+wazuh-ml/scripts/
+
+# llm
+wazuh-ml/llm/
