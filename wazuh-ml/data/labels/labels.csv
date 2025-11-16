@@ -1,0 +1,35 @@
+run_id,type,start_ts,end_ts,src_ip,notes
+2025-11-03T22:00:19+07:00,benign,2025-11-03T22:00:19+07:00,2025-11-03T22:00:51+07:00,192.168.1.208,internal dns+icmp+web+ssh+apt
+2025-11-03T22:01:00+07:00,benign,2025-11-03T22:01:00+07:00,2025-11-03T22:01:10+07:00,192.168.1.208,internal dns+icmp+web+ssh+apt
+2025-11-03T22:02:44+07:00,attack,2025-11-03T22:02:44+07:00,2025-11-03T22:03:11+07:00,192.168.1.208,scan+ssh_brute_small+lateral_ports+egress_small
+2025-11-04T15:18:27+07:00,benign,2025-11-04T15:18:27+07:00,2025-11-04T15:21:01+07:00,192.168.1.208,internal dns+icmp+web+ssh+apt
+2025-11-04T15:21:16+07:00,attack,2025-11-04T15:21:16+07:00,2025-11-04T15:28:30+07:00,192.168.1.208,scan+ssh_brute_small+lateral_ports+egress_small
+2025-11-04T15:31:16+07:00,attack,2025-11-04T15:31:16+07:00,2025-11-04T15:38:35+07:00,192.168.1.208,scan+ssh_brute_small+lateral_ports+egress_small
+2025-11-04T15:40:33+07:00,attack,2025-11-04T15:40:33+07:00,2025-11-04T15:40:54+07:00,192.168.1.208,scan+ssh_brute_small+lateral_ports+egress_small
+2025-11-04T15:44:27+07:00,benign,2025-11-04T15:44:27+07:00,2025-11-04T15:44:56+07:00,192.168.1.208,internal dns+icmp+web+ssh+apt
+2025-11-04T15:46:11+07:00,attack,2025-11-04T15:46:11+07:00,2025-11-04T15:46:20+07:00,192.168.1.208,scan+ssh_brute_small+lateral_ports+egress_small
+2025-11-04T15:46:44+07:00,attack,2025-11-04T15:46:44+07:00,2025-11-04T15:46:54+07:00,192.168.1.208,scan+ssh_brute_small+lateral_ports+egress_small
+2025-11-04T15:47:38+07:00,attack,2025-11-04T15:47:38+07:00,2025-11-04T15:47:52+07:00,192.168.1.208,scan+ssh_brute_small+lateral_ports+egress_small
+2025-11-04T15:48:35+07:00,attack,2025-11-04T15:48:35+07:00,2025-11-04T15:48:56+07:00,192.168.1.208,scan+ssh_brute_small+lateral_ports+egress_small
+2025-11-04T15:51:54+07:00,attack_wan,2025-11-04T15:51:54+07:00,2025-11-04T15:51:56+07:00,192.168.1.208,wan_tcp+udp_probe+http_probe+ssh_small+burst
+2025-11-04T15:51:58+07:00,attack_wan,2025-11-04T15:51:58+07:00,2025-11-04T15:52:02+07:00,192.168.1.208,wan_tcp+udp_probe+http_probe+ssh_small+burst
+2025-11-04T15:52:13+07:00,attack_wan,2025-11-04T15:52:13+07:00,2025-11-04T15:52:14+07:00,192.168.1.208,wan_tcp+udp_probe+http_probe+ssh_small+burst
+2025-11-04T15:52:34+07:00,attack_wan,2025-11-04T15:52:34+07:00,2025-11-04T15:52:50+07:00,192.168.1.208,wan_tcp+udp_probe+http_probe+ssh_small+burst
+2025-11-04T15:55:04+07:00,attack_wan,2025-11-04T15:55:04+07:00,2025-11-04T15:55:20+07:00,192.168.1.208,wan_tcp+udp_probe+http_probe+ssh_small+burst
+2025-11-04T20:10:31+07:00,benign,2025-11-04T20:10:31+07:00,2025-11-04T20:10:37+07:00,192.168.1.208,internal dns+icmp+web+ssh+apt
+2025-11-04T20:12:09+07:00,benign,2025-11-04T20:12:09+07:00,2025-11-04T20:12:29+07:00,192.168.1.208,internal dns+icmp+web+ssh+apt
+2025-11-04T20:12:59+07:00,attack,2025-11-04T20:12:59+07:00,2025-11-04T20:13:08+07:00,192.168.1.208,scan+ssh_brute_small+lateral_ports+egress_small
+2025-11-04T20:13:38+07:00,attack_wan,2025-11-04T20:13:38+07:00,2025-11-04T20:13:41+07:00,192.168.1.208,wan_tcp+udp_probe+http_probe+ssh_small+burst
+2025-11-04T20:14:11+07:00,benign,2025-11-04T20:14:11+07:00,2025-11-04T20:14:23+07:00,192.168.1.208,internal dns+icmp+web+ssh+apt
+2025-11-04T20:14:53+07:00,attack,2025-11-04T20:14:53+07:00,2025-11-04T20:15:02+07:00,192.168.1.208,scan+ssh_brute_small+lateral_ports+egress_small
+2025-11-04T20:15:32+07:00,attack_wan,2025-11-04T20:15:32+07:00,2025-11-04T20:15:35+07:00,192.168.1.208,wan_tcp+udp_probe+http_probe+ssh_small+burst
+2025-11-04T20:16:05+07:00,benign,2025-11-04T20:16:05+07:00,2025-11-04T20:16:21+07:00,192.168.1.208,internal dns+icmp+web+ssh+apt
+2025-11-04T20:17:26+07:00,benign,2025-11-04T20:17:26+07:00,2025-11-04T20:17:37+07:00,192.168.1.208,internal dns+icmp+web+ssh+apt
+2025-11-04T20:18:07+07:00,attack,2025-11-04T20:18:07+07:00,2025-11-04T20:18:28+07:00,192.168.1.208,scan+ssh_brute_small+lateral_ports+egress_small
+2025-11-04T20:18:58+07:00,attack_wan,2025-11-04T20:18:58+07:00,2025-11-04T20:19:14+07:00,192.168.1.208,wan_tcp+udp_probe+http_probe+ssh_small+burst
+2025-11-04T20:19:44+07:00,benign,2025-11-04T20:19:44+07:00,2025-11-04T20:19:56+07:00,192.168.1.208,internal dns+icmp+web+ssh+apt
+2025-11-04T20:20:26+07:00,attack,2025-11-04T20:20:26+07:00,2025-11-04T20:20:46+07:00,192.168.1.208,scan+ssh_brute_small+lateral_ports+egress_small
+2025-11-04T20:21:16+07:00,attack_wan,2025-11-04T20:21:16+07:00,2025-11-04T20:21:32+07:00,192.168.1.208,wan_tcp+udp_probe+http_probe+ssh_small+burst
+2025-11-04T20:22:02+07:00,benign,2025-11-04T20:22:02+07:00,2025-11-04T20:22:13+07:00,192.168.1.208,internal dns+icmp+web+ssh+apt
+2025-11-04T20:22:43+07:00,attack,2025-11-04T20:22:43+07:00,2025-11-04T20:23:03+07:00,192.168.1.208,scan+ssh_brute_small+lateral_ports+egress_small
+2025-11-04T20:23:33+07:00,attack_wan,2025-11-04T20:23:33+07:00,2025-11-04T20:23:49+07:00,192.168.1.208,wan_tcp+udp_probe+http_probe+ssh_small+burst
