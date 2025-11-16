@@ -45,15 +45,4 @@ def train_all(enable_tuning=True):
     print()
 
 
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description="Train all ML models")
-    parser.add_argument(
-        "--no-tuning",
-        action="store_true",
-        help="Disable hyperparameter tuning (faster training)"
-    )
-    args = parser.parse_args()
-    
-    train_all(enable_tuning=not args.no_tuning)
 

@@ -3,7 +3,6 @@ Action Executor - Thực thi các actions
 """
 import os
 import json
-import requests
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 import pandas as pd
@@ -24,59 +23,90 @@ def _create_result(success: bool, message: str, **kwargs) -> Dict:
     return result
 
 
+def _schedule_unblock_if_needed(result: Dict, params: Dict, scheduler, action_type: str) -> Dict:
+    """Helper: Schedule unblock nếu có duration"""
+    duration = params.get('duration', 0)
+    if not result.get('success') or duration <= 0 or not scheduler:
+        return result
+    
+    ip = params.get('ip')
+    port = params.get('port')
+    table_name = params.get('table_name', 'blocked_ips')
+    
+    if action_type in ['block_ip', 'reject_ip'] and ip:
+        rule_id = f"ip_{ip}_{int(datetime.now().timestamp())}"
+        schedule_result = scheduler.schedule_unblock(
+            ip=ip, duration=duration, table_name=table_name, rule_id=rule_id
+        )
+    elif action_type in ['block_port', 'reject_port'] and port:
+        rule_id = f"port_{port}_{ip or 'all'}_{int(datetime.now().timestamp())}"
+        schedule_result = scheduler.schedule_unblock(
+            ip=ip, port=port, duration=duration, rule_id=rule_id
+        )
+    else:
+        return result
+    
+    result['scheduled_unblock'] = schedule_result
+    return result
+
+
 def _execute_pfsense_action(action_type: str, action: Dict, executor) -> Dict:
-    """Helper: Execute pfSense action (block IP hoặc port)"""
+    """Helper: Execute pfSense action (block/reject IP hoặc port)"""
     if not executor.enable_pfsense:
         return _create_result(
-            False,
-            'pfSense not enabled. Enable with ENABLE_PFSENSE=true',
+            False, 'pfSense not enabled. Enable with ENABLE_PFSENSE=true',
             block_info={'status': 'pfSense_not_configured'}
         )
     
     try:
-        from actions.pfsense_integration import get_pfsense_client
+        from actions.pfsense_integration import get_pfsense_client, RuleScheduler
         pfsense = get_pfsense_client(method=executor.pfsense_method)
-        
         if not pfsense:
             return _create_result(False, 'Failed to get pfSense client')
         
         params = action.get('params', {})
+        action_method = params.get('action', 'block')
+        duration = params.get('duration', 0)
+        interface = params.get('interface', 'lan')
+        table_name = params.get('table_name', 'blocked_ips')
+        scheduler = RuleScheduler() if duration > 0 else None
         
-        if action_type == 'block_ip':
+        # Execute action based on type
+        is_ip_action = action_type in ['block_ip', 'reject_ip']
+        is_port_action = action_type in ['block_port', 'reject_port']
+        
+        if is_ip_action:
             ip = params.get('ip')
             if not ip:
                 return _create_result(False, 'No IP address provided')
             
             if executor.pfsense_method == 'ssh':
-                result = pfsense.block_ip_pfctl(ip)
+                result = pfsense.block_ip_pfctl(ip, table_name, action_method, interface)
             else:
-                duration = params.get('duration', 3600)
                 reason = params.get('reason', 'Security threat detected')
-                result = pfsense.block_ip(ip, duration=duration, reason=reason)
+                result = pfsense.block_ip(ip, duration, reason)
         
-        elif action_type == 'block_port':
+        elif is_port_action:
             port = params.get('port')
             if not port:
                 return _create_result(False, 'No port provided')
             
-            ip = params.get('ip')
-            duration = params.get('duration', 3600)
-            result = pfsense.block_port(port, ip=ip, duration=duration)
+            if executor.pfsense_method == 'ssh':
+                result = pfsense.block_port_pfctl(port, params.get('ip'), action_method, interface)
+            else:
+                result = pfsense.block_port(port, params.get('ip'), duration)
         
         else:
             return _create_result(False, f'Unknown action type: {action_type}')
         
+        # Schedule unblock if needed
+        result = _schedule_unblock_if_needed(result, params, scheduler, action_type)
+        
+        # Return formatted result
         if result.get('success'):
-            return _create_result(
-                True,
-                result.get('message', f'{action_type} executed successfully'),
-                block_info=result
-            )
+            return _create_result(True, result.get('message', f'{action_type} executed successfully'), block_info=result)
         else:
-            return _create_result(
-                False,
-                f'pfSense {action_type} failed: {result.get("message")}'
-            )
+            return _create_result(False, f'pfSense {action_type} failed: {result.get("message")}')
     
     except Exception as e:
         return _create_result(False, f'pfSense integration error: {str(e)}')
@@ -111,8 +141,6 @@ class ActionExecutor:
             config: Configuration dict
         """
         self.config = config or {}
-        self.telegram_bot_token = self.config.get('telegram_bot_token') or os.getenv('TELEGRAM_BOT_TOKEN')
-        self.telegram_chat_id = self.config.get('telegram_chat_id') or os.getenv('TELEGRAM_CHAT_ID')
         self.action_log_path = self.config.get('action_log_path', 'data/action_logs.jsonl')
         
         # pfSense configuration
@@ -121,6 +149,10 @@ class ActionExecutor:
         
         # Đảm bảo thư mục tồn tại
         ensure_dir(self.action_log_path)
+        
+        # Initialize rule scheduler
+        from actions.pfsense_integration import RuleScheduler
+        self.scheduler = RuleScheduler()
     
     def execute_action(self, action: Dict) -> Dict:
         """
@@ -141,18 +173,20 @@ class ActionExecutor:
         }
         
         try:
-            if action_type == ActionType.LOG:
-                result = self._execute_log(action)
-            elif action_type == ActionType.ALERT:
-                result = self._execute_alert(action)
-            elif action_type == ActionType.NOTIFY_TELEGRAM:
-                result = self._execute_telegram_notify(action)
-            elif action_type == ActionType.BLOCK_IP:
-                result = self._execute_block_ip(action)
-            elif action_type == ActionType.BLOCK_PORT:
-                result = self._execute_block_port(action)
-            elif action_type == ActionType.ESCALATE:
-                result = self._execute_escalate(action)
+            # Use dict mapping for cleaner code
+            action_handlers = {
+                ActionType.LOG: self._execute_log,
+                ActionType.ALERT: self._execute_alert,
+                ActionType.BLOCK_IP: self._execute_block_ip,
+                ActionType.BLOCK_PORT: self._execute_block_port,
+                ActionType.REJECT_IP: self._execute_reject_ip,
+                ActionType.REJECT_PORT: self._execute_reject_port,
+                ActionType.ESCALATE: self._execute_escalate,
+            }
+            
+            handler = action_handlers.get(action_type)
+            if handler:
+                result = handler(action)
             else:
                 result['message'] = f'Unknown action type: {action_type}'
         
@@ -175,31 +209,6 @@ class ActionExecutor:
         print(f"  {message}")
         return _create_result(True, f'Alert logged: {message}')
     
-    def _execute_telegram_notify(self, action: Dict) -> Dict:
-        """Execute TELEGRAM NOTIFY action"""
-        if not self.telegram_bot_token or not self.telegram_chat_id:
-            return _create_result(False, 'Telegram bot token or chat ID not configured')
-        
-        params = action.get('params', {})
-        message = params.get('message', action.get('reason', 'Unknown alert'))
-        chat_id = params.get('chat_id') or self.telegram_chat_id
-        bot_token = params.get('bot_token') or self.telegram_bot_token
-        
-        try:
-            url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-            payload = {
-                'chat_id': chat_id,
-                'text': message,
-                'parse_mode': 'Markdown',
-            }
-            
-            response = requests.post(url, json=payload, timeout=10)
-            response.raise_for_status()
-            
-            return _create_result(True, f'Telegram notification sent to chat {chat_id}')
-        except Exception as e:
-            return _create_result(False, f'Failed to send Telegram notification: {str(e)}')
-    
     def _execute_block_ip(self, action: Dict) -> Dict:
         """Execute BLOCK IP action trên pfSense firewall"""
         return _execute_pfsense_action('block_ip', action, self)
@@ -207,6 +216,14 @@ class ActionExecutor:
     def _execute_block_port(self, action: Dict) -> Dict:
         """Execute BLOCK PORT action trên pfSense firewall"""
         return _execute_pfsense_action('block_port', action, self)
+    
+    def _execute_reject_ip(self, action: Dict) -> Dict:
+        """Execute REJECT IP action trên pfSense firewall"""
+        return _execute_pfsense_action('reject_ip', action, self)
+    
+    def _execute_reject_port(self, action: Dict) -> Dict:
+        """Execute REJECT PORT action trên pfSense firewall"""
+        return _execute_pfsense_action('reject_port', action, self)
     
     def _execute_escalate(self, action: Dict) -> Dict:
         """Execute ESCALATE action"""
@@ -250,9 +267,20 @@ class ActionExecutor:
             }
             
             result = self.execute_action(action)
-            result['anomaly_index'] = row['anomaly_index']
-            result['action_index'] = idx
+            result.update({
+                'anomaly_index': row['anomaly_index'],
+                'action_index': idx
+            })
             results.append(result)
         
         return pd.DataFrame(results)
+    
+    def process_scheduled_unblocks(self) -> List[Dict]:
+        """
+        Process các scheduled unblocks đã đến thời gian
+        
+        Returns:
+            List of unblock results
+        """
+        return self.scheduler.process_scheduled_unblocks()
 

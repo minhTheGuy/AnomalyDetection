@@ -7,24 +7,11 @@ import os
 import sys
 import time
 from datetime import datetime, timedelta
-import joblib
-from pathlib import Path
 from core.config import CSV_PATH, MODEL_PATH, ANALYZED_CSV_PATH
 from data_processing.export_from_es import fetch_logs
 from training.train_model import train_model_with_tuning
-from utils.common import print_header, safe_load_joblib
-
-def get_file_age(filepath):
-    """
-    Lấy thời gian modified của file
-    
-    Returns:
-        datetime object hoặc None nếu file không tồn tại
-    """
-    if os.path.exists(filepath):
-        timestamp = os.path.getmtime(filepath)
-        return datetime.fromtimestamp(timestamp)
-    return None
+from training.common import get_file_age, get_model_info
+from utils.common import print_header
 
 
 def should_retrain(force=False, max_age_days=7):
@@ -70,26 +57,6 @@ def should_retrain(force=False, max_age_days=7):
     return False, f"Model is up-to-date ({model_days_old} days old)"
 
 
-def get_model_info():
-    """
-    Lấy thông tin model hiện tại
-    
-    Returns:
-        Dictionary với model info
-    """
-    if not os.path.exists(MODEL_PATH):
-        return None
-    
-    bundle = safe_load_joblib(MODEL_PATH)
-    if bundle is None:
-        return None
-    return {
-        'training_date': bundle.get('training_date', 'Unknown'),
-        'n_samples': bundle.get('n_samples', 'Unknown'),
-        'n_features': bundle.get('n_features', 'Unknown'),
-        'best_params': bundle.get('best_params', {}),
-        'metrics': bundle.get('metrics', {})
-    }
 
 
 def auto_retrain(fetch_new_data=True, force=False, enable_tuning=True, max_age_days=7):
@@ -109,7 +76,7 @@ def auto_retrain(fetch_new_data=True, force=False, enable_tuning=True, max_age_d
     
     # Hiển thị thông tin model hiện tại
     print("\n  Current Model Info:")
-    model_info = get_model_info()
+    model_info = get_model_info(MODEL_PATH)
     if model_info:
         print(f"  Training date:  {model_info['training_date']}")
         print(f"  Samples:        {model_info['n_samples']}")
@@ -152,7 +119,7 @@ def auto_retrain(fetch_new_data=True, force=False, enable_tuning=True, max_age_d
         
         # Hiển thị thông tin model mới
         print("\n  New Model Info:")
-        new_model_info = get_model_info()
+        new_model_info = get_model_info(MODEL_PATH)
         if new_model_info:
             print(f"  Training date:  {new_model_info['training_date']}")
             print(f"  Samples:        {new_model_info['n_samples']}")

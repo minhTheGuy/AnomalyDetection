@@ -1,236 +1,382 @@
-# train_model.py
+"""
+Train ensemble anomaly detection model (IF + LOF + SVM)
+Train 3 models riêng biệt và lưu chúng
+"""
 import pandas as pd
-import joblib
 import numpy as np
+import os
 from sklearn.ensemble import IsolationForest
-from sklearn.model_selection import ParameterGrid
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.svm import OneClassSVM
 from sklearn.preprocessing import StandardScaler
-from core.config import CSV_PATH, MODEL_PATH, ANALYZED_CSV_PATH, ANOMALIES_CSV_PATH, MODEL_TYPE, SINGLE_IF_NORMALIZE
-from detection.ensemble_detector import train_ensemble_model
-from training.common import load_and_prepare_data
-from utils.common import print_header, safe_load_csv, safe_save_joblib, safe_save_csv
+from sklearn.model_selection import ParameterGrid
+from core.config import CSV_PATH, MODEL_PATH, ANALYZED_CSV_PATH, ANOMALIES_CSV_PATH
+from training.common import (
+    load_and_prepare_data,
+    create_ensemble_bundle
+)
+from utils.common import print_header, print_section, safe_load_csv, safe_save_joblib, safe_save_csv
 
-def evaluate_model(model, X, df=None):
+
+def train_models(X, contamination=0.05, voting_threshold=2):
     """
-    Đánh giá model với các metrics
+    Train 3 models: Isolation Forest, LOF, One-Class SVM
     
     Args:
-        model: Trained IsolationForest model
         X: Feature matrix
-        df: Optional DataFrame for additional analysis
+        contamination: Tỷ lệ anomaly dự kiến
+        voting_threshold: Số models phải đồng ý (2/3 hoặc 3/3)
     
     Returns:
-        Dictionary với evaluation metrics
+        models dict, scaler, voting_threshold
     """
-    predictions = model.predict(X)
-    scores = model.decision_function(X)
+    print_header("ENSEMBLE TRAINING")
     
-    anomaly_count = (predictions == -1).sum()
-    anomaly_ratio = anomaly_count / len(predictions)
+    # Normalize data (quan trọng cho LOF và SVM)
+    print("\nNormalizing data...")
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    print(f"  Shape: {X_scaled.shape}")
+    print(f"  Mean: {X_scaled.mean():.4f}, Std: {X_scaled.std():.4f}")
     
-    print_header("MODEL EVALUATION", width=60)
-    print(f"Total samples:        {len(predictions)}")
-    print(f"Anomalies detected:   {anomaly_count} ({anomaly_ratio:.2%})")
-    print(f"Normal samples:       {(predictions == 1).sum()}")
-    print(f"Score range:          [{scores.min():.3f}, {scores.max():.3f}]")
-    print(f"Mean score:           {scores.mean():.3f}")
-    print(f"Std deviation:        {scores.std():.3f}")
+    models = {}
     
-    # Phân tích anomalies nếu có DataFrame
-    if df is not None:
-        anomalies_df = df[predictions == -1]
-        if len(anomalies_df) > 0:
-            print(f"\nAnomaly Statistics:")
-            if 'rule_level' in anomalies_df.columns:
-                print(f"  Average rule level:   {anomalies_df['rule_level'].mean():.2f}")
-            if 'severity_category' in anomalies_df.columns:
-                print(f"  Severity distribution:")
-                for cat, count in anomalies_df['severity_category'].value_counts().head(3).items():
-                    print(f"    {cat}: {count}")
+    # 1. Isolation Forest
+    print("\n[1/3] Training Isolation Forest...")
+    models['iforest'] = IsolationForest(
+        contamination=contamination,
+        n_estimators=200,
+        max_samples='auto',
+        random_state=42,
+        n_jobs=-1
+    )
+    models['iforest'].fit(X_scaled)
+    pred_if = models['iforest'].predict(X_scaled)
+    print(f"  Isolation Forest trained")
+    print(f"  Detected anomalies: {(pred_if == -1).sum()} ({(pred_if == -1).sum()/len(pred_if):.2%})")
     
-    return {
-        'anomaly_count': anomaly_count,
-        'anomaly_ratio': anomaly_ratio,
-        'score_mean': scores.mean(),
-        'score_std': scores.std(),
-        'score_min': scores.min(),
-        'score_max': scores.max()
+    # 2. Local Outlier Factor
+    print("\n[2/3] Training Local Outlier Factor...")
+    models['lof'] = LocalOutlierFactor(
+        contamination=contamination,
+        n_neighbors=20,
+        novelty=True,  # Cho phép predict trên data mới
+        n_jobs=-1
+    )
+    models['lof'].fit(X_scaled)
+    pred_lof = models['lof'].predict(X_scaled)
+    print(f"  LOF trained")
+    print(f"  Detected anomalies: {(pred_lof == -1).sum()} ({(pred_lof == -1).sum()/len(pred_lof):.2%})")
+    
+    # 3. One-Class SVM
+    print("\n[3/3] Training One-Class SVM...")
+    models['svm'] = OneClassSVM(
+        nu=contamination,  # nu ≈ contamination
+        kernel='rbf',
+        gamma='auto'
+    )
+    models['svm'].fit(X_scaled)
+    pred_svm = models['svm'].predict(X_scaled)
+    print(f"  One-Class SVM trained")
+    print(f"  Detected anomalies: {(pred_svm == -1).sum()} ({(pred_svm == -1).sum()/len(pred_svm):.2%})")
+    
+    print("\nAll models trained successfully!")
+    
+    return models, scaler, voting_threshold
+
+
+def predict_ensemble(models, scaler, X, voting_threshold=2):
+    """
+    Predict với voting mechanism
+    
+    Args:
+        models: Dict chứa 3 models (iforest, lof, svm)
+        scaler: StandardScaler đã fit
+        X: Feature matrix
+        voting_threshold: Số models phải đồng ý (2/3 hoặc 3/3)
+    
+    Returns:
+        predictions, votes, anomaly_votes, scores
+    """
+    X_scaled = scaler.transform(X)
+    
+    # Dự đoán từng model
+    votes = {}
+    votes['iforest'] = models['iforest'].predict(X_scaled)
+    votes['lof'] = models['lof'].predict(X_scaled)
+    votes['svm'] = models['svm'].predict(X_scaled)
+    
+    # Đếm số votes cho anomaly (-1)
+    vote_matrix = np.array([votes['iforest'], votes['lof'], votes['svm']])
+    anomaly_votes = (vote_matrix == -1).sum(axis=0)
+    
+    # Final decision based on voting threshold
+    predictions = np.where(
+        anomaly_votes >= voting_threshold,
+        -1,  # Anomaly
+        1    # Normal
+    )
+    
+    # Tính anomaly scores
+    scores = []
+    scores.append(models['iforest'].decision_function(X_scaled))
+    scores.append(models['lof'].score_samples(X_scaled))
+    scores.append(models['svm'].decision_function(X_scaled))
+    avg_score = np.mean(scores, axis=0)
+    
+    return predictions, votes, anomaly_votes, avg_score
+
+
+def get_model_agreement(predictions, votes, anomaly_votes):
+    """Phân tích mức độ đồng thuận giữa các models"""
+    agreement_stats = {
+        'unanimous_anomaly': (anomaly_votes == 3).sum(),
+        'majority_anomaly': (anomaly_votes >= 2).sum(),
+        'split_decision': (anomaly_votes == 1).sum(),
+        'unanimous_normal': (anomaly_votes == 0).sum()
     }
+    return agreement_stats
 
 
-def hyperparameter_tuning(X, df, param_grid):
+def hyperparameter_tuning_ensemble(X, contamination_range=[0.03, 0.05, 0.07], voting_thresholds=[2, 3]):
     """
-    Tìm hyperparameters tốt nhất bằng grid search
-    
-    Args:
-        X: Feature matrix
-        df: DataFrame (for additional analysis)
-        param_grid: Dictionary với parameter ranges
+    Tìm best contamination và voting threshold cho ensemble
     
     Returns:
-        best_model, best_params, results_list
+        best_models, best_scaler, best_params, results
     """
-    print_header("HYPERPARAMETER TUNING", width=60)
-    print(f"Grid size: {len(list(ParameterGrid(param_grid)))} combinations")
+    print_header("ENSEMBLE HYPERPARAMETER TUNING")
     
     best_score = float('-inf')
     best_params = None
-    best_model = None
+    best_models = None
+    best_scaler = None
     results = []
     
-    for i, params in enumerate(ParameterGrid(param_grid), 1):
-        print(f"\n[{i}/{len(list(ParameterGrid(param_grid)))}] Testing: {params}")
-        
-        try:
-            model = IsolationForest(**params, random_state=42)
-            model.fit(X)
+    total_combinations = len(contamination_range) * len(voting_thresholds)
+    current = 0
+    
+    for contamination in contamination_range:
+        for voting_threshold in voting_thresholds:
+            current += 1
+            print(f"\n[{current}/{total_combinations}] Testing contamination={contamination}, voting={voting_threshold}/3")
             
-            scores = model.decision_function(X)
-            predictions = model.predict(X)
+            models, scaler, _ = train_models(X, contamination=contamination, voting_threshold=voting_threshold)
+            
+            predictions, votes, anomaly_votes, scores = predict_ensemble(models, scaler, X, voting_threshold)
             
             # Metrics
+            anomaly_count = (predictions == -1).sum()
+            anomaly_ratio = anomaly_count / len(predictions)
             score_std = scores.std()
-            anomaly_ratio = (predictions == -1).sum() / len(predictions)
             
-            # Penalty nếu anomaly ratio quá xa contamination
-            target_contamination = params['contamination']
-            ratio_penalty = abs(anomaly_ratio - target_contamination)
+            # Agreement analysis
+            agreement = get_model_agreement(predictions, votes, anomaly_votes)
             
-            # Combined score (ưu tiên phân tán tốt và tỷ lệ hợp lý)
-            combined_score = score_std - (ratio_penalty * 10)
+            # Combined score (ưu tiên high agreement + reasonable ratio)
+            combined_score = (
+                score_std * 10 +
+                agreement['unanimous_anomaly'] * 0.5 +
+                agreement['majority_anomaly'] * 0.3 -
+                abs(anomaly_ratio - contamination) * 20
+            )
             
-            results.append({
-                'params': params,
-                'combined_score': combined_score,
+            print(f"  Anomalies: {anomaly_count} ({anomaly_ratio:.2%})")
+            print(f"  Unanimous (3/3): {agreement['unanimous_anomaly']}")
+            print(f"  Majority (2/3+): {agreement['majority_anomaly']}")
+            print(f"  Combined Score: {combined_score:.4f}")
+            
+            result = {
+                'contamination': contamination,
+                'voting_threshold': voting_threshold,
+                'score': combined_score,
+                'anomaly_count': anomaly_count,
                 'anomaly_ratio': anomaly_ratio,
-                'score_std': score_std,
-                'score_mean': scores.mean()
-            })
-            
-            print(f"  ➜ Score: {combined_score:.4f} | Anomalies: {anomaly_ratio:.2%} | Std: {score_std:.4f}")
+                'agreement': agreement
+            }
+            results.append(result)
             
             if combined_score > best_score:
                 best_score = combined_score
-                best_params = params
-                best_model = model
+                best_params = {
+                    'contamination': contamination,
+                    'voting_threshold': voting_threshold
+                }
+                best_models = models
+                best_scaler = scaler
                 print(f"  New best score!")
-                
-        except Exception as e:
-            print(f"Error: {e}")
-            continue
     
-    print_header("BEST PARAMETERS FOUND", width=60)
-    for key, value in best_params.items():
-        print(f"{key:20s}: {value}")
-    print(f"{'Combined score':20s}: {best_score:.4f}")
+    print_header("BEST PARAMETERS FOUND")
+    print(f"Contamination:     {best_params['contamination']}")
+    print(f"Voting threshold:  {best_params['voting_threshold']}/3")
+    print(f"Combined score:    {best_score:.4f}")
     
-    return best_model, best_params, results
+    return best_models, best_scaler, best_params, results
 
 
 def train_model_with_tuning(enable_tuning=True):
     """
-    Train model với feature engineering và hyperparameter tuning
+    Train ensemble model (IF + LOF + SVM) với feature engineering và hyperparameter tuning
     
     Args:
         enable_tuning: True để bật hyperparameter tuning, False để dùng default params
     """
-    # If ensemble is requested by config, delegate to ensemble training
-    if MODEL_TYPE == "ensemble":
-        return train_ensemble_model()
-    
-    print_header("ANOMALY DETECTION MODEL TRAINING", width=60)
+    print_header("ENSEMBLE ANOMALY DETECTION - TRAINING")
     
     # Load và prepare data
-    print("Reading data from CSV...")
+    print("\nLoading data...")
     df, X, encoders = load_and_prepare_data(CSV_PATH, engineer_features=True)
     print(f"  ✓ Loaded {len(df)} records")
+    print(f"  Features: {X.shape[1]}")
+    print(f"  Samples: {X.shape[0]}")
     
-    # Optional normalization for single IsolationForest
-    scaler = None
-    if SINGLE_IF_NORMALIZE:
-        print("\nApplying StandardScaler normalization (single-model IF)...")
-        scaler = StandardScaler()
-        X_for_fit = scaler.fit_transform(X)
-    else:
-        X_for_fit = X
-
     if enable_tuning:
-        # Hyperparameter grid
-        param_grid = {
-            'contamination': [0.05, 0.07, 0.10],
-            'n_estimators': [100, 200, 300],
-            'max_samples': ['auto', 256],
-            'max_features': [0.8, 1.0]
-        }
-        
-        # Tuning
-        best_model, best_params, tuning_results = hyperparameter_tuning(X_for_fit, df, param_grid)
+        # Hyperparameter tuning
+        best_models, best_scaler, best_params, tuning_results = hyperparameter_tuning_ensemble(
+            X,
+            contamination_range=[0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10],
+            voting_thresholds=[2, 3]
+        )
     else:
         # Use default parameters
         print("\nTraining with default parameters...")
         best_params = {
             'contamination': 0.05,
-            'n_estimators': 200,
-            'max_samples': 'auto',
-            'max_features': 1.0
+            'voting_threshold': 2
         }
-        best_model = IsolationForest(**best_params, random_state=42)
-        best_model.fit(X_for_fit)
+        best_models, best_scaler, _ = train_models(
+            X,
+            contamination=best_params['contamination'],
+            voting_threshold=best_params['voting_threshold']
+        )
         tuning_results = []
     
-    # Evaluate best model
-    metrics = evaluate_model(best_model, X_for_fit, df)
+    # Final predictions
+    print_header("FINAL ENSEMBLE PREDICTIONS")
     
-    # Predict on all data
-    print(f"\nMaking predictions...")
-    df["anomaly_label"] = best_model.predict(X_for_fit)
-    df["anomaly_score"] = best_model.decision_function(X_for_fit)
+    predictions, votes, anomaly_votes, scores = predict_ensemble(
+        best_models, best_scaler, X, best_params['voting_threshold']
+    )
+    agreement = get_model_agreement(predictions, votes, anomaly_votes)
     
-    # Save analyzed results
+    # Add results to dataframe
+    df['anomaly_label'] = predictions
+    df['anomaly_score'] = scores
+    df['anomaly_votes'] = anomaly_votes
+    df['iforest_vote'] = votes['iforest']
+    df['lof_vote'] = votes['lof']
+    df['svm_vote'] = votes['svm']
+    
+    # Statistics
+    total_anomalies = (predictions == -1).sum()
+    print(f"\nRESULTS:")
+    print(f"  Total records:           {len(df)}")
+    print(f"  Anomalies detected:      {total_anomalies} ({total_anomalies/len(df):.2%})")
+    print(f"  Normal events:           {len(df) - total_anomalies} ({(len(df) - total_anomalies)/len(df):.2%})")
+    
+    print(f"\nMODEL AGREEMENT:")
+    print(f"  Unanimous anomaly (3/3): {agreement['unanimous_anomaly']}")
+    print(f"  Majority anomaly (≥2/3): {agreement['majority_anomaly']}")
+    print(f"  Split decision (1/3):    {agreement['split_decision']}")
+    print(f"  Unanimous normal (0/3):  {agreement['unanimous_normal']}")
+    
+    # Score distribution
+    print(f"\nSCORE DISTRIBUTION:")
+    print(f"  Min:    {scores.min():.4f}")
+    print(f"  Q1:     {np.percentile(scores, 25):.4f}")
+    print(f"  Median: {np.median(scores):.4f}")
+    print(f"  Q3:     {np.percentile(scores, 75):.4f}")
+    print(f"  Max:    {scores.max():.4f}")
+    
+    # Save analyzed data
     if safe_save_csv(df, ANALYZED_CSV_PATH):
-        print(f"Saved analysis results → {ANALYZED_CSV_PATH}")
+        print(f"\nResults saved → {ANALYZED_CSV_PATH}")
 
     # Save anomalies only
-    anomalies_out = df[df["anomaly_label"] == -1].copy()
+    anomalies_out = df[df['anomaly_label'] == -1].copy()
     if safe_save_csv(anomalies_out, ANOMALIES_CSV_PATH):
-        print(f"Saved anomalies only → {ANOMALIES_CSV_PATH} ({len(anomalies_out)} rows)")
+        print(f"Anomalies only saved → {ANOMALIES_CSV_PATH} ({len(anomalies_out)} rows)")
     
     # Save model bundle
-    model_bundle = {
-        "model": best_model,
-        "encoders": encoders,
-        "best_params": best_params,
-        "metrics": metrics,
-        "tuning_results": tuning_results,
-        "feature_names": list(X.columns),
-        "training_date": pd.Timestamp.now().isoformat(),
-        "n_features": X.shape[1],
-        "n_samples": X.shape[0],
-        "model_type": "single",
-        "scaler": scaler
-    }
+    model_bundle = create_ensemble_bundle(
+        models=best_models,
+        scaler=best_scaler,
+        voting_threshold=best_params['voting_threshold'],
+        encoders=encoders,
+        feature_names=X.columns.tolist(),
+        best_params=best_params,
+        tuning_results=tuning_results,
+        X=X
+    )
     
+    # Save ensemble bundle
     if safe_save_joblib(model_bundle, MODEL_PATH):
-        print(f"Saved trained model → {MODEL_PATH}")
+        print(f"\nEnsemble bundle saved → {MODEL_PATH}")
     
-    # Display top anomalies
-    print_header("TOP 15 ANOMALIES DETECTED", width=60)
-    anomalies = df[df["anomaly_label"] == -1].nsmallest(15, "anomaly_score")
+    # Save individual models (IF, LOF, SVM)
+    base_dir = os.path.dirname(MODEL_PATH)
+    base_name = os.path.basename(MODEL_PATH).replace('.pkl', '')
     
-    if len(anomalies) > 0:
-        display_cols = []
-        for col in ['timestamp', 'agent', 'rule_level', 'event_desc', 'anomaly_score']:
-            if col in anomalies.columns:
-                display_cols.append(col)
+    if_path = os.path.join(base_dir, f'{base_name}_iforest.pkl')
+    lof_path = os.path.join(base_dir, f'{base_name}_lof.pkl')
+    svm_path = os.path.join(base_dir, f'{base_name}_svm.pkl')
+    
+    safe_save_joblib(best_models['iforest'], if_path)
+    safe_save_joblib(best_models['lof'], lof_path)
+    safe_save_joblib(best_models['svm'], svm_path)
+    
+    print(f"  Individual models saved:")
+    print(f"    - IForest: {if_path}")
+    print(f"    - LOF:     {lof_path}")
+    print(f"    - SVM:     {svm_path}")
+    
+    # Show top anomalies by confidence
+    print_header("TOP ANOMALIES BY CONFIDENCE")
+    
+    # Unanimous anomalies (3/3 votes)
+    unanimous = df[df['anomaly_votes'] == 3].copy()
+    if len(unanimous) > 0:
+        print(f"\nUNANIMOUS ANOMALIES (3/3 models agree) - {len(unanimous)} events:")
+        print_section("")
+        top_unanimous = unanimous.nsmallest(10, 'anomaly_score')
+        
+        display_cols = ['timestamp', 'agent', 'rule_level', 'event_desc', 'anomaly_score', 'anomaly_votes']
+        display_cols = [c for c in display_cols if c in top_unanimous.columns]
         
         pd.set_option('display.max_colwidth', 50)
-        print(anomalies[display_cols].to_string(index=False))
-    else:
-        print("No anomalies detected!")
+        print(top_unanimous[display_cols].to_string(index=False))
     
-    print_header("TRAINING COMPLETED SUCCESSFULLY", width=60)
-
-
-if __name__ == "__main__":
-    # Set enable_tuning=False để training nhanh hơn (dùng default params)
-    train_model_with_tuning(enable_tuning=True)
+    # Majority anomalies (2/3 votes)
+    majority = df[df['anomaly_votes'] == 2].copy()
+    if len(majority) > 0:
+        print(f"\nMAJORITY ANOMALIES (2/3 models agree) - {len(majority)} events:")
+        print_section("")
+        top_majority = majority.nsmallest(10, 'anomaly_score')
+        
+        display_cols = ['timestamp', 'agent', 'rule_level', 'event_desc', 'anomaly_score', 'anomaly_votes']
+        display_cols = [c for c in display_cols if c in top_majority.columns]
+        
+        print(top_majority[display_cols].to_string(index=False))
+    
+    # Model-specific insights
+    print_header("MODEL-SPECIFIC INSIGHTS")
+    
+    anomalies = df[df['anomaly_label'] == -1]
+    
+    only_if = ((anomalies['iforest_vote'] == -1) & 
+               (anomalies['lof_vote'] == 1) & 
+               (anomalies['svm_vote'] == 1)).sum()
+    
+    only_lof = ((anomalies['iforest_vote'] == 1) & 
+                (anomalies['lof_vote'] == -1) & 
+                (anomalies['svm_vote'] == 1)).sum()
+    
+    only_svm = ((anomalies['iforest_vote'] == 1) & 
+                (anomalies['lof_vote'] == 1) & 
+                (anomalies['svm_vote'] == -1)).sum()
+    
+    print(f"\nOnly detected by Isolation Forest:  {only_if}")
+    print(f"Only detected by LOF:               {only_lof}")
+    print(f"Only detected by SVM:               {only_svm}")
+    
+    print_header("TRAINING COMPLETED SUCCESSFULLY")

@@ -1,119 +1,14 @@
 """
 Module phân loại sự kiện bảo mật thành các loại tấn công và danh mục sự kiện
 """
-
 import pandas as pd
 import re
 from typing import List, Optional
-
-# Định nghĩa các pattern để phân loại attack types
-ATTACK_PATTERNS = {
-    'brute_force': [
-        r'failed password', r'authentication failure', r'authentication failed',
-        r'invalid user', r'login attempt', r'brute force', r'too many attempts',
-        r'connection closed', r'connection reset', r'too many authentication failures'
-    ],
-    'port_scan': [
-        # Suricata alert patterns (check sau malware để tránh conflict)
-        r'et scan', r'potential.*scan', r'scan.*port', r'port.*scan',
-        r'postgresql port', r'mysql port', r'ssh scan',
-        r'vnc scan', r'rdp scan', r'http.*probe', r'tcp.*probe',
-        r'udp.*probe',
-        # General scan patterns (không match với malware)
-        r'port scan', r'nmap', r'syn scan', r'xmas scan', r'fin scan',
-        r'null scan', r'port sweep', r'network scan', r'host scan',
-        r'multiple connection attempts', r'connection attempts from',
-        # Chỉ match "suspicious inbound to" nếu không có "malware" hoặc "trojan"
-        r'scan.*inbound'
-    ],
-    'sql_injection': [
-        r'sql injection', r'union select', r"or 1=1", r"' or '1'='1",
-        r'select.*from', r'insert.*into', r'delete.*from', r'drop table',
-        r'exec.*xp_', r'information_schema'
-    ],
-    'xss': [
-        r'cross.site.scripting', r'xss', r'<script', r'javascript:',
-        r'onerror=', r'onclick=', r'eval\(', r'document\.cookie'
-    ],
-    'dos_ddos': [
-        r'denial of service', r'dos', r'ddos', r'flood', r'syn flood',
-        r'icmp flood', r'udp flood', r'connection flood', r'resource exhaustion',
-        r'too many connections', r'rate limit exceeded',
-        # Suricata patterns
-        r'et dos', r'et ddos', r'flood.*attack', r'burst.*traffic'
-    ],
-    'malware': [
-        r'malware', r'virus', r'trojan', r'ransomware', r'backdoor',
-        r'rootkit', r'worm', r'spyware', r'adware', r'exploit',
-        r'payload', r'shellcode',
-        # Suricata alert patterns
-        r'et malware', r'et trojan', r'known malware ip',
-        r'suspicious inbound to.*port', r'malware.*ip',
-        r'trojan.*communication', r'c2 communication',
-        r'possible.*trojan', r'suspicious.*malware'
-    ],
-    'privilege_escalation': [
-        r'privilege escalation', r'sudo', r'su ', r'root access',
-        r'administrator access', r'permission denied', r'access denied',
-        r'unauthorized access', r'elevated privileges'
-    ],
-    'data_exfiltration': [
-        r'data exfiltration', r'data leak', r'large data transfer',
-        r'unusual data volume', r'external data transfer', r'bulk download',
-        r'data export', r'sensitive data'
-    ],
-    'web_attack': [
-        r'web attack', r'http attack', r'https attack', r'web vulnerability',
-        r'nikto', r'sqlmap', r'gobuster', r'dirb', r'burp', r'owasp',
-        r'path traversal', r'directory traversal', r'file inclusion',
-        r'command injection', r'remote code execution'
-    ],
-    'suspicious_activity': [
-        r'suspicious', r'anomalous', r'unusual', r'abnormal', r'atypical',
-        r'irregular', r'strange', r'odd behavior', r'unexpected'
-    ]
-}
-
-# Định nghĩa event categories dựa trên rule groups và event descriptions
-EVENT_CATEGORY_PATTERNS = {
-    'authentication': [
-        r'login', r'logout', r'authentication', r'auth', r'session',
-        r'password', r'credential', r'user account', r'sshd', r'su ',
-        r'sudo', r'kerberos', r'ldap'
-    ],
-    'file_integrity': [
-        r'file integrity', r'file changed', r'file modified', r'file deleted',
-        r'file created', r'integrity checksum', r'fim', r'file monitoring',
-        r'file access', r'permission changed'
-    ],
-    'network': [
-        r'network', r'connection', r'port', r'protocol', r'ip address',
-        r'firewall', r'packet', r'traffic', r'network interface',
-        r'network scan', r'network activity', r'suricata', r'ids', r'ips',
-        r'alert', r'intrusion', r'snort'
-    ],
-    'system': [
-        r'system', r'process', r'service', r'daemon', r'kernel',
-        r'system call', r'process execution', r'service started',
-        r'service stopped', r'system event'
-    ],
-    'compliance': [
-        r'cis', r'benchmark', r'compliance', r'policy', r'audit',
-        r'security policy', r'configuration', r'hardening'
-    ],
-    'vulnerability': [
-        r'vulnerability', r'cve', r'exploit', r'security flaw',
-        r'weakness', r'security issue', r'patch', r'update required'
-    ],
-    'malware_detection': [
-        r'malware', r'virus', r'trojan', r'threat', r'infection',
-        r'antivirus', r'security scan', r'threat detection'
-    ],
-    'web': [
-        r'http', r'https', r'web', r'apache', r'nginx', r'web server',
-        r'web application', r'url', r'request', r'response'
-    ]
-}
+from classification.patterns import (
+    ATTACK_PATTERNS,
+    EVENT_CATEGORY_PATTERNS,
+    ATTACK_PRIORITY_ORDER
+)
 
 
 def extract_attack_type(event_desc: str) -> str:
@@ -124,23 +19,15 @@ def extract_attack_type(event_desc: str) -> str:
         event_desc: Mô tả sự kiện
         
     Returns:
-        Loại tấn công (brute_force, port_scan, sql_injection, etc.)
-        hoặc 'benign' nếu không phát hiện tấn công (lưu lượng bình thường)
+        Loại tấn công hoặc 'benign' nếu không phát hiện tấn công
     """
     if pd.isna(event_desc) or not event_desc:
         return 'unknown'
     
     event_desc_lower = str(event_desc).lower()
     
-    # Kiểm tra từng loại tấn công
-    # Malware được check trước port_scan
-    # để tránh "et malware suspicious inbound to port" bị phân loại nhầm thành port_scan
-    priority_order = ['malware', 'brute_force', 'port_scan', 'dos_ddos', 
-                     'sql_injection', 'xss', 'privilege_escalation', 'data_exfiltration',
-                     'web_attack', 'suspicious_activity']
-    
-    # Check priority attacks first
-    for attack_type in priority_order:
+    # Check priority attacks first (malware trước port_scan để tránh false positives)
+    for attack_type in ATTACK_PRIORITY_ORDER:
         if attack_type in ATTACK_PATTERNS:
             for pattern in ATTACK_PATTERNS[attack_type]:
                 if re.search(pattern, event_desc_lower, re.IGNORECASE):
@@ -148,7 +35,7 @@ def extract_attack_type(event_desc: str) -> str:
     
     # Check remaining attack types
     for attack_type, patterns in ATTACK_PATTERNS.items():
-        if attack_type not in priority_order:
+        if attack_type not in ATTACK_PRIORITY_ORDER:
             for pattern in patterns:
                 if re.search(pattern, event_desc_lower, re.IGNORECASE):
                     return attack_type
@@ -176,28 +63,25 @@ def extract_event_category(event_desc: str, rule_groups: Optional[str] = None) -
     if rule_groups and pd.notna(rule_groups):
         rule_groups_str = str(rule_groups).lower()
         # Map rule groups trực tiếp
-        if 'authentication' in rule_groups_str or 'auth' in rule_groups_str:
-            return 'authentication'
-        elif 'ossec' in rule_groups_str or 'syscheck' in rule_groups_str:
-            return 'file_integrity'
-        elif 'network' in rule_groups_str or 'ids' in rule_groups_str:
-            return 'network'
-        elif 'system' in rule_groups_str or 'syslog' in rule_groups_str:
-            return 'system'
-        elif 'sca' in rule_groups_str or 'compliance' in rule_groups_str:
-            return 'compliance'
-        elif 'vulnerability' in rule_groups_str:
-            return 'vulnerability'
-        elif 'malware' in rule_groups_str:
-            return 'malware_detection'
-        elif 'web' in rule_groups_str or 'apache' in rule_groups_str:
-            return 'web'
+        rule_group_mapping = {
+            'authentication': ['authentication', 'auth'],
+            'file_integrity': ['ossec', 'syscheck'],
+            'network': ['network', 'ids'],
+            'system': ['system', 'syslog'],
+            'compliance': ['sca', 'compliance'],
+            'vulnerability': ['vulnerability'],
+            'malware_detection': ['malware'],
+            'web': ['web', 'apache']
+        }
+        
+        for category, keywords in rule_group_mapping.items():
+            if any(kw in rule_groups_str for kw in keywords):
+                return category
     
     # Nếu không có rule_groups, dùng pattern matching trên event_desc
     for category, patterns in EVENT_CATEGORY_PATTERNS.items():
-        for pattern in patterns:
-            if re.search(pattern, event_desc_lower, re.IGNORECASE):
-                return category
+        if any(re.search(pattern, event_desc_lower, re.IGNORECASE) for pattern in patterns):
+            return category
     
     return 'other'
 
@@ -276,36 +160,3 @@ def get_classification_features(df: pd.DataFrame, feature_names: List[str]) -> p
     X = X[feature_names]
     
     return X
-
-
-# Test với sample data
-if __name__ == "__main__":
-    print("Testing classification module...")
-    
-    sample_data = {
-        'event_desc': [
-            'sshd: authentication failure for user root',
-            'Port scan detected from 192.168.1.100',
-            'SQL injection attempt detected in web request',
-            'File integrity checksum changed: /etc/passwd',
-            'Wazuh server started.',
-            'CIS Ubuntu Linux 24.04 LTS Benchmark: Ensure mounting of cramfs filesystems is disabled.'
-        ],
-        'rule_groups': [
-            'sshd,authentication_failure',
-            'ids,network',
-            'web,attack',
-            'ossec,syscheck',
-            'ossec',
-            'sca,compliance'
-        ]
-    }
-    
-    df = pd.DataFrame(sample_data)
-    df = create_classification_labels(df)
-    
-    print("\n" + "="*60)
-    print("CLASSIFICATION RESULTS")
-    print("="*60)
-    print(df[['event_desc', 'attack_type', 'event_category']].to_string(index=False))
-

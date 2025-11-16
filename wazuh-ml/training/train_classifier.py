@@ -1,5 +1,5 @@
 """
-Huấn luyện classification model để phân loại sự kiện bảo mật
+Huấn luyện classification model để phân loại event categories và attack types
 """
 
 import pandas as pd
@@ -10,15 +10,19 @@ from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.metrics import classification_report, accuracy_score
 from core.config import CSV_PATH
 from classification.classification import create_classification_labels
-from training.common import load_and_prepare_data
+from training.common import (
+    load_and_prepare_data,
+    prepare_train_test_split,
+    get_cv_folds,
+    create_classifier_bundle
+)
 from training.feature_selection import (
     select_features_rfe, 
     get_feature_importance,
     save_feature_selector
 )
 from utils.visualization import create_training_visualizations
-from utils.common import print_header
-from training.common import prepare_train_test_split, get_cv_folds
+from utils.common import print_header, safe_save_joblib
 
 # Path cho classification model
 CLASSIFIER_MODEL_PATH = "data/classifier_model.pkl"
@@ -33,7 +37,7 @@ def _train_classifier_common(
     feature_names: list,
     model_name: str,
     enable_tuning: bool = True
-) -> Tuple:
+) -> tuple:
     """
     Common logic để train classifier (attack type hoặc event category)
     
@@ -248,19 +252,17 @@ def train_classification_models(enable_tuning=True):
         category_classifier, category_encoder = None, None
     
     # Save models
-    classifier_bundle = {
-        "attack_classifier": attack_classifier,
-        "attack_encoder": attack_encoder,
-        "category_classifier": category_classifier,
-        "category_encoder": category_encoder,
-        "encoders": encoders,
-        "feature_names": feature_names,
-        "feature_selector": feature_selector,
-        "selected_feature_names": selected_feature_names,
-        "training_date": pd.Timestamp.now().isoformat(),
-        "n_features": X.shape[1],
-        "n_samples": X.shape[0]
-    }
+    classifier_bundle = create_classifier_bundle(
+        attack_classifier=attack_classifier,
+        attack_encoder=attack_encoder,
+        category_classifier=category_classifier,
+        category_encoder=category_encoder,
+        encoders=encoders,
+        feature_names=feature_names,
+        feature_selector=feature_selector,
+        selected_feature_names=selected_feature_names,
+        X=X
+    )
     
     if safe_save_joblib(classifier_bundle, CLASSIFIER_MODEL_PATH):
         print(f"\nSaved classification models → {CLASSIFIER_MODEL_PATH}")
@@ -270,6 +272,4 @@ def train_classification_models(enable_tuning=True):
     return classifier_bundle
 
 
-if __name__ == "__main__":
-    train_classification_models(enable_tuning=True)
 

@@ -1,27 +1,24 @@
 """
 Real-time anomaly detection - Monitor Wazuh Indexer và phát hiện anomalies ngay lập tức
 """
-
 import time
-import json
 import requests
 import urllib3
 import pandas as pd
 from datetime import datetime, timedelta
 import signal
 import sys
-import os
 from core.config import (
     WAZUH_INDEXER_URL,
     WAZUH_INDEX_PATTERN,
     INDEXER_USER,
     INDEXER_PASS,
     MODEL_PATH,
+    MODEL_TYPE,
     get_requests_verify
 )
-from data_processing.preprocessing import preprocess_dataframe
-from data_processing.feature_engineering import engineer_all_features
-from utils.push_alert import send_alert
+from data_processing.common import parse_hits_to_dataframe
+from detection.detect_anomaly import _predict_ensemble
 from utils.common import print_header, safe_load_joblib
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -51,17 +48,15 @@ class RealtimeDetector:
         """
         self.poll_interval = poll_interval
         self.lookback_minutes = lookback_minutes
-        self.model = None
-        self.encoders = None
-        self.feature_names = None
         self.last_check_time = None
         self.total_processed = 0
         self.total_anomalies = 0
         
+        # Load model và prepare
         print("Initializing Real-time Anomaly Detector")
-        self.load_model()
+        self._init_model()
     
-    def load_model(self):
+    def _init_model(self):
         """Load trained model"""
         try:
             print(f"Loading model from {MODEL_PATH}...")
@@ -69,16 +64,32 @@ class RealtimeDetector:
             if bundle is None:
                 raise FileNotFoundError(f"Model not found at {MODEL_PATH}")
             
-            self.model = bundle['model']
-            self.encoders = bundle['encoders']
-            self.feature_names = bundle.get('feature_names', [])
+            self.bundle = bundle
+            model_type = bundle.get("model_type", MODEL_TYPE or "single")
+            
+            if model_type == "ensemble":
+                self.models = bundle["models"]
+                self.scaler = bundle["scaler"]
+                self.voting_threshold = bundle.get("voting_threshold", 2)
+                self.is_ensemble = True
+                self.detector = None
+            else:
+                self.detector = bundle["model"]
+                self.models = None
+                self.is_ensemble = False
+                self.scaler = bundle.get("scaler")
+                self.voting_threshold = None
+            
+            self.encoders = bundle["encoders"]
+            self.feature_names = bundle.get("feature_names", [])
             
             training_date = bundle.get('training_date', 'Unknown')
             n_features = bundle.get('n_features', 'Unknown')
             
-            print(f"✅ Model loaded successfully")
+            print(f"Model loaded successfully")
             print(f"   Training date: {training_date}")
             print(f"   Features: {n_features}")
+            print(f"   Model type: {'Ensemble' if self.is_ensemble else 'Single'}")
             
         except Exception as e:
             print(f"Error loading model: {e}")
@@ -90,7 +101,7 @@ class RealtimeDetector:
         Fetch recent events from Wazuh Indexer
         
         Returns:
-            List of event dictionaries
+            DataFrame với parsed events
         """
         # Calculate time range
         now = datetime.utcnow()
@@ -118,10 +129,18 @@ class RealtimeDetector:
             },
             "sort": [{"timestamp": "asc"}],
             "_source": [
-                "timestamp", "agent.name", "rule.id", "rule.level",
-                "rule.description", "data.proto", "data.src_ip", "data.src_port",
-                "data.dest_ip", "data.dest_port", "data.flow.bytes_toserver", "data.flow.bytes_toclient",
-                "syscheck.size_after"
+                "@timestamp", "timestamp", "agent.name", "agent.ip",
+                "rule.id", "rule.level", "rule.groups", "rule.description",
+                "decoder.name", "location",
+                "syscheck.event", "syscheck.path", "syscheck.size_after",
+                "syscheck.sha256_after", "syscheck.uname_after", "syscheck.mtime_after",
+                "data.file", "data.title",
+                "data.event_type", "data.app_proto", "data.proto",
+                "data.src_ip", "data.src_port", "data.dest_ip", "data.dest_port",
+                "data.alert.severity", "data.alert.signature", "data.alert.category",
+                "data.flow.bytes_toserver", "data.flow.bytes_toclient",
+                "data.flow.pkts_toserver", "data.flow.pkts_toclient",
+                "full_log"
             ]
         }
         
@@ -139,64 +158,34 @@ class RealtimeDetector:
             data = response.json()
             hits = data.get("hits", {}).get("hits", [])
             
-            events = []
-            for hit in hits:
-                src = hit["_source"]
-                
-                # Parse event (tương tự export_from_es.py)
-                dat = src.get('data', {}) or {}
-                rule = src.get('rule', {}) or {}
-                agent = src.get('agent', {}) or {}
-                syscheck = src.get('syscheck', {}) or {}
-                flow = dat.get('flow', {}) or {}
-                
-                # Tính bytes từ flow stats nếu có
-                bytes_total = None
-                if flow.get("bytes_toserver") is not None or flow.get("bytes_toclient") is not None:
-                    bytes_total = (flow.get("bytes_toserver") or 0) + (flow.get("bytes_toclient") or 0)
-                
-                event = {
-                    'timestamp': src.get('@timestamp') or src.get('timestamp', ''),
-                    'agent': agent.get('name', 'unknown'),
-                    'rule_id': rule.get('id', ''),
-                    'rule_level': rule.get('level', 0),
-                    'rule_groups': rule.get('groups'),
-                    'event_desc': rule.get('description', ''),
-                    'proto': dat.get('proto') or dat.get('protocol', ''),
-                    'src_ip': dat.get('src_ip') or dat.get('srcip', ''),
-                    'src_port': dat.get('src_port') or dat.get('srcport', 0),
-                    'dst_ip': dat.get('dest_ip') or dat.get('destip') or dat.get('dst_ip') or dat.get('dstip', ''),
-                    'dst_port': dat.get('dest_port') or dat.get('destport') or dat.get('dst_port') or dat.get('dstport', 0),
-                    'bytes': bytes_total or 0,
-                    'length': syscheck.get('size_after') or 0
-                }
-                
-                events.append(event)
+            # Sử dụng parse_hits_to_dataframe từ common.py
+            df = parse_hits_to_dataframe(hits)
             
             # Update last check time
             self.last_check_time = now
             
-            return events
+            return df
             
         except Exception as e:
             print(f"Error fetching events: {e}")
-            return []
+            return pd.DataFrame()
     
-    def detect_anomalies(self, events):
+    def detect_anomalies(self, df):
         """
-        Detect anomalies in events
+        Detect anomalies in events DataFrame
         
         Args:
-            events: List of event dictionaries
+            df: DataFrame với events
         
         Returns:
-            DataFrame with anomaly predictions
+            DataFrame với anomaly predictions
         """
-        if not events:
+        if df.empty:
             return pd.DataFrame()
         
-        # Convert to DataFrame
-        df = pd.DataFrame(events)
+        # Sử dụng logic từ detect_anomaly.py
+        from data_processing.feature_engineering import engineer_all_features
+        from data_processing.preprocessing import preprocess_dataframe
         
         # Feature engineering
         df = engineer_all_features(df)
@@ -204,7 +193,7 @@ class RealtimeDetector:
         # Preprocessing
         df, X, _ = preprocess_dataframe(df)
         
-        # Ensure same features as training
+        # Align features
         for col in self.feature_names:
             if col not in X.columns:
                 X[col] = 0
@@ -212,11 +201,23 @@ class RealtimeDetector:
         X = X[self.feature_names]
         
         # Predict
-        predictions = self.model.predict(X)
-        scores = self.model.decision_function(X)
-        
-        df['anomaly_label'] = predictions
-        df['anomaly_score'] = scores
+        if self.is_ensemble:
+            predictions, votes, anomaly_votes, scores = _predict_ensemble(
+                self.models, self.scaler, X, self.voting_threshold
+            )
+            df["anomaly_label"] = predictions
+            df["anomaly_score"] = scores
+            df["anomaly_votes"] = anomaly_votes
+        else:
+            # Single model
+            X_infer = X
+            if self.scaler is not None:
+                try:
+                    X_infer = self.scaler.transform(X)
+                except Exception:
+                    X_infer = X
+            df["anomaly_label"] = self.detector.predict(X_infer)
+            df["anomaly_score"] = self.detector.decision_function(X_infer)
         
         return df
     
@@ -234,20 +235,12 @@ class RealtimeDetector:
             event_desc = row.get('event_desc', 'N/A')
             score = row.get('anomaly_score', 0)
             
-            # Format alert message
             alert_msg = (
                 f"[ML Anomaly] {agent} - Level {rule_level} - "
-                f"{event_desc[:60]} (score: {score:.3f})"
+                f"{str(event_desc)[:60]} (score: {score:.3f})"
             )
             
             print(f"  {timestamp} - {alert_msg}")
-            
-            # Send to Wazuh (optional - uncomment to enable)
-            # try:
-            #     send_alert(alert_msg)
-            # except Exception as e:
-            #     print(f"     ⚠️  Failed to send alert: {e}")
-            
             self.total_anomalies += 1
     
     def run(self):
@@ -266,31 +259,31 @@ class RealtimeDetector:
             try:
                 # Fetch recent events
                 print("  Fetching recent events...")
-                events = self.fetch_recent_events()
+                df = self.fetch_recent_events()
                 
-                if not events:
-                    print(f"  ℹ️  No new events found")
+                if df.empty:
+                    print(f"  ℹNo new events found")
                 else:
-                    print(f"  ✓ Found {len(events)} new events")
+                    print(f"  Found {len(df)} new events")
                     
                     # Detect anomalies
-                    print("  🔎 Analyzing events...")
-                    df = self.detect_anomalies(events)
+                    print("  Analyzing events...")
+                    df = self.detect_anomalies(df)
                     
                     if df.empty:
-                        print("  ⚠️  Detection failed")
+                        print("  Detection failed")
                     else:
                         anomalies = df[df['anomaly_label'] == -1]
                         self.total_processed += len(df)
                         
                         if len(anomalies) > 0:
-                            print(f"  🔥 Detected {len(anomalies)} anomalies:")
+                            print(f"  Detected {len(anomalies)} anomalies:")
                             self.process_anomalies(anomalies)
                         else:
-                            print(f"  ✅ All events are normal")
+                            print(f"  All events are normal")
                 
                 # Statistics
-                print(f"  📊 Stats: {self.total_processed} processed, {self.total_anomalies} anomalies")
+                print(f"  Stats: {self.total_processed} processed, {self.total_anomalies} anomalies")
                 
             except Exception as e:
                 print(f"   Error in iteration: {e}")
@@ -299,7 +292,7 @@ class RealtimeDetector:
             
             # Sleep until next poll
             if running:
-                print(f"  ⏳ Sleeping for {self.poll_interval}s...")
+                print(f"  Sleeping for {self.poll_interval}s...")
                 time.sleep(self.poll_interval)
         
         print_header("DETECTOR STOPPED")

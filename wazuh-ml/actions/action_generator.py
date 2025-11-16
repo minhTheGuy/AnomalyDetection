@@ -23,8 +23,9 @@ class ActionType(Enum):
     """Các loại actions có thể thực hiện"""
     BLOCK_IP = "block_ip"
     BLOCK_PORT = "block_port"
+    REJECT_IP = "reject_ip"
+    REJECT_PORT = "reject_port"
     ALERT = "alert"
-    NOTIFY_TELEGRAM = "notify_telegram"
     NOTIFY_EMAIL = "notify_email"
     QUARANTINE = "quarantine"
     LOG = "log"
@@ -49,15 +50,11 @@ class ActionGenerator:
         Args:
             config: Configuration dict với các settings:
                 - enable_auto_block: bool (default: False)
-                - enable_telegram: bool (default: False)
-                - telegram_chat_id: str
-                - telegram_bot_token: str
                 - min_severity_for_block: int (1-4, default: 3)
                 - min_severity_for_notify: int (1-4, default: 2)
         """
         self.config = config or {}
         self.enable_auto_block = self.config.get('enable_auto_block', False)
-        self.enable_telegram = self.config.get('enable_telegram', False)
         
         # Convert int sang enum SeverityLevel
         min_block_int = self.config.get('min_severity_for_block', 3)  # HIGH
@@ -177,58 +174,18 @@ class ActionGenerator:
                 }
             })
         
-        # 3. NOTIFY_TELEGRAM (nếu enabled và severity >= min_severity_for_notify)
-        if self.enable_telegram and severity.value >= self.min_severity_for_notify.value:
-            actions.append({
-                'type': ActionType.NOTIFY_TELEGRAM,
-                'target': 'telegram',
-                'reason': f'{attack_type.upper()} Alert: {event_desc}',
-                'severity': severity,
-                'params': {
-                    'message': self._format_telegram_message(anomaly_row, attack_type, severity),
-                    'chat_id': self.config.get('telegram_chat_id'),
-                    'bot_token': self.config.get('telegram_bot_token'),
-                }
-            })
+        # 3. BLOCK_IP trên pfSense
+        if (self.enable_auto_block and severity.value >= self.min_severity_for_block.value and 
+            pd.notna(src_ip) and src_ip and 
+            (_is_external_ip(src_ip) or attack_type in ['malware', 'dos_ddos', 'brute_force', 'privilege_escalation'])):
+            actions.append(self._create_block_ip_action(src_ip, attack_type, event_desc, severity))
         
-        # 4. BLOCK_IP trên pfSense (nếu enabled và severity >= min_severity_for_block và có src_ip)
-        if (self.enable_auto_block and 
-            severity.value >= self.min_severity_for_block.value and 
-            pd.notna(src_ip) and src_ip):
-            
-            # Chỉ block nếu là external IP hoặc attack type nghiêm trọng
-            if _is_external_ip(src_ip) or attack_type in ['malware', 'dos_ddos', 'brute_force', 'privilege_escalation']:
-                actions.append({
-                    'type': ActionType.BLOCK_IP,
-                    'target': str(src_ip),
-                    'reason': f'Block IP {src_ip} on pfSense due to {attack_type} attack',
-                    'severity': severity,
-                    'params': {
-                        'ip': str(src_ip),
-                        'attack_type': attack_type,
-                        'duration': 3600,  # 1 hour default
-                        'reason': event_desc,
-                    }
-                })
-        
-        # 5. BLOCK_PORT trên pfSense (nếu severity CRITICAL và có dst_port)
-        if (severity == SeverityLevel.CRITICAL and 
-            pd.notna(dst_port) and dst_port and
+        # 4. BLOCK_PORT trên pfSense
+        if (severity == SeverityLevel.CRITICAL and pd.notna(dst_port) and dst_port and
             attack_type in ['dos_ddos', 'port_scan']):
-            actions.append({
-                'type': ActionType.BLOCK_PORT,
-                'target': f'{dst_ip}:{dst_port}' if pd.notna(dst_ip) else str(dst_port),
-                'reason': f'Block port {dst_port} on pfSense due to {attack_type}',
-                'severity': severity,
-                'params': {
-                    'port': int(dst_port) if pd.notna(dst_port) else None,
-                    'ip': str(dst_ip) if pd.notna(dst_ip) else None,
-                    'attack_type': attack_type,
-                    'duration': 3600,  # 1 hour default
-                }
-            })
+            actions.append(self._create_block_port_action(dst_port, dst_ip, attack_type, severity))
         
-        # 6. ESCALATE (nếu severity CRITICAL)
+        # 5. ESCALATE (nếu severity CRITICAL)
         if severity == SeverityLevel.CRITICAL:
             actions.append({
                 'type': ActionType.ESCALATE,
@@ -244,38 +201,37 @@ class ActionGenerator:
         
         return actions
     
-    def _format_telegram_message(self, anomaly_row: pd.Series, attack_type: str, severity: SeverityLevel) -> str:
-        """Format message cho Telegram"""
-        emoji_map = {
-            SeverityLevel.CRITICAL: '🔴',
-            SeverityLevel.HIGH: '🟠',
-            SeverityLevel.MEDIUM: '🟡',
-            SeverityLevel.LOW: '🟢',
+    def _create_block_ip_action(self, src_ip: str, attack_type: str, event_desc: str, severity: SeverityLevel) -> Dict:
+        """Helper: Tạo BLOCK_IP action"""
+        return {
+            'type': ActionType.BLOCK_IP,
+            'target': str(src_ip),
+            'reason': f'Block IP {src_ip} on pfSense due to {attack_type} attack',
+            'severity': severity,
+            'params': {
+                'ip': str(src_ip),
+                'attack_type': attack_type,
+                'duration': 3600,  # 1 hour default
+                'reason': event_desc,
+                'action': 'block',  # default action
+            }
         }
-        
-        emoji = emoji_map.get(severity, '⚪')
-        event_desc = anomaly_row.get('event_desc', 'Unknown event')
-        agent = anomaly_row.get('agent', 'Unknown')
-        src_ip = anomaly_row.get('src_ip', 'N/A')
-        dst_ip = anomaly_row.get('dst_ip', 'N/A')
-        timestamp = anomaly_row.get('timestamp', 'Unknown time')
-        confidence = anomaly_row.get('attack_type_confidence', 0)
-        anomaly_score = anomaly_row.get('anomaly_score', 0)
-        
-        message = f"""{emoji} *{severity.name} Alert*
-
-*Attack Type:* {attack_type.upper()}
-*Description:* {event_desc}
-*Agent:* {agent}
-*Source IP:* {src_ip}
-*Destination IP:* {dst_ip}
-*Time:* {timestamp}
-*Confidence:* {confidence:.2%}
-*Anomaly Score:* {anomaly_score:.2f}
-
-_Generated by Wazuh ML System - Actions executed on pfSense Firewall_"""
-        
-        return message
+    
+    def _create_block_port_action(self, dst_port, dst_ip, attack_type: str, severity: SeverityLevel) -> Dict:
+        """Helper: Tạo BLOCK_PORT action"""
+        return {
+            'type': ActionType.BLOCK_PORT,
+            'target': f'{dst_ip}:{dst_port}' if pd.notna(dst_ip) else str(dst_port),
+            'reason': f'Block port {dst_port} on pfSense due to {attack_type}',
+            'severity': severity,
+            'params': {
+                'port': int(dst_port) if pd.notna(dst_port) else None,
+                'ip': str(dst_ip) if pd.notna(dst_ip) else None,
+                'attack_type': attack_type,
+                'duration': 3600,  # 1 hour default
+                'action': 'block',  # default action
+            }
+        }
     
     def generate_actions_batch(self, anomalies_df: pd.DataFrame) -> pd.DataFrame:
         """

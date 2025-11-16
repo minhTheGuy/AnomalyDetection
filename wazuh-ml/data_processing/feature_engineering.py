@@ -364,27 +364,3 @@ def engineer_all_features(df):
     print(f"\nFeatures added: {final_cols - initial_cols} (Total: {final_cols})")
     
     return df
-
-
-# Test với sample data
-if __name__ == "__main__":
-    print("Testing feature engineering...")
-    
-    sample_data = {
-        'timestamp': ['2025-10-28T10:30:00Z', '2025-10-28T14:45:00Z', '2025-10-28T23:15:00Z'],
-        'agent': ['wazuh-server', 'wazuh-server', 'client-001'],
-        'event_desc': ['sshd: authentication success', 'File integrity changed', 'Malicious attack detected'],
-        'rule_level': [3, 7, 15],
-        'src_port': [54321, 0, 12345],
-        'dst_port': [22, 0, 80],
-        'bytes': [1024, 0, 65535],
-        'src_ip': ['172.16.158.1', '172.16.158.150', '192.168.1.100'],
-        'dst_ip': ['172.16.158.150', '172.16.158.150', '172.16.158.150']
-    }
-    
-    df = pd.DataFrame(sample_data)
-    print(f"\nOriginal columns: {list(df.columns)}")
-    
-    df_engineered = engineer_all_features(df)
-    print(f"\nNew columns: {list(df_engineered.columns)}")
-    print(f"\nSample output:\n{df_engineered.head()}")

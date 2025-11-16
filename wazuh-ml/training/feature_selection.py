@@ -5,12 +5,23 @@ Sử dụng RFE (Recursive Feature Elimination) để chọn features quan trọ
 
 import pandas as pd
 import numpy as np
-import joblib
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import StratifiedKFold
 from typing import List, Optional, Tuple
 from utils.common import safe_load_joblib, safe_save_joblib
+
+
+def _create_default_estimator(**kwargs):
+    """Helper: Tạo default RandomForest estimator"""
+    defaults = {
+        'n_estimators': 100,
+        'random_state': 42,
+        'n_jobs': -1,
+        'max_depth': 10
+    }
+    defaults.update(kwargs)
+    return RandomForestClassifier(**defaults)
 
 
 def select_features_rfe(
@@ -36,12 +47,7 @@ def select_features_rfe(
         Tuple of (X_selected, selector, selected_feature_names)
     """
     if estimator is None:
-        estimator = RandomForestClassifier(
-            n_estimators=100,
-            random_state=42,
-            n_jobs=-1,
-            max_depth=10
-        )
+        estimator = _create_default_estimator()
     
     feature_names = list(X.columns)
     
@@ -125,11 +131,7 @@ def get_feature_importance(
         DataFrame với feature importance
     """
     if estimator is None:
-        estimator = RandomForestClassifier(
-            n_estimators=100,
-            random_state=42,
-            n_jobs=-1
-        )
+        estimator = _create_default_estimator(max_depth=None)
     
     print(f"Computing feature importance...")
     estimator.fit(X.values, y)

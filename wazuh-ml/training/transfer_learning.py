@@ -16,7 +16,8 @@ import warnings
 from core.config import MODEL_PATH, CSV_PATH, CLASSIFIER_MODEL_PATH
 from data_processing.feature_engineering import engineer_all_features
 from data_processing.preprocessing import preprocess_dataframe
-from detection.ensemble_detector import EnsembleAnomalyDetector
+from training.train_model import train_models, predict_ensemble
+from training.common import align_features
 from utils.common import print_header, safe_load_joblib, safe_save_joblib, safe_load_csv
 
 
@@ -57,7 +58,16 @@ class TransferLearning:
             return False
         
         model_type = bundle.get("model_type", "single")
-        self.source_model = bundle.get("detector" if model_type == "ensemble" else "model")
+        if model_type == "ensemble":
+            # Ensemble model: load models dict, scaler, voting_threshold
+            self.source_model = {
+                'models': bundle.get("models"),
+                'scaler': bundle.get("scaler"),
+                'voting_threshold': bundle.get("voting_threshold", 2)
+            }
+        else:
+            # Single model
+            self.source_model = bundle.get("model")
         print(f"Loaded source model from: {path}")
         print(f"   Model type: {model_type}")
         return True
@@ -151,16 +161,22 @@ class TransferLearning:
                 
                 # Use source model predictions as pseudo-labels
                 print("   Using source model for pseudo-labeling...")
-                if isinstance(self.source_model, EnsembleAnomalyDetector):
-                    source_predictions, _, _ = self.source_model.predict(X_aligned)
+                # Check if source model is ensemble (dict with 'models' key) or single model
+                if isinstance(self.source_model, dict) and 'models' in self.source_model:
+                    # Ensemble model
+                    models = self.source_model['models']
+                    scaler = self.source_model.get('scaler')
+                    voting_threshold = self.source_model.get('voting_threshold', 2)
+                    source_predictions, _, _, _ = predict_ensemble(models, scaler, X_aligned, voting_threshold)
                 else:
+                    # Single model
                     source_predictions = self.source_model.predict(X_aligned)
                 
                 # Fine-tune với pseudo-labels
                 print("   Fine-tuning target model...")
                 if use_ensemble:
-                    target_model = EnsembleAnomalyDetector(voting_threshold=2)
-                    target_model.fit(X_target, contamination=contamination)
+                    models, scaler, voting_threshold = train_models(X_target, contamination=contamination, voting_threshold=2)
+                    target_model = {'models': models, 'scaler': scaler, 'voting_threshold': voting_threshold}
                 else:
                     target_model = IsolationForest(
                         contamination=contamination,
@@ -192,31 +208,12 @@ class TransferLearning:
         Args:
             X_target: Target feature matrix
             source_features: Source feature names
-            target_features: Target feature names
+            target_features: Target feature names (unused, kept for compatibility)
             
         Returns:
             Aligned feature matrix
         """
-        X_aligned = pd.DataFrame(index=X_target.index)
-        
-        for source_feat in source_features:
-            if source_feat in self.feature_mapping:
-                target_feat = self.feature_mapping[source_feat]
-                if target_feat in X_target.columns:
-                    X_aligned[source_feat] = X_target[target_feat]
-                else:
-                    X_aligned[source_feat] = 0
-            elif source_feat in X_target.columns:
-                X_aligned[source_feat] = X_target[source_feat]
-            else:
-                X_aligned[source_feat] = 0
-        
-        # Fill missing source features
-        for source_feat in source_features:
-            if source_feat not in X_aligned.columns:
-                X_aligned[source_feat] = 0
-        
-        return X_aligned
+        return align_features(X_target, source_features, self.feature_mapping)
     
     def _train_from_scratch(
         self,
@@ -236,8 +233,8 @@ class TransferLearning:
             Trained model
         """
         if use_ensemble:
-            model = EnsembleAnomalyDetector(voting_threshold=2)
-            model.fit(X, contamination=contamination)
+            models, scaler, voting_threshold = train_models(X, contamination=contamination, voting_threshold=2)
+            model = {'models': models, 'scaler': scaler, 'voting_threshold': voting_threshold}
         else:
             model = IsolationForest(
                 contamination=contamination,

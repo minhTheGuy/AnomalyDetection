@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Script tạo synthetic data để augment training dataset
 Tạo ra file JSON giống format của security_logs_raw.json từ Wazuh Indexer
@@ -19,11 +18,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.config import RAW_JSON_PATH, CSV_PATH
 from utils.common import safe_save_csv, print_header
 from data_processing.common import parse_hits_to_dataframe
-
-
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
 
 # Agents
 AGENTS = [
@@ -75,10 +69,6 @@ LOCATIONS = [
     "wazuh-agent",
 ]
 
-
-# ============================================================================
-# EVENT GENERATORS
-# ============================================================================
 
 def generate_sha256(text: str) -> str:
     """Generate SHA256 hash"""

@@ -16,9 +16,10 @@ from core.config import (
     ANALYZED_CSV_PATH, ACTIONS_CSV_PATH, ACTION_RESULTS_CSV_PATH
 )
 from detection.detect_anomaly import detect
-from training.auto_retrain import auto_retrain
+from training.auto_retrain import auto_retrain, should_retrain
+from training.common import get_model_info
 from tests.run_tests import run_all_tests
-from utils.common import print_header, print_section, safe_load_csv, ensure_dataframe, safe_load_joblib
+from utils.common import print_header, print_section, safe_load_csv, ensure_dataframe
 
 
 class PerformanceAnalyzer:
@@ -110,28 +111,27 @@ class PerformanceAnalyzer:
                 )
         
         # 4. Phân tích model performance metrics
-        bundle = safe_load_joblib(MODEL_PATH)
-        if bundle:
-            metrics = bundle.get('metrics', {})
-            if metrics:
-                analysis['metrics']['model_metrics'] = metrics
+        model_info = get_model_info(MODEL_PATH)
+        if model_info and model_info.get('metrics'):
+            metrics = model_info['metrics']
+            analysis['metrics']['model_metrics'] = metrics
                 
-                # Check anomaly rate
-                anomaly_rate = metrics.get('anomaly_ratio', 0)
-                if anomaly_rate > 0.15:  # >15% anomalies
-                    analysis['issues'].append({
-                        'type': 'high_anomaly_rate',
-                        'severity': 'medium',
-                        'description': f'Anomaly rate is {anomaly_rate:.1%} (may indicate too sensitive)',
-                        'value': anomaly_rate
-                    })
-                elif anomaly_rate < 0.01:  # <1% anomalies
-                    analysis['issues'].append({
-                        'type': 'low_anomaly_rate',
-                        'severity': 'medium',
-                        'description': f'Anomaly rate is {anomaly_rate:.1%} (may miss real threats)',
-                        'value': anomaly_rate
-                    })
+            # Check anomaly rate
+            anomaly_rate = metrics.get('anomaly_ratio', 0)
+            if anomaly_rate > 0.15:  # >15% anomalies
+                analysis['issues'].append({
+                    'type': 'high_anomaly_rate',
+                    'severity': 'medium',
+                    'description': f'Anomaly rate is {anomaly_rate:.1%} (may indicate too sensitive)',
+                    'value': anomaly_rate
+                })
+            elif anomaly_rate < 0.01:  # <1% anomalies
+                analysis['issues'].append({
+                    'type': 'low_anomaly_rate',
+                    'severity': 'medium',
+                    'description': f'Anomaly rate is {anomaly_rate:.1%} (may miss real threats)',
+                    'value': anomaly_rate
+                })
         
         # 5. Phân tích feature importance (nếu có)
         if 'anomaly_score' in anomalies_df.columns:
@@ -357,10 +357,8 @@ class FeedbackLoop:
                 }
             else:
                 # Load current model params
-                current_params = {}
-                bundle = safe_load_joblib(MODEL_PATH)
-                if bundle:
-                    current_params = bundle.get('best_params', {})
+                model_info = get_model_info(MODEL_PATH)
+                current_params = model_info.get('best_params', {}) if model_info else {}
                 
                 recommended_params = self.tuner.tune_parameters(
                     analysis_results=analysis,
@@ -386,7 +384,6 @@ class FeedbackLoop:
             print_section("STEP 4: RETRAIN")
             try:
                 # Check if retrain is needed
-                from training.auto_retrain import should_retrain
                 should_train, reason = should_retrain(force=False, max_age_days=7)
                 
                 if should_train:

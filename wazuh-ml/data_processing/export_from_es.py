@@ -110,5 +110,3 @@ def fetch_logs(limit: int = 1000):
 
     return df.head(limit).to_dict(orient="records")
 
-if __name__ == "__main__":
-    fetch_logs()

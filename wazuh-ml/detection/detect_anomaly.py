@@ -1,19 +1,63 @@
 """
-Phát hiện anomalies
+Phát hiện anomalies và phân loại attack types và event categories
 """
 
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import IsolationForest
 from core.config import CSV_PATH, MODEL_PATH, CLASSIFIER_MODEL_PATH
 from core.config import DYNAMIC_THRESHOLD_ENABLE, TARGET_ANOMALY_RATE, MIN_ANOMALY_RATE, MAX_ANOMALY_RATE, MODEL_TYPE, ENABLE_CLASSIFICATION
 from core.config import ENABLE_ACTIONS, AUTO_EXECUTE_ACTIONS, ACTIONS_CSV_PATH, ACTION_RESULTS_CSV_PATH
-from utils.push_alert import send_alert
 from utils.common import print_header, print_section, safe_load_joblib, safe_load_csv
 from data_processing.feature_engineering import engineer_all_features
 from data_processing.preprocessing import preprocess_dataframe
 from detection.anomaly_tuning import AnomalyFilter, analyze_anomaly_distribution, compute_dynamic_threshold, apply_threshold_to_labels
-from detection.ensemble_detector import EnsembleAnomalyDetector
+
+
+def _predict_ensemble(models, scaler, X, voting_threshold=2):
+    """
+    Predict với voting mechanism (không dùng class)
+    
+    Returns:
+        predictions, votes, anomaly_votes, scores
+    """
+    X_scaled = scaler.transform(X)
+    
+    # Dự đoán từng model
+    votes = {}
+    votes['iforest'] = models['iforest'].predict(X_scaled)
+    votes['lof'] = models['lof'].predict(X_scaled)
+    votes['svm'] = models['svm'].predict(X_scaled)
+    
+    # Đếm số votes cho anomaly (-1)
+    vote_matrix = np.array([votes['iforest'], votes['lof'], votes['svm']])
+    anomaly_votes = (vote_matrix == -1).sum(axis=0)
+    
+    # Final decision based on voting threshold
+    predictions = np.where(
+        anomaly_votes >= voting_threshold,
+        -1,  # Anomaly
+        1    # Normal
+    )
+    
+    # Tính anomaly scores
+    scores = []
+    scores.append(models['iforest'].decision_function(X_scaled))
+    scores.append(models['lof'].score_samples(X_scaled))
+    scores.append(models['svm'].decision_function(X_scaled))
+    avg_score = np.mean(scores, axis=0)
+    
+    return predictions, votes, anomaly_votes, avg_score
+
+
+def _get_model_agreement(anomaly_votes):
+    """Phân tích mức độ đồng thuận giữa các models"""
+    agreement_stats = {
+        'unanimous_anomaly': (anomaly_votes == 3).sum(),
+        'majority_anomaly': (anomaly_votes >= 2).sum(),
+        'split_decision': (anomaly_votes == 1).sum(),
+        'unanimous_normal': (anomaly_votes == 0).sum()
+    }
+    return agreement_stats
 
 
 def _load_model_and_prepare_data(logs, feature_names):
@@ -21,22 +65,25 @@ def _load_model_and_prepare_data(logs, feature_names):
     bundle = safe_load_joblib(MODEL_PATH)
     if bundle is None:
         print("Error: Could not load model")
-        return None, None, None, None, None, None
+        return None, None, None, None, None, None, None, None, None
     
     model_type = bundle.get("model_type", MODEL_TYPE or "single")
     
     if model_type == "ensemble":
         print("Ensemble model detected (IF + LOF + SVM)")
-        detector = bundle["detector"]
+        models = bundle["models"]  # Dict chứa 3 models
+        scaler = bundle["scaler"]
         voting_threshold = bundle.get("voting_threshold", 2)
         print(f"Voting threshold: {voting_threshold}/3")
         is_ensemble = True
-        scaler = None
+        detector = None  # Không dùng class nữa
     else:
         print("Single model detected (Isolation Forest)")
         detector = bundle["model"]
+        models = None
         is_ensemble = False
         scaler = bundle.get("scaler")
+        voting_threshold = None
     
     encoders = bundle["encoders"]
     feature_names_model = bundle.get("feature_names", feature_names or [])
@@ -52,7 +99,7 @@ def _load_model_and_prepare_data(logs, feature_names):
         df = safe_load_csv(CSV_PATH)
         if df is None or len(df) == 0:
             print("Error: Could not load data")
-            return None, None, None, None, None, None
+            return None, None, None, None, None, None, None, None, None
     
     print(f"Loaded {len(df)} records")
     
@@ -73,70 +120,51 @@ def _load_model_and_prepare_data(logs, feature_names):
     X = X[feature_names_model]
     print(f"   Final feature matrix: {X.shape}")
     
-    return bundle, detector, scaler, encoders, df, X, is_ensemble
+    return bundle, models, detector, scaler, encoders, df, X, is_ensemble, voting_threshold
 
 
 def _run_classification(df, X, feature_names):
-    """Helper: Chạy classification trên events"""
+    """Helper: Chạy classification trên events (sử dụng classify_events module)"""
     if not ENABLE_CLASSIFICATION:
         return df
     
     try:
         print("\nRunning classification on events...")
-        classifier_bundle = safe_load_joblib(CLASSIFIER_MODEL_PATH)
-        if classifier_bundle is None:
-            print(f"Classification model not found at {CLASSIFIER_MODEL_PATH}")
+        from classification.classify_events import (
+            _load_classifier_bundle,
+            _align_features,
+            _classify_attack_type,
+            _classify_event_category
+        )
+        
+        classifier_data = _load_classifier_bundle(CLASSIFIER_MODEL_PATH)
+        if classifier_data is None:
             return df
         
-        attack_classifier = classifier_bundle.get("attack_classifier")
-        attack_encoder = classifier_bundle.get("attack_encoder")
-        category_classifier = classifier_bundle.get("category_classifier")
-        category_encoder = classifier_bundle.get("category_encoder")
-        classifier_feature_names = classifier_bundle.get("feature_names", feature_names)
-        feature_selector = classifier_bundle.get("feature_selector")
-        selected_feature_names = classifier_bundle.get("selected_feature_names", classifier_feature_names)
+        attack_classifier = classifier_data['attack_classifier']
+        attack_encoder = classifier_data['attack_encoder']
+        category_classifier = classifier_data['category_classifier']
+        category_encoder = classifier_data['category_encoder']
+        classifier_feature_names = classifier_data['feature_names']
+        feature_selector = classifier_data['feature_selector']
+        selected_feature_names = classifier_data['selected_feature_names']
         
-        # Prepare features for classification
-        if feature_selector is not None and selected_feature_names:
-            from training.feature_selection import apply_feature_selection
-            X_classify = apply_feature_selection(X, feature_selector, selected_feature_names)
-        else:
-            X_classify = X.copy()
-            for col in classifier_feature_names:
-                if col not in X_classify.columns:
-                    X_classify[col] = 0
-            X_classify = X_classify[classifier_feature_names]
+        # Prepare features (X đã được preprocessed, chỉ cần align)
+        from classification.classify_events import _align_features
+        X_classify = _align_features(X, classifier_feature_names, feature_selector, selected_feature_names)
         
-        # Attack type classification
+        # Run classification
         if attack_classifier:
-            attack_predictions = attack_classifier.predict(X_classify.values)
-            attack_probas = attack_classifier.predict_proba(X_classify.values)
-            df['predicted_attack_type'] = attack_encoder.inverse_transform(attack_predictions)
-            df['attack_type_confidence'] = np.max(attack_probas, axis=1)
-            
-            # Pattern matching fallback
-            from classification.classification import extract_attack_type
-            if 'event_desc' in df.columns:
-                pattern_based_types = df['event_desc'].apply(extract_attack_type)
-                mask_override = (df['predicted_attack_type'] == 'benign') & (pattern_based_types != 'benign')
-                if mask_override.sum() > 0:
-                    df.loc[mask_override, 'predicted_attack_type'] = pattern_based_types[mask_override]
-                    df.loc[mask_override, 'attack_type_confidence'] = 0.75
-                    print(f"  Override {mask_override.sum()} predictions từ 'benign' → attack types (dùng pattern matching)")
+            df = _classify_attack_type(df, X_classify, attack_classifier, attack_encoder)
         
-        # Event category classification
         if category_classifier:
-            category_predictions = category_classifier.predict(X_classify.values)
-            category_probas = category_classifier.predict_proba(X_classify.values)
-            df['predicted_event_category'] = category_encoder.inverse_transform(category_predictions)
-            df['event_category_confidence'] = np.max(category_probas, axis=1)
+            df = _classify_event_category(df, X_classify, category_classifier, category_encoder)
         
         print("Classification completed")
-    except FileNotFoundError:
-        print(f"Classification model not found at {CLASSIFIER_MODEL_PATH}")
-        print("Run train_classifier.py to enable classification")
     except Exception as e:
         print(f"Classification failed: {e}")
+        import traceback
+        traceback.print_exc()
     
     return df
 
@@ -147,16 +175,15 @@ def detect(logs=None):
     if result[0] is None:
         return []
     
-    bundle, detector, scaler, encoders, df, X, is_ensemble = result
+    bundle, models, detector, scaler, encoders, df, X, is_ensemble, voting_threshold = result
     feature_names = bundle.get("feature_names", [])
 
     # Dự đoán bất thường
     print("Đang dự đoán anomaly...")
     
     if is_ensemble:
-        # Ensemble prediction
-        predictions, votes, anomaly_votes = detector.predict(X)
-        scores = detector.decision_function(X)
+        # Ensemble prediction (không dùng class)
+        predictions, votes, anomaly_votes, scores = _predict_ensemble(models, scaler, X, voting_threshold)
         
         df["anomaly_label"] = predictions
         df["anomaly_score"] = scores
@@ -166,12 +193,12 @@ def detect(logs=None):
         df["svm_vote"] = votes['svm']
         
         # Get agreement stats
-        agreement = detector.get_model_agreement(X)
+        agreement = _get_model_agreement(anomaly_votes)
     else:
         # Single model prediction
         # Apply scaler if provided (single-model normalization)
         X_infer = X
-        if not is_ensemble and scaler is not None:
+        if scaler is not None:
             try:
                 X_infer = scaler.transform(X)
                 print("Applied saved StandardScaler to features")
@@ -270,20 +297,6 @@ def detect(logs=None):
             top_anomalies = anomalies.sort_values("anomaly_score", ascending=True)
             print(top_anomalies[display_cols].to_string(index=False))
 
-        # gửi cảnh báo ngược vào Wazuh Dashboard
-        # print("\n Đang gửi cảnh báo lên Wazuh...")
-        # for _, row in anomalies.iterrows():
-        #     msg = (
-        #         f"[ML Anomaly] {row.get('agent', 'unknown')} - "
-        #         f"{row.get('event_desc', 'N/A')[:60]} "
-        #         f"(level={row.get('rule_level', 0)}, "
-        #         f"score={row.get('anomaly_score', 0):.3f})"
-        #     )
-        #     try:
-        #         send_alert(msg)
-        #     except Exception as e:
-        #         print(f"    Failed to send alert: {e}")
-        # print("Đã gửi tất cả cảnh báo ML lên Wazuh Dashboard!")
 
     else:
         print("\nKhông phát hiện sự kiện bất thường mới.")
@@ -392,6 +405,3 @@ def detect(logs=None):
     print()
 
     return anomalies_filtered.to_dict(orient="records")
-
-if __name__ == "__main__":
-    detect()
