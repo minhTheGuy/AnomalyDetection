@@ -193,6 +193,11 @@ def fetch_logs(limit: int = 1000):
     # Sắp xếp theo thời gian (nếu timestamp có None, pandas vẫn chịu được sort_values với na_position)
     df = df.sort_values(by="timestamp", na_position="last", ignore_index=True)
 
+    # Thay thế newlines bằng spaces
+    if 'full_log' in df.columns:
+        df['full_log'] = df['full_log'].astype(str).str.replace('\n', ' | ', regex=False)
+        df['full_log'] = df['full_log'].str.replace('\r', '', regex=False)
+
     # Ghi CSV cuối cùng
     df.to_csv(CSV_PATH, index=False)
     print(f"Đã lưu {len(df)} dòng log → {CSV_PATH}")

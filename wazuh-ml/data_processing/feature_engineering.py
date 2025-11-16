@@ -1,11 +1,9 @@
-# feature_engineering.py
 """
 Module trích xuất các đặc trưng nâng cao cho anomaly detection
 """
 
 import pandas as pd
 import numpy as np
-from datetime import datetime
 
 def extract_time_features(df):
     """
@@ -367,8 +365,8 @@ def engineer_all_features(df):
     return df
 
 
+# Test với sample data
 if __name__ == "__main__":
-    # Test với sample data
     print("Testing feature engineering...")
     
     sample_data = {
