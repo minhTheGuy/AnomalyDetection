@@ -222,6 +222,33 @@ class PfSenseSSH:
         self.username = username or os.getenv('PFSENSE_SSH_USER', 'admin')
         self.password = password or os.getenv('PFSENSE_SSH_PASS', '')
     
+    def _execute_ssh_command(self, command: str) -> Dict:
+        """Helper: Execute SSH command và return result"""
+        try:
+            import paramiko
+            
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(self.host, username=self.username, password=self.password, timeout=10)
+            
+            stdin, stdout, stderr = ssh.exec_command(command)
+            error = stderr.read().decode()
+            output = stdout.read().decode()
+            
+            ssh.close()
+            
+            if error:
+                return {'success': False, 'message': error, 'output': output}
+            return {'success': True, 'message': 'Command executed successfully', 'output': output}
+        
+        except ImportError:
+            return {
+                'success': False,
+                'message': 'paramiko library not installed. Install with: pip install paramiko'
+            }
+        except Exception as e:
+            return {'success': False, 'message': f'SSH connection failed: {str(e)}'}
+    
     def block_ip_pfctl(self, ip: str, table_name: str = 'blocked_ips') -> Dict:
         """
         Block IP sử dụng pfctl command
@@ -233,76 +260,30 @@ class PfSenseSSH:
         Returns:
             Dict với kết quả
         """
-        try:
-            import paramiko
-            
-            # SSH connection
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(self.host, username=self.username, password=self.password, timeout=10)
-            
-            # Add IP to table
-            command = f"pfctl -t {table_name} -T add {ip}"
-            stdin, stdout, stderr = ssh.exec_command(command)
-            
-            error = stderr.read().decode()
-            if error:
-                ssh.close()
-                return {
-                    'success': False,
-                    'message': f'Failed to block IP: {error}'
-                }
-            
-            ssh.close()
-            
-            return {
-                'success': True,
-                'message': f'IP {ip} added to pfSense table {table_name}',
-                'ip': ip,
-                'table': table_name
-            }
-        except ImportError:
-            return {
-                'success': False,
-                'message': 'paramiko library not installed. Install with: pip install paramiko'
-            }
-        except Exception as e:
-            return {
-                'success': False,
-                'message': f'SSH connection failed: {str(e)}'
-            }
+        command = f"pfctl -t {table_name} -T add {ip}"
+        result = self._execute_ssh_command(command)
+        
+        if result['success']:
+            result['message'] = f'IP {ip} added to pfSense table {table_name}'
+            result['ip'] = ip
+            result['table'] = table_name
+        else:
+            result['message'] = f'Failed to block IP: {result["message"]}'
+        
+        return result
     
     def unblock_ip_pfctl(self, ip: str, table_name: str = 'blocked_ips') -> Dict:
         """Unblock IP sử dụng pfctl"""
-        try:
-            import paramiko
-            
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(self.host, username=self.username, password=self.password, timeout=10)
-            
-            command = f"pfctl -t {table_name} -T delete {ip}"
-            stdin, stdout, stderr = ssh.exec_command(command)
-            
-            error = stderr.read().decode()
-            ssh.close()
-            
-            if error:
-                return {
-                    'success': False,
-                    'message': f'Failed to unblock IP: {error}'
-                }
-            
-            return {
-                'success': True,
-                'message': f'IP {ip} removed from pfSense table {table_name}',
-                'ip': ip
-            }
-        except Exception as e:
-            return {
-                'success': False,
-                'message': f'Failed to unblock IP: {str(e)}'
-            }
+        command = f"pfctl -t {table_name} -T delete {ip}"
+        result = self._execute_ssh_command(command)
+        
+        if result['success']:
+            result['message'] = f'IP {ip} removed from pfSense table {table_name}'
+            result['ip'] = ip
+        else:
+            result['message'] = f'Failed to unblock IP: {result["message"]}'
+        
+        return result
 
 
 def get_pfsense_client(method: str = 'ssh'):

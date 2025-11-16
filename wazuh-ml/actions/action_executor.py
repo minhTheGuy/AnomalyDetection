@@ -10,6 +10,76 @@ import pandas as pd
 from enum import Enum
 
 from actions.action_generator import ActionType
+from utils.common import ensure_dir
+
+
+def _create_result(success: bool, message: str, **kwargs) -> Dict:
+    """Helper: Tạo result dict với timestamp"""
+    result = {
+        'success': success,
+        'message': message,
+        'timestamp': datetime.now().isoformat(),
+    }
+    result.update(kwargs)
+    return result
+
+
+def _execute_pfsense_action(action_type: str, action: Dict, executor) -> Dict:
+    """Helper: Execute pfSense action (block IP hoặc port)"""
+    if not executor.enable_pfsense:
+        return _create_result(
+            False,
+            'pfSense not enabled. Enable with ENABLE_PFSENSE=true',
+            block_info={'status': 'pfSense_not_configured'}
+        )
+    
+    try:
+        from actions.pfsense_integration import get_pfsense_client
+        pfsense = get_pfsense_client(method=executor.pfsense_method)
+        
+        if not pfsense:
+            return _create_result(False, 'Failed to get pfSense client')
+        
+        params = action.get('params', {})
+        
+        if action_type == 'block_ip':
+            ip = params.get('ip')
+            if not ip:
+                return _create_result(False, 'No IP address provided')
+            
+            if executor.pfsense_method == 'ssh':
+                result = pfsense.block_ip_pfctl(ip)
+            else:
+                duration = params.get('duration', 3600)
+                reason = params.get('reason', 'Security threat detected')
+                result = pfsense.block_ip(ip, duration=duration, reason=reason)
+        
+        elif action_type == 'block_port':
+            port = params.get('port')
+            if not port:
+                return _create_result(False, 'No port provided')
+            
+            ip = params.get('ip')
+            duration = params.get('duration', 3600)
+            result = pfsense.block_port(port, ip=ip, duration=duration)
+        
+        else:
+            return _create_result(False, f'Unknown action type: {action_type}')
+        
+        if result.get('success'):
+            return _create_result(
+                True,
+                result.get('message', f'{action_type} executed successfully'),
+                block_info=result
+            )
+        else:
+            return _create_result(
+                False,
+                f'pfSense {action_type} failed: {result.get("message")}'
+            )
+    
+    except Exception as e:
+        return _create_result(False, f'pfSense integration error: {str(e)}')
 
 
 def _json_serialize(obj: Any) -> Any:
@@ -50,7 +120,7 @@ class ActionExecutor:
         self.pfsense_method = self.config.get('pfsense_method', 'ssh') or os.getenv('PFSENSE_METHOD', 'ssh')
         
         # Đảm bảo thư mục tồn tại
-        os.makedirs(os.path.dirname(self.action_log_path), exist_ok=True)
+        ensure_dir(self.action_log_path)
     
     def execute_action(self, action: Dict) -> Dict:
         """
@@ -97,36 +167,18 @@ class ActionExecutor:
     
     def _execute_log(self, action: Dict) -> Dict:
         """Execute LOG action"""
-        # Log đã được thực hiện trong detection pipeline
-        return {
-            'success': True,
-            'message': 'Logged successfully',
-            'timestamp': datetime.now().isoformat(),
-        }
+        return _create_result(True, 'Logged successfully')
     
     def _execute_alert(self, action: Dict) -> Dict:
         """Execute ALERT action"""
-        # Alert được gửi đến logging system
-        params = action.get('params', {})
         message = f"ALERT: {action.get('reason', 'Unknown alert')}"
-        
-        # Log alert (có thể mở rộng để gửi đến monitoring system)
         print(f"  {message}")
-        
-        return {
-            'success': True,
-            'message': f'Alert logged: {message}',
-            'timestamp': datetime.now().isoformat(),
-        }
+        return _create_result(True, f'Alert logged: {message}')
     
     def _execute_telegram_notify(self, action: Dict) -> Dict:
         """Execute TELEGRAM NOTIFY action"""
         if not self.telegram_bot_token or not self.telegram_chat_id:
-            return {
-                'success': False,
-                'message': 'Telegram bot token or chat ID not configured',
-                'timestamp': datetime.now().isoformat(),
-            }
+            return _create_result(False, 'Telegram bot token or chat ID not configured')
         
         params = action.get('params', {})
         message = params.get('message', action.get('reason', 'Unknown alert'))
@@ -144,162 +196,23 @@ class ActionExecutor:
             response = requests.post(url, json=payload, timeout=10)
             response.raise_for_status()
             
-            return {
-                'success': True,
-                'message': f'Telegram notification sent to chat {chat_id}',
-                'timestamp': datetime.now().isoformat(),
-            }
+            return _create_result(True, f'Telegram notification sent to chat {chat_id}')
         except Exception as e:
-            return {
-                'success': False,
-                'message': f'Failed to send Telegram notification: {str(e)}',
-                'timestamp': datetime.now().isoformat(),
-            }
+            return _create_result(False, f'Failed to send Telegram notification: {str(e)}')
     
     def _execute_block_ip(self, action: Dict) -> Dict:
         """Execute BLOCK IP action trên pfSense firewall"""
-        params = action.get('params', {})
-        ip = params.get('ip')
-        duration = params.get('duration', 3600)  # Default 1 hour
-        reason = params.get('reason', 'Security threat detected')
-        
-        if not ip:
-            return {
-                'success': False,
-                'message': 'No IP address provided',
-                'timestamp': datetime.now().isoformat(),
-            }
-        
-        # Sử dụng pfSense để block IP
-        if self.enable_pfsense:
-            try:
-                from actions.pfsense_integration import get_pfsense_client
-                
-                pfsense = get_pfsense_client(method=self.pfsense_method)
-                
-                if pfsense:
-                    if self.pfsense_method == 'ssh':
-                        # Sử dụng SSH + pfctl (khuyến nghị)
-                        result = pfsense.block_ip_pfctl(ip)
-                    else:
-                        # Sử dụng pfSense API
-                        result = pfsense.block_ip(ip, duration=duration, reason=reason)
-                    
-                    if result.get('success'):
-                        return {
-                            'success': True,
-                            'message': result.get('message', f'IP {ip} blocked on pfSense'),
-                            'timestamp': datetime.now().isoformat(),
-                            'block_info': {
-                                'ip': ip,
-                                'duration': duration,
-                                'reason': reason,
-                                'method': f'pfSense ({self.pfsense_method})',
-                            }
-                        }
-                    else:
-                        return {
-                            'success': False,
-                            'message': f'pfSense block failed: {result.get("message")}',
-                            'timestamp': datetime.now().isoformat(),
-                        }
-            except Exception as e:
-                return {
-                    'success': False,
-                    'message': f'pfSense integration error: {str(e)}',
-                    'timestamp': datetime.now().isoformat(),
-                }
-        
-        # Nếu pfSense chưa được cấu hình
-        return {
-            'success': False,
-            'message': f'pfSense not enabled. Enable with ENABLE_PFSENSE=true',
-            'timestamp': datetime.now().isoformat(),
-            'block_info': {
-                'ip': ip,
-                'duration': duration,
-                'reason': reason,
-                'status': 'pfSense_not_configured',
-            }
-        }
+        return _execute_pfsense_action('block_ip', action, self)
     
     def _execute_block_port(self, action: Dict) -> Dict:
         """Execute BLOCK PORT action trên pfSense firewall"""
-        params = action.get('params', {})
-        port = params.get('port')
-        ip = params.get('ip')
-        duration = params.get('duration', 3600)  # Default 1 hour
-        
-        if not port:
-            return {
-                'success': False,
-                'message': 'No port provided',
-                'timestamp': datetime.now().isoformat(),
-            }
-        
-        # Sử dụng pfSense để block port
-        if self.enable_pfsense:
-            try:
-                from actions.pfsense_integration import get_pfsense_client
-                
-                pfsense = get_pfsense_client(method=self.pfsense_method)
-                
-                if pfsense:
-                    result = pfsense.block_port(port, ip=ip, duration=duration)
-                    
-                    if result.get('success'):
-                        return {
-                            'success': True,
-                            'message': result.get('message', f'Port {port} blocked on pfSense'),
-                            'timestamp': datetime.now().isoformat(),
-                            'block_info': {
-                                'port': port,
-                                'ip': ip,
-                                'duration': duration,
-                                'method': f'pfSense ({self.pfsense_method})',
-                            }
-                        }
-                    else:
-                        return {
-                            'success': False,
-                            'message': f'pfSense port block failed: {result.get("message")}',
-                            'timestamp': datetime.now().isoformat(),
-                        }
-            except Exception as e:
-                return {
-                    'success': False,
-                    'message': f'pfSense integration error: {str(e)}',
-                    'timestamp': datetime.now().isoformat(),
-                }
-        
-        # Nếu pfSense chưa được cấu hình
-        return {
-            'success': False,
-            'message': f'pfSense not enabled. Enable with ENABLE_PFSENSE=true',
-            'timestamp': datetime.now().isoformat(),
-            'block_info': {
-                'port': port,
-                'ip': ip,
-                'status': 'pfSense_not_configured',
-            }
-        }
+        return _execute_pfsense_action('block_port', action, self)
     
     def _execute_escalate(self, action: Dict) -> Dict:
         """Execute ESCALATE action"""
-        # Escalate có thể gửi email, SMS, hoặc notification đến manager
-        params = action.get('params', {})
         message = f"ESCALATION: {action.get('reason', 'Unknown escalation')}"
-        
-        # Có thể tích hợp với:
-        # - Email service
-        # - SMS service
-        # - PagerDuty, OpsGenie, etc.
-        
-        return {
-            'success': True,
-            'message': f'Escalation sent: {message}',
-            'timestamp': datetime.now().isoformat(),
-        }
+        # Có thể tích hợp với: Email, SMS, PagerDuty, OpsGenie, etc.
+        return _create_result(True, f'Escalation sent: {message}')
     
     def _log_action(self, action: Dict, result: Dict):
         """Log action và result vào file"""

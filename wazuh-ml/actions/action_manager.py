@@ -1,12 +1,12 @@
 """
 Action Manager - Quản lý và điều phối actions
 """
-import os
 import pandas as pd
 from typing import Dict, List, Optional
 
 from actions.action_generator import ActionGenerator
 from actions.action_executor import ActionExecutor
+from utils.common import safe_save_csv, print_header
 
 
 class ActionManager:
@@ -47,7 +47,8 @@ class ActionManager:
             }
         
         # Generate actions
-        print(f"\nGenerating actions for {len(anomalies_df)} anomalies...")
+        print_header("ACTION GENERATION", width=60)
+        print(f"Generating actions for {len(anomalies_df)} anomalies...")
         actions_df = self.generator.generate_actions_batch(anomalies_df)
         print(f"  Generated {len(actions_df)} actions")
         
@@ -91,13 +92,11 @@ class ActionManager:
     
     def save_actions(self, actions_df: pd.DataFrame, output_path: str):
         """Save actions to CSV"""
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        actions_df.to_csv(output_path, index=False)
-        print(f"Actions saved to {output_path}")
+        if safe_save_csv(actions_df, output_path):
+            print(f"Actions saved to {output_path}")
     
     def save_results(self, results_df: pd.DataFrame, output_path: str):
         """Save execution results to CSV"""
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        results_df.to_csv(output_path, index=False)
-        print(f"Execution results saved to {output_path}")
+        if safe_save_csv(results_df, output_path):
+            print(f"Execution results saved to {output_path}")
 

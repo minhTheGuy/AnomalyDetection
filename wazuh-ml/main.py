@@ -6,6 +6,8 @@ import argparse
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, PROJECT_ROOT)
 
+from utils.common import print_header
+
 
 def export_logs():
     """Export logs từ Wazuh Indexer"""
@@ -375,6 +377,49 @@ Examples:
         action="store_true",
         help="Execute actions immediately (for generate-actions command)"
     )
+    parser.add_argument(
+        "--source-model",
+        type=str,
+        default=None,
+        help="Source model path for transfer learning (for transfer-learning command)"
+    )
+    parser.add_argument(
+        "--contamination",
+        type=float,
+        default=0.05,
+        help="Contamination rate for transfer learning (for transfer-learning command)"
+    )
+    parser.add_argument(
+        "--ensemble",
+        action="store_true",
+        help="Use ensemble model for transfer learning (for transfer-learning command, default: True)"
+    )
+    parser.add_argument(
+        "--no-ensemble",
+        action="store_true",
+        help="Disable ensemble model for transfer learning (for transfer-learning command)"
+    )
+    parser.add_argument(
+        "--iterations",
+        type=int,
+        default=1,
+        help="Number of feedback loop iterations (for feedback-loop command)"
+    )
+    parser.add_argument(
+        "--detect-only",
+        action="store_true",
+        help="Only run detection in feedback loop, skip retraining (for feedback-loop command)"
+    )
+    parser.add_argument(
+        "--no-retrain",
+        action="store_true",
+        help="Skip retraining in feedback loop (for feedback-loop command)"
+    )
+    parser.add_argument(
+        "--no-tests",
+        action="store_true",
+        help="Skip tests in feedback loop (for feedback-loop command)"
+    )
     args = parser.parse_args()
     
     # Nếu có --menu hoặc không có command, hiển thị menu
@@ -420,10 +465,12 @@ Examples:
                 elif choice == "13":
                     generate_actions(anomalies_csv=args.anomalies_csv, execute=args.execute)
                 elif choice == "14":
+                    # Default: use ensemble (True), unless --no-ensemble is set
+                    use_ensemble = not args.no_ensemble
                     run_transfer_learning(
                         source_model=args.source_model,
                         contamination=args.contamination,
-                        use_ensemble=args.ensemble
+                        use_ensemble=use_ensemble
                     )
                 elif choice == "15":
                     run_feedback_loop(

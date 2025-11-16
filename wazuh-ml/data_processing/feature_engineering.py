@@ -4,6 +4,7 @@ Module trích xuất các đặc trưng nâng cao cho anomaly detection
 
 import pandas as pd
 import numpy as np
+from utils.common import print_header
 
 def extract_time_features(df):
     """
@@ -340,7 +341,7 @@ def engineer_all_features(df):
     Returns:
         DataFrame với tất cả features đã được engineering
     """
-    print("Feature Engineering:")
+    print_header("FEATURE ENGINEERING", width=60)
     
     initial_cols = df.shape[1]
     
@@ -360,7 +361,7 @@ def engineer_all_features(df):
     df = create_aggregated_features(df)
     
     final_cols = df.shape[1]
-    print(f"Features added: {final_cols - initial_cols} (Total: {final_cols})")
+    print(f"\nFeatures added: {final_cols - initial_cols} (Total: {final_cols})")
     
     return df
 

@@ -6,6 +6,19 @@ from enum import Enum
 import pandas as pd
 
 
+def _is_external_ip(ip: str) -> bool:
+    """Check if IP is external (not private)"""
+    if not ip or pd.isna(ip):
+        return False
+    ip_str = str(ip)
+    private_prefixes = [
+        '192.168.', '10.', '172.16.', '172.17.', '172.18.', '172.19.',
+        '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.',
+        '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.'
+    ]
+    return not any(ip_str.startswith(prefix) for prefix in private_prefixes)
+
+
 class ActionType(Enum):
     """Các loại actions có thể thực hiện"""
     BLOCK_IP = "block_ip"
@@ -184,12 +197,7 @@ class ActionGenerator:
             pd.notna(src_ip) and src_ip):
             
             # Chỉ block nếu là external IP hoặc attack type nghiêm trọng
-            is_external = not any(src_ip.startswith(prefix) for prefix in 
-                                 ['192.168.', '10.', '172.16.', '172.17.', '172.18.', '172.19.',
-                                  '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.',
-                                  '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.'])
-            
-            if is_external or attack_type in ['malware', 'dos_ddos', 'brute_force', 'privilege_escalation']:
+            if _is_external_ip(src_ip) or attack_type in ['malware', 'dos_ddos', 'brute_force', 'privilege_escalation']:
                 actions.append({
                     'type': ActionType.BLOCK_IP,
                     'target': str(src_ip),

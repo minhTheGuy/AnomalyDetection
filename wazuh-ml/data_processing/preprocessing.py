@@ -1,5 +1,6 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+from utils.common import print_header
 
 def preprocess_dataframe(df: pd.DataFrame):
     """

@@ -107,7 +107,7 @@ def classify(logs=None, classifier_path=CLASSIFIER_MODEL_PATH):
             if mask_override.sum() > 0:
                 df.loc[mask_override, 'predicted_attack_type'] = pattern_based_types[mask_override]
                 df.loc[mask_override, 'attack_type_confidence'] = 0.75  # Set confidence cho pattern-based
-                print(f"  ⚠️  Override {mask_override.sum()} predictions từ 'benign' → attack types (dùng pattern matching)")
+                print(f"  Override {mask_override.sum()} predictions từ 'benign' → attack types (dùng pattern matching)")
         
         # Lấy top 3 predictions với probabilities
         top3_indices = np.argsort(attack_probas, axis=1)[:, -3:][:, ::-1]
