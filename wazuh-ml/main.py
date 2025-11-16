@@ -94,9 +94,7 @@ def llm_analyze():
 
 def generate_synthetic_data(num_events=5000, benign_ratio=0.7, days=7, output=None, csv_output=None):
     """Generate synthetic training data"""
-    print("=" * 70)
-    print("GENERATING SYNTHETIC DATA")
-    print("=" * 70)
+    print_header("GENERATING SYNTHETIC DATA")
     from data_processing.generate_synthetic_data import generate_synthetic_data as gen_data
     from datetime import datetime, timedelta
     
@@ -115,9 +113,7 @@ def generate_synthetic_data(num_events=5000, benign_ratio=0.7, days=7, output=No
 
 def run_tests(test_module=None):
     """Run test suite"""
-    print("=" * 70)
-    print("RUNNING TESTS")
-    print("=" * 70)
+    print_header("RUNNING TESTS")
     from tests.run_tests import run_all_tests, run_specific_test
     import sys
     
@@ -135,9 +131,7 @@ def run_tests(test_module=None):
 
 def check_threat_intelligence(ip=None, file_hash=None):
     """Kiểm tra threat intelligence feeds"""
-    print("=" * 70)
-    print("KIỂM TRA THÔNG TIN AN TOÀN")
-    print("=" * 70)
+    print_header("KIỂM TRA THÔNG TIN AN TOÀN")
     from threat_intelligence.feeds import get_threat_intel_manager
     
     manager = get_threat_intel_manager()
@@ -170,11 +164,47 @@ def check_threat_intelligence(ip=None, file_hash=None):
                     print(f"  Scan Date: {result.get('scan_date', 'N/A')}")
 
 
+def run_transfer_learning(source_model=None, contamination=0.05, use_ensemble=True):
+    """Bootstrap model với Transfer Learning"""
+    print_header("TRANSFER LEARNING")
+    from training.transfer_learning import bootstrap_with_transfer_learning
+    from core.config import CSV_PATH, MODEL_PATH
+    
+    success = bootstrap_with_transfer_learning(
+        target_data_path=CSV_PATH,
+        source_model_path=source_model,
+        output_model_path=MODEL_PATH,
+        contamination=contamination,
+        use_ensemble=use_ensemble
+    )
+    
+    if success:
+        print("\n  Transfer learning completed successfully!")
+    else:
+        print("\n  Transfer learning failed!")
+        import sys
+        sys.exit(1)
+
+
+def run_feedback_loop(iterations=1, detect_only=False, retrain=True, run_tests=True):
+    """Chạy Feedback Loop hoàn chỉnh"""
+    print_header("FEEDBACK LOOP")
+    from training.feedback_loop import run_feedback_loop
+    
+    results = run_feedback_loop(
+        iterations=iterations,
+        detect_only=detect_only,
+        retrain=retrain,
+        run_tests=run_tests
+    )
+    
+    print(f"\n  Completed {len(results)} feedback loop iteration(s)")
+    return results
+
+
 def generate_actions(anomalies_csv=None, execute=False):
     """Generate và execute actions từ anomalies"""
-    print("=" * 70)
-    print("ACTION GENERATION & EXECUTION")
-    print("=" * 70)
+    print_header("ACTION GENERATION & EXECUTION")
     from actions.action_manager import ActionManager
     from core.config import (
         ANOMALIES_CSV_PATH, ACTIONS_CSV_PATH, ACTION_RESULTS_CSV_PATH,
@@ -246,6 +276,8 @@ def show_menu():
     print("  11. Run tests")
     print("  12. Check threat intelligence")
     print("  13. Generate actions from anomalies")
+    print("  14. Transfer Learning (bootstrap model)")
+    print("  15. Feedback Loop (Detect → Analyze → Tune → Retrain → Test)")
     print("  0. Thoát")
     print("=" * 70)
 
@@ -269,7 +301,8 @@ Examples:
         choices=[
             "export", "train", "train-classifier", "train-all",
             "detect", "classify", "realtime", "evaluate", "llm", "generate-data",
-            "test", "threat-intel", "generate-actions"
+            "test", "threat-intel", "generate-actions",
+            "transfer-learning", "feedback-loop"
         ],
         help="Command to run"
     )
@@ -349,7 +382,7 @@ Examples:
         while True:
             show_menu()
             try:
-                choice = input("\nNhập lựa chọn (0-13): ").strip()
+                choice = input("\nNhập lựa chọn (0-15): ").strip()
                 
                 if choice == "0":
                     print("\nTạm biệt!")
@@ -386,8 +419,21 @@ Examples:
                     check_threat_intelligence(ip=args.ip, file_hash=args.hash)
                 elif choice == "13":
                     generate_actions(anomalies_csv=args.anomalies_csv, execute=args.execute)
+                elif choice == "14":
+                    run_transfer_learning(
+                        source_model=args.source_model,
+                        contamination=args.contamination,
+                        use_ensemble=args.ensemble
+                    )
+                elif choice == "15":
+                    run_feedback_loop(
+                        iterations=args.iterations,
+                        detect_only=args.detect_only,
+                        retrain=not args.no_retrain,
+                        run_tests=not args.no_tests
+                    )
                 else:
-                    print("Lựa chọn không hợp lệ! Vui lòng chọn từ 0-13.")
+                    print("Lựa chọn không hợp lệ! Vui lòng chọn từ 0-15.")
                 
                 if choice != "0":
                     input("\nNhấn Enter để tiếp tục...")
@@ -432,6 +478,19 @@ Examples:
             check_threat_intelligence(ip=args.ip, file_hash=args.hash)
         elif args.command == "generate-actions":
             generate_actions(anomalies_csv=args.anomalies_csv, execute=args.execute)
+        elif args.command == "transfer-learning":
+            run_transfer_learning(
+                source_model=args.source_model,
+                contamination=args.contamination,
+                use_ensemble=args.ensemble
+            )
+        elif args.command == "feedback-loop":
+            run_feedback_loop(
+                iterations=args.iterations,
+                detect_only=args.detect_only,
+                retrain=not args.no_retrain,
+                run_tests=not args.no_tests
+            )
 
 if __name__ == "__main__":
     main()
