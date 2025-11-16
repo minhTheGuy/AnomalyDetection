@@ -3,21 +3,28 @@ Module phân loại sự kiện bảo mật thành các loại tấn công và d
 """
 
 import pandas as pd
-import numpy as np
 import re
-from typing import Dict, List, Tuple, Optional
+from typing import List, Optional
 
 # Định nghĩa các pattern để phân loại attack types
 ATTACK_PATTERNS = {
     'brute_force': [
-        r'failed password', r'authentication failure', r'invalid user',
-        r'login attempt', r'brute force', r'too many attempts',
+        r'failed password', r'authentication failure', r'authentication failed',
+        r'invalid user', r'login attempt', r'brute force', r'too many attempts',
         r'connection closed', r'connection reset', r'too many authentication failures'
     ],
     'port_scan': [
+        # Suricata alert patterns (check sau malware để tránh conflict)
+        r'et scan', r'potential.*scan', r'scan.*port', r'port.*scan',
+        r'postgresql port', r'mysql port', r'ssh scan',
+        r'vnc scan', r'rdp scan', r'http.*probe', r'tcp.*probe',
+        r'udp.*probe',
+        # General scan patterns (không match với malware)
         r'port scan', r'nmap', r'syn scan', r'xmas scan', r'fin scan',
         r'null scan', r'port sweep', r'network scan', r'host scan',
-        r'multiple connection attempts', r'connection attempts from'
+        r'multiple connection attempts', r'connection attempts from',
+        # Chỉ match "suspicious inbound to" nếu không có "malware" hoặc "trojan"
+        r'scan.*inbound'
     ],
     'sql_injection': [
         r'sql injection', r'union select', r"or 1=1", r"' or '1'='1",
@@ -31,12 +38,19 @@ ATTACK_PATTERNS = {
     'dos_ddos': [
         r'denial of service', r'dos', r'ddos', r'flood', r'syn flood',
         r'icmp flood', r'udp flood', r'connection flood', r'resource exhaustion',
-        r'too many connections', r'rate limit exceeded'
+        r'too many connections', r'rate limit exceeded',
+        # Suricata patterns
+        r'et dos', r'et ddos', r'flood.*attack', r'burst.*traffic'
     ],
     'malware': [
         r'malware', r'virus', r'trojan', r'ransomware', r'backdoor',
         r'rootkit', r'worm', r'spyware', r'adware', r'exploit',
-        r'payload', r'shellcode'
+        r'payload', r'shellcode',
+        # Suricata alert patterns
+        r'et malware', r'et trojan', r'known malware ip',
+        r'suspicious inbound to.*port', r'malware.*ip',
+        r'trojan.*communication', r'c2 communication',
+        r'possible.*trojan', r'suspicious.*malware'
     ],
     'privilege_escalation': [
         r'privilege escalation', r'sudo', r'su ', r'root access',
@@ -75,7 +89,8 @@ EVENT_CATEGORY_PATTERNS = {
     'network': [
         r'network', r'connection', r'port', r'protocol', r'ip address',
         r'firewall', r'packet', r'traffic', r'network interface',
-        r'network scan', r'network activity'
+        r'network scan', r'network activity', r'suricata', r'ids', r'ips',
+        r'alert', r'intrusion', r'snort'
     ],
     'system': [
         r'system', r'process', r'service', r'daemon', r'kernel',
@@ -118,10 +133,25 @@ def extract_attack_type(event_desc: str) -> str:
     event_desc_lower = str(event_desc).lower()
     
     # Kiểm tra từng loại tấn công
+    # Malware được check trước port_scan
+    # để tránh "et malware suspicious inbound to port" bị phân loại nhầm thành port_scan
+    priority_order = ['malware', 'brute_force', 'port_scan', 'dos_ddos', 
+                     'sql_injection', 'xss', 'privilege_escalation', 'data_exfiltration',
+                     'web_attack', 'suspicious_activity']
+    
+    # Check priority attacks first
+    for attack_type in priority_order:
+        if attack_type in ATTACK_PATTERNS:
+            for pattern in ATTACK_PATTERNS[attack_type]:
+                if re.search(pattern, event_desc_lower, re.IGNORECASE):
+                    return attack_type
+    
+    # Check remaining attack types
     for attack_type, patterns in ATTACK_PATTERNS.items():
-        for pattern in patterns:
-            if re.search(pattern, event_desc_lower, re.IGNORECASE):
-                return attack_type
+        if attack_type not in priority_order:
+            for pattern in patterns:
+                if re.search(pattern, event_desc_lower, re.IGNORECASE):
+                    return attack_type
     
     return 'benign'
 
@@ -248,8 +278,8 @@ def get_classification_features(df: pd.DataFrame, feature_names: List[str]) -> p
     return X
 
 
+# Test với sample data
 if __name__ == "__main__":
-    # Test với sample data
     print("Testing classification module...")
     
     sample_data = {
