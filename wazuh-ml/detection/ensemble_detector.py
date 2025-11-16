@@ -14,6 +14,7 @@ from sklearn.model_selection import ParameterGrid
 from core.config import CSV_PATH, MODEL_PATH, ANALYZED_CSV_PATH, ANOMALIES_CSV_PATH
 from data_processing.preprocessing import preprocess_dataframe
 from data_processing.feature_engineering import engineer_all_features
+from utils.common import print_header, print_section, safe_load_joblib, safe_save_joblib, safe_load_csv, safe_save_csv
 
 
 class EnsembleAnomalyDetector:
@@ -44,9 +45,7 @@ class EnsembleAnomalyDetector:
             X: Feature matrix
             contamination: Tỷ lệ anomaly dự kiến
         """
-        print("\n" + "="*70)
-        print("ENSEMBLE TRAINING")
-        print("="*70)
+        print_header("ENSEMBLE TRAINING")
         
         # Normalize data (quan trọng cho LOF và SVM)
         print("\nNormalizing data...")
@@ -103,8 +102,8 @@ class EnsembleAnomalyDetector:
         Voting mechanism: Anomaly nếu >= voting_threshold models đồng ý
         
         Returns:
-            predictions: Array of -1 (anomaly) or 1 (normal)
-            votes: Dict với chi tiết vote từng model
+            predictions: Array có giá trị = -1 (anomaly) hoặc 1 (normal)
+            votes: Dictionary với chi tiết vote từng model
             anomaly_votes: Số models vote anomaly cho mỗi sample
         """
         if not self.fitted:
@@ -171,6 +170,27 @@ class EnsembleAnomalyDetector:
         }
         
         return agreement_stats
+    
+    def save(self, path: str):
+        """Save detector to file"""
+        bundle = {
+            'models': self.models,
+            'scaler': self.scaler,
+            'voting_threshold': self.voting_threshold,
+            'fitted': self.fitted
+        }
+        safe_save_joblib(bundle, path)
+    
+    def load(self, path: str):
+        """Load detector from file"""
+        bundle = safe_load_joblib(path)
+        if bundle is None:
+            return None
+        self.models = bundle['models']
+        self.scaler = bundle['scaler']
+        self.voting_threshold = bundle.get('voting_threshold', 2)
+        self.fitted = bundle.get('fitted', True)
+        return self
 
 
 def hyperparameter_tuning_ensemble(X, contamination_range=[0.03, 0.05, 0.07], voting_thresholds=[2, 3]):
@@ -179,15 +199,13 @@ def hyperparameter_tuning_ensemble(X, contamination_range=[0.03, 0.05, 0.07], vo
     
     Args:
         X: Feature matrix
-        contamination_range: List of contamination values to test
-        voting_thresholds: List of voting thresholds to test
+        contamination_range: List của giá trị contamination để test
+        voting_thresholds: List của giá trị voting thresholds để test
     
     Returns:
         best_detector, best_params, results
     """
-    print("\n" + "="*70)
-    print("ENSEMBLE HYPERPARAMETER TUNING")
-    print("="*70)
+    print_header("ENSEMBLE HYPERPARAMETER TUNING")
     
     best_score = float('-inf')
     best_params = None
@@ -248,9 +266,7 @@ def hyperparameter_tuning_ensemble(X, contamination_range=[0.03, 0.05, 0.07], vo
                 best_detector = detector
                 print(f"  New best score!")
     
-    print("\n" + "="*70)
-    print("BEST PARAMETERS FOUND")
-    print("="*70)
+    print_header("BEST PARAMETERS FOUND")
     print(f"Contamination:     {best_params['contamination']}")
     print(f"Voting threshold:  {best_params['voting_threshold']}/3")
     print(f"Combined score:    {best_score:.4f}")
@@ -262,13 +278,14 @@ def train_ensemble_model():
     """
     Main training function với ensemble approach
     """
-    print("="*70)
-    print("ENSEMBLE ANOMALY DETECTION - TRAINING")
-    print("="*70)
+    print_header("ENSEMBLE ANOMALY DETECTION - TRAINING")
     
     # Load data
     print("\nLoading data...")
-    df = pd.read_csv(CSV_PATH)
+    df = safe_load_csv(CSV_PATH)
+    if df is None or len(df) == 0:
+        print(f"Error: Could not load data from {CSV_PATH}")
+        return
     print(f"  Loaded {len(df)} records from {CSV_PATH}")
     
     # Feature engineering
@@ -284,14 +301,12 @@ def train_ensemble_model():
     # Hyperparameter tuning
     best_detector, best_params, tuning_results = hyperparameter_tuning_ensemble(
         X,
-        contamination_range=[0.05, 0.07, 0.10],
+        contamination_range=[0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10],
         voting_thresholds=[2, 3]
     )
     
     # Final predictions
-    print("\n" + "="*70)
-    print("FINAL ENSEMBLE PREDICTIONS")
-    print("="*70)
+    print_header("FINAL ENSEMBLE PREDICTIONS")
     
     predictions, votes, anomaly_votes = best_detector.predict(X)
     scores = best_detector.decision_function(X)
@@ -327,16 +342,13 @@ def train_ensemble_model():
     print(f"  Max:    {scores.max():.4f}")
     
     # Save analyzed data
-    df.to_csv(ANALYZED_CSV_PATH, index=False)
-    print(f"\nResults saved → {ANALYZED_CSV_PATH}")
+    if safe_save_csv(df, ANALYZED_CSV_PATH):
+        print(f"\nResults saved → {ANALYZED_CSV_PATH}")
 
     # Save anomalies only
-    try:
-        anomalies_out = df[df['anomaly_label'] == -1].copy()
-        anomalies_out.to_csv(ANOMALIES_CSV_PATH, index=False)
+    anomalies_out = df[df['anomaly_label'] == -1].copy()
+    if safe_save_csv(anomalies_out, ANOMALIES_CSV_PATH):
         print(f"Anomalies only saved → {ANOMALIES_CSV_PATH} ({len(anomalies_out)} rows)")
-    except Exception as e:
-        print(f"Failed to save anomalies CSV: {e}")
     
     # Save model bundle
     model_bundle = {
@@ -351,19 +363,17 @@ def train_ensemble_model():
         'n_samples': X.shape[0]
     }
     
-    joblib.dump(model_bundle, MODEL_PATH)
-    print(f"Model saved → {MODEL_PATH}")
+    if safe_save_joblib(model_bundle, MODEL_PATH):
+        print(f"Model saved → {MODEL_PATH}")
     
     # Show top anomalies by confidence
-    print("\n" + "="*70)
-    print("TOP ANOMALIES BY CONFIDENCE")
-    print("="*70)
+    print_header("TOP ANOMALIES BY CONFIDENCE")
     
     # Unanimous anomalies (3/3 votes)
     unanimous = df[df['anomaly_votes'] == 3].copy()
     if len(unanimous) > 0:
         print(f"\nUNANIMOUS ANOMALIES (3/3 models agree) - {len(unanimous)} events:")
-        print("-"*70)
+        print_section("")
         top_unanimous = unanimous.nsmallest(10, 'anomaly_score')
         
         display_cols = ['timestamp', 'agent', 'rule_level', 'event_desc', 'anomaly_score', 'anomaly_votes']
@@ -376,7 +386,7 @@ def train_ensemble_model():
     majority = df[df['anomaly_votes'] == 2].copy()
     if len(majority) > 0:
         print(f"\nMAJORITY ANOMALIES (2/3 models agree) - {len(majority)} events:")
-        print("-"*70)
+        print_section("")
         top_majority = majority.nsmallest(10, 'anomaly_score')
         
         display_cols = ['timestamp', 'agent', 'rule_level', 'event_desc', 'anomaly_score', 'anomaly_votes']
@@ -385,9 +395,7 @@ def train_ensemble_model():
         print(top_majority[display_cols].to_string(index=False))
     
     # Model-specific insights
-    print("\n" + "="*70)
-    print("MODEL-SPECIFIC INSIGHTS")
-    print("="*70)
+    print_header("MODEL-SPECIFIC INSIGHTS")
     
     anomalies = df[df['anomaly_label'] == -1]
     
@@ -403,13 +411,11 @@ def train_ensemble_model():
                 (anomalies['lof_vote'] == 1) & 
                 (anomalies['svm_vote'] == -1)).sum()
     
-    print(f"\nOnly detected by Isolation Forest: {only_if}")
+    print(f"\nOnly detected by Isolation Forest:  {only_if}")
     print(f"Only detected by LOF:               {only_lof}")
     print(f"Only detected by SVM:               {only_svm}")
     
-    print("\n" + "="*70)
-    print("TRAINING COMPLETED SUCCESSFULLY")
-    print("="*70)
+    print_header("TRAINING COMPLETED SUCCESSFULLY")
 
 
 if __name__ == "__main__":

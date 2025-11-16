@@ -6,9 +6,9 @@ from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import ParameterGrid
 from sklearn.preprocessing import StandardScaler
 from core.config import CSV_PATH, MODEL_PATH, ANALYZED_CSV_PATH, ANOMALIES_CSV_PATH, MODEL_TYPE, SINGLE_IF_NORMALIZE
-from data_processing.preprocessing import preprocess_dataframe
-from data_processing.feature_engineering import engineer_all_features
 from detection.ensemble_detector import train_ensemble_model
+from training.common import load_and_prepare_data
+from utils.common import print_header, safe_load_csv, safe_save_joblib, safe_save_csv
 
 def evaluate_model(model, X, df=None):
     """
@@ -28,9 +28,7 @@ def evaluate_model(model, X, df=None):
     anomaly_count = (predictions == -1).sum()
     anomaly_ratio = anomaly_count / len(predictions)
     
-    print(f"\n{'='*60}")
-    print(f"MODEL EVALUATION")
-    print(f"{'='*60}")
+    print_header("MODEL EVALUATION", width=60)
     print(f"Total samples:        {len(predictions)}")
     print(f"Anomalies detected:   {anomaly_count} ({anomaly_ratio:.2%})")
     print(f"Normal samples:       {(predictions == 1).sum()}")
@@ -72,9 +70,7 @@ def hyperparameter_tuning(X, df, param_grid):
     Returns:
         best_model, best_params, results_list
     """
-    print(f"\n{'='*60}")
-    print(f"🔍 HYPERPARAMETER TUNING")
-    print(f"{'='*60}")
+    print_header("HYPERPARAMETER TUNING", width=60)
     print(f"Grid size: {len(list(ParameterGrid(param_grid)))} combinations")
     
     best_score = float('-inf')
@@ -123,9 +119,7 @@ def hyperparameter_tuning(X, df, param_grid):
             print(f"Error: {e}")
             continue
     
-    print(f"\n{'='*60}")
-    print(f"BEST PARAMETERS FOUND")
-    print(f"{'='*60}")
+    print_header("BEST PARAMETERS FOUND", width=60)
     for key, value in best_params.items():
         print(f"{key:20s}: {value}")
     print(f"{'Combined score':20s}: {best_score:.4f}")
@@ -143,22 +137,13 @@ def train_model_with_tuning(enable_tuning=True):
     # If ensemble is requested by config, delegate to ensemble training
     if MODEL_TYPE == "ensemble":
         return train_ensemble_model()
-    print(f"\n{'='*60}")
-    print(f"ANOMALY DETECTION MODEL TRAINING")
-    print(f"{'='*60}\n")
     
-    # Đọc dữ liệu
+    print_header("ANOMALY DETECTION MODEL TRAINING", width=60)
+    
+    # Load và prepare data
     print("Reading data from CSV...")
-    df = pd.read_csv(CSV_PATH)
+    df, X, encoders = load_and_prepare_data(CSV_PATH, engineer_features=True)
     print(f"  ✓ Loaded {len(df)} records")
-    
-    # Feature engineering
-    print("\nApplying feature engineering...")
-    df = engineer_all_features(df)
-    
-    # Preprocessing
-    print("\nPreprocessing and encoding...")
-    df, X, encoders = preprocess_dataframe(df)
     
     # Optional normalization for single IsolationForest
     scaler = None
@@ -202,16 +187,13 @@ def train_model_with_tuning(enable_tuning=True):
     df["anomaly_score"] = best_model.decision_function(X_for_fit)
     
     # Save analyzed results
-    df.to_csv(ANALYZED_CSV_PATH, index=False)
-    print(f"Saved analysis results → {ANALYZED_CSV_PATH}")
+    if safe_save_csv(df, ANALYZED_CSV_PATH):
+        print(f"Saved analysis results → {ANALYZED_CSV_PATH}")
 
     # Save anomalies only
-    try:
-        anomalies_out = df[df["anomaly_label"] == -1].copy()
-        anomalies_out.to_csv(ANOMALIES_CSV_PATH, index=False)
+    anomalies_out = df[df["anomaly_label"] == -1].copy()
+    if safe_save_csv(anomalies_out, ANOMALIES_CSV_PATH):
         print(f"Saved anomalies only → {ANOMALIES_CSV_PATH} ({len(anomalies_out)} rows)")
-    except Exception as e:
-        print(f"Failed to save anomalies CSV: {e}")
     
     # Save model bundle
     model_bundle = {
@@ -228,13 +210,11 @@ def train_model_with_tuning(enable_tuning=True):
         "scaler": scaler
     }
     
-    joblib.dump(model_bundle, MODEL_PATH)
-    print(f"Saved trained model → {MODEL_PATH}")
+    if safe_save_joblib(model_bundle, MODEL_PATH):
+        print(f"Saved trained model → {MODEL_PATH}")
     
     # Display top anomalies
-    print(f"\n{'='*60}")
-    print(f" TOP 15 ANOMALIES DETECTED")
-    print(f"{'='*60}")
+    print_header("TOP 15 ANOMALIES DETECTED", width=60)
     anomalies = df[df["anomaly_label"] == -1].nsmallest(15, "anomaly_score")
     
     if len(anomalies) > 0:
@@ -248,9 +228,7 @@ def train_model_with_tuning(enable_tuning=True):
     else:
         print("No anomalies detected!")
     
-    print(f"\n{'='*60}")
-    print(f"TRAINING COMPLETED SUCCESSFULLY")
-    print(f"{'='*60}\n")
+    print_header("TRAINING COMPLETED SUCCESSFULLY", width=60)
 
 
 if __name__ == "__main__":

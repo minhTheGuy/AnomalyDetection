@@ -7,7 +7,6 @@ import json
 import requests
 import urllib3
 import pandas as pd
-import joblib
 from datetime import datetime, timedelta
 import signal
 import sys
@@ -23,6 +22,7 @@ from core.config import (
 from data_processing.preprocessing import preprocess_dataframe
 from data_processing.feature_engineering import engineer_all_features
 from utils.push_alert import send_alert
+from utils.common import print_header, safe_load_joblib
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -65,7 +65,9 @@ class RealtimeDetector:
         """Load trained model"""
         try:
             print(f"Loading model from {MODEL_PATH}...")
-            bundle = joblib.load(MODEL_PATH)
+            bundle = safe_load_joblib(MODEL_PATH)
+            if bundle is None:
+                raise FileNotFoundError(f"Model not found at {MODEL_PATH}")
             
             self.model = bundle['model']
             self.encoders = bundle['encoders']
@@ -250,9 +252,7 @@ class RealtimeDetector:
     
     def run(self):
         """Run detector in continuous mode"""
-        print(f"\n{'='*70}")
-        print(f" REAL-TIME ANOMALY DETECTOR STARTED")
-        print(f"{'='*70}")
+        print_header("REAL-TIME ANOMALY DETECTOR STARTED")
         print(f"Poll interval:     {self.poll_interval}s")
         print(f"Lookback window:   {self.lookback_minutes} minutes")
         print(f"Press Ctrl+C to stop\n")
@@ -302,9 +302,7 @@ class RealtimeDetector:
                 print(f"  ⏳ Sleeping for {self.poll_interval}s...")
                 time.sleep(self.poll_interval)
         
-        print(f"\n{'='*70}")
-        print(f"✅ DETECTOR STOPPED")
-        print(f"{'='*70}")
+        print_header("DETECTOR STOPPED")
         print(f"Total events processed: {self.total_processed}")
         print(f"Total anomalies found:  {self.total_anomalies}")
 

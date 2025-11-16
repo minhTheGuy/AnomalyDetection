@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# auto_retrain.py
 """
 Script tự động retrain model khi có dữ liệu mới
 Kiểm tra ngày modified của file CSV, nếu mới hơn model thì retrain
@@ -14,6 +12,7 @@ from pathlib import Path
 from core.config import CSV_PATH, MODEL_PATH, ANALYZED_CSV_PATH
 from data_processing.export_from_es import fetch_logs
 from training.train_model import train_model_with_tuning
+from utils.common import print_header, safe_load_joblib
 
 def get_file_age(filepath):
     """
@@ -81,18 +80,16 @@ def get_model_info():
     if not os.path.exists(MODEL_PATH):
         return None
     
-    try:
-        bundle = joblib.load(MODEL_PATH)
-        return {
-            'training_date': bundle.get('training_date', 'Unknown'),
-            'n_samples': bundle.get('n_samples', 'Unknown'),
-            'n_features': bundle.get('n_features', 'Unknown'),
-            'best_params': bundle.get('best_params', {}),
-            'metrics': bundle.get('metrics', {})
-        }
-    except Exception as e:
-        print(f"⚠️  Error loading model info: {e}")
+    bundle = safe_load_joblib(MODEL_PATH)
+    if bundle is None:
         return None
+    return {
+        'training_date': bundle.get('training_date', 'Unknown'),
+        'n_samples': bundle.get('n_samples', 'Unknown'),
+        'n_features': bundle.get('n_features', 'Unknown'),
+        'best_params': bundle.get('best_params', {}),
+        'metrics': bundle.get('metrics', {})
+    }
 
 
 def auto_retrain(fetch_new_data=True, force=False, enable_tuning=True, max_age_days=7):
@@ -108,12 +105,10 @@ def auto_retrain(fetch_new_data=True, force=False, enable_tuning=True, max_age_d
     Returns:
         True nếu đã retrain, False nếu không
     """
-    print("="*70)
-    print("🔄 AUTO-RETRAIN CHECKER")
-    print("="*70)
+    print_header("AUTO-RETRAIN CHECKER")
     
     # Hiển thị thông tin model hiện tại
-    print("\n📊 Current Model Info:")
+    print("\n  Current Model Info:")
     model_info = get_model_info()
     if model_info:
         print(f"  Training date:  {model_info['training_date']}")
@@ -125,38 +120,38 @@ def auto_retrain(fetch_new_data=True, force=False, enable_tuning=True, max_age_d
         print("  No existing model found")
     
     # Kiểm tra có cần retrain không
-    print("\n🔍 Checking if retrain is needed...")
+    print("\n  Checking if retrain is needed...")
     should_train, reason = should_retrain(force=force, max_age_days=max_age_days)
     print(f"  Reason: {reason}")
     
     if not should_train:
-        print("\n✅ Model is up-to-date. No retrain needed.")
+        print("\n  Model is up-to-date. No retrain needed.")
         return False
     
-    print("\n🚀 Retrain is needed!")
+    print("\n  Retrain is needed!")
     
     # Fetch new data nếu được yêu cầu
     if fetch_new_data:
-        print("\n📥 Fetching new data from Wazuh Indexer...")
+        print("\n  Fetching new data from Wazuh Indexer...")
         try:
             fetch_logs()
-            print("✅ New data fetched successfully")
+            print("  New data fetched successfully")
         except Exception as e:
-            print(f"❌ Error fetching data: {e}")
-            print("⚠️  Continuing with existing data...")
+            print(f"  Error fetching data: {e}")
+            print("   Continuing with existing data...")
     
     # Retrain model
-    print("\n🧠 Starting model retraining...")
+    print("\n  Starting model retraining...")
     start_time = time.time()
     
     try:
         train_model_with_tuning(enable_tuning=enable_tuning)
         
         elapsed = time.time() - start_time
-        print(f"\n✅ Retrain completed successfully in {elapsed:.2f} seconds")
+        print(f"\n  Retrain completed successfully in {elapsed:.2f} seconds")
         
         # Hiển thị thông tin model mới
-        print("\n📊 New Model Info:")
+        print("\n  New Model Info:")
         new_model_info = get_model_info()
         if new_model_info:
             print(f"  Training date:  {new_model_info['training_date']}")
@@ -168,7 +163,7 @@ def auto_retrain(fetch_new_data=True, force=False, enable_tuning=True, max_age_d
         return True
         
     except Exception as e:
-        print(f"\n❌ Error during retraining: {e}")
+        print(f"\n  Error during retraining: {e}")
         import traceback
         traceback.print_exc()
         return False

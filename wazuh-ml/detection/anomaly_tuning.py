@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# anomaly_tuning.py
 """
 Module tinh chỉnh anomaly detection để giảm false positives
 """
@@ -7,6 +5,7 @@ Module tinh chỉnh anomaly detection để giảm false positives
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from utils.common import print_header, safe_load_csv
 
 class AnomalyFilter:
     """Filter và điều chỉnh anomaly scores để giảm false positives"""
@@ -344,9 +343,7 @@ def analyze_anomaly_distribution(df):
     Args:
         df: DataFrame với anomaly predictions
     """
-    print("\n" + "="*70)
-    print("ANOMALY DISTRIBUTION ANALYSIS")
-    print("="*70)
+    print_header("ANOMALY DISTRIBUTION ANALYSIS", width=70)
     
     anomalies = df[df['anomaly_label'] == -1]
     
@@ -412,9 +409,7 @@ def recommend_threshold(df, target_anomaly_rate=0.02):
     threshold_idx = int(len(scores) * target_anomaly_rate)
     recommended_threshold = scores_sorted[threshold_idx]
     
-    print("\n" + "="*70)
-    print("THRESHOLD RECOMMENDATION")
-    print("="*70)
+    print_header("THRESHOLD RECOMMENDATION")
     print(f"Target anomaly rate: {target_anomaly_rate*100:.1f}%")
     print(f"Recommended threshold: {recommended_threshold:.4f}")
     print(f"Expected anomalies: {threshold_idx}")
@@ -439,7 +434,10 @@ if __name__ == "__main__":
         print("No analyzed data found. Run train_model.py first.")
         exit(1)
     
-    df = pd.read_csv(ANALYZED_CSV_PATH)
+    df = safe_load_csv(ANALYZED_CSV_PATH)
+    if df is None or len(df) == 0:
+        print("Error: Could not load analyzed data")
+        exit(1)
     print(f"Loaded {len(df)} records")
     
     # Analyze distribution
@@ -449,9 +447,7 @@ if __name__ == "__main__":
     recommend_threshold(df, target_anomaly_rate=0.02)
     
     # Apply filters
-    print("\n" + "="*70)
-    print("APPLYING FILTERS")
-    print("="*70)
+    print_header("APPLYING FILTERS")
     
     filter_engine = AnomalyFilter()
     df_filtered = filter_engine.filter_anomalies(df)
