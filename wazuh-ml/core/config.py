@@ -58,3 +58,26 @@ LLM_MAX_EVENTS = int(os.getenv("LLM_MAX_EVENTS", "100"))
 # Classification model configuration
 CLASSIFIER_MODEL_PATH = os.getenv("CLASSIFIER_MODEL_PATH", "data/classifier_model.pkl")
 ENABLE_CLASSIFICATION = os.getenv("ENABLE_CLASSIFICATION", "true").strip().lower() in ("1", "true", "yes", "on")
+
+# Action/Response configuration
+ENABLE_ACTIONS = os.getenv("ENABLE_ACTIONS", "true").strip().lower() in ("1", "true", "yes", "on")
+AUTO_EXECUTE_ACTIONS = os.getenv("AUTO_EXECUTE_ACTIONS", "true").strip().lower() in ("1", "true", "yes", "on")
+ENABLE_AUTO_BLOCK = os.getenv("ENABLE_AUTO_BLOCK", "true").strip().lower() in ("1", "true", "yes", "on")
+ENABLE_TELEGRAM = os.getenv("ENABLE_TELEGRAM", "false").strip().lower() in ("1", "true", "yes", "on")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
+MIN_SEVERITY_FOR_BLOCK = int(os.getenv("MIN_SEVERITY_FOR_BLOCK", "3"))  # 1=LOW, 2=MEDIUM, 3=HIGH, 4=CRITICAL
+MIN_SEVERITY_FOR_NOTIFY = int(os.getenv("MIN_SEVERITY_FOR_NOTIFY", "2"))  # 1=LOW, 2=MEDIUM, 3=HIGH, 4=CRITICAL
+ACTIONS_CSV_PATH = os.getenv("ACTIONS_CSV_PATH", "data/actions.csv")
+ACTION_RESULTS_CSV_PATH = os.getenv("ACTION_RESULTS_CSV_PATH", "data/action_results.csv")
+
+# pfSense integration configuration
+ENABLE_PFSENSE = os.getenv("ENABLE_PFSENSE", "false").strip().lower() in ("1", "true", "yes", "on")
+PFSENSE_METHOD = os.getenv("PFSENSE_METHOD", "ssh").strip().lower()  # 'api' or 'ssh'
+PFSENSE_HOST = os.getenv("PFSENSE_HOST", "https://172.16.158.100")
+PFSENSE_USERNAME = os.getenv("PFSENSE_USERNAME", "admin")
+PFSENSE_PASSWORD = os.getenv("PFSENSE_PASSWORD", "pfsense")
+PFSENSE_VERIFY_SSL = os.getenv("PFSENSE_VERIFY_SSL", "false").strip().lower() in ("1", "true", "yes", "on")
+PFSENSE_SSH_HOST = os.getenv("PFSENSE_SSH_HOST", "172.16.158.100")
+PFSENSE_SSH_USER = os.getenv("PFSENSE_SSH_USER", "admin")
+PFSENSE_SSH_PASS = os.getenv("PFSENSE_SSH_PASS", "pfsense")
