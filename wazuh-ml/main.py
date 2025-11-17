@@ -351,7 +351,7 @@ def generate_actions(anomalies_csv=None, execute=False):
     from actions.action_manager import ActionManager
     from core.config import (
         ANOMALIES_CSV_PATH, ACTIONS_CSV_PATH, ACTION_RESULTS_CSV_PATH,
-        ENABLE_AUTO_BLOCK, ENABLE_TELEGRAM, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID,
+        ENABLE_AUTO_BLOCK,
         MIN_SEVERITY_FOR_BLOCK, MIN_SEVERITY_FOR_NOTIFY
     )
     import pandas as pd
@@ -370,9 +370,6 @@ def generate_actions(anomalies_csv=None, execute=False):
     # Action config
     action_config = {
         'enable_auto_block': ENABLE_AUTO_BLOCK,
-        'enable_telegram': ENABLE_TELEGRAM,
-        'telegram_bot_token': TELEGRAM_BOT_TOKEN,
-        'telegram_chat_id': TELEGRAM_CHAT_ID,
         'min_severity_for_block': MIN_SEVERITY_FOR_BLOCK,
         'min_severity_for_notify': MIN_SEVERITY_FOR_NOTIFY,
         'auto_execute': execute,
