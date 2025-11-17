@@ -17,15 +17,15 @@ wazuh-ml/
 │   
 │
 ├── training/                # Training models
-│   ├── train_model.py      # Train anomaly detection model
+│   ├── train_model.py      # Train ensemble anomaly detection
+│   ├── train_autoencoder.py # Train reconstruction-based autoencoder
 │   ├── train_classifier.py # Train classification model
-│   ├── train_all_models.py # Train cả 2 models
+│   ├── train_all_models.py # Train nhiều models cùng lúc
 │   ├── auto_retrain.py     # Tự động retrain
 │   └── feature_selection.py  # Feature selection (RFE)
 │
 ├── detection/               # Anomaly detection
 │   ├── detect_anomaly.py   # Phát hiện anomalies
-│   ├── ensemble_detector.py # Ensemble model (IF + LOF + SVM)
 │   ├── anomaly_tuning.py   # Tinh chỉnh để giảm false positives
 │   └── realtime_detector.py # Real-time detection
 │
@@ -42,8 +42,11 @@ wazuh-ml/
 ├── threat_intelligence/     # Threat Intelligence Feeds
 │   └── feeds.py            # Tích hợp AbuseIPDB, VirusTotal, local feeds
 │
+├── llm/                    # AI-assisted investigation
+│   ├── llm_analyze.py      # Generate investigation reports via LLM
+│   └── provider.py         # DeepSeek/OpenAI adapters
+│
 ├── utils/                   # Utilities
-│   ├── push_alert.py       # Gửi alerts
 │   ├── evaluate.py         # Đánh giá models
 │   ├── visualization.py    # Tạo visualizations (plots, charts)
 │   └── main.py             # FastAPI server
@@ -111,6 +114,8 @@ python main.py evaluate            # Evaluate models
 python main.py test                # Run tests
 python main.py threat-intel        # Check threat intelligence
 python main.py generate-actions    # Generate actions from anomalies
+python main.py transfer-learning   # Bootstrap model với Transfer Learning
+python main.py feedback-loop       # Chạy Feedback Loop (Detect → Analyze → Tune → Retrain → Test)
 ```
 
 ### 3. Hoặc chạy trực tiếp từ các modules
@@ -147,10 +152,11 @@ python classification/classify_events.py
 - **train_all_models.py**: Train cả 2 models cùng lúc
 - **auto_retrain.py**: Tự động retrain khi có data mới
 - **feature_selection.py**: Feature selection với RFE (Recursive Feature Elimination)
+- **transfer_learning.py**: Transfer Learning để bootstrap models từ pre-trained
+- **feedback_loop.py**: Feedback Loop hoàn chỉnh (Detect → Analyze → Tune → Retrain → Test)
 
 ### Detection
 - **detect_anomaly.py**: Phát hiện anomalies với classification
-- **ensemble_detector.py**: Ensemble model (IF + LOF + SVM)
 - **anomaly_tuning.py**: Filter và tuning để giảm false positives
 - **realtime_detector.py**: Real-time monitoring và detection
 
@@ -167,8 +173,11 @@ python classification/classify_events.py
 ### Threat Intelligence
 - **feeds.py**: Tích hợp threat intelligence feeds (AbuseIPDB, VirusTotal, local feeds)
 
+### LLM
+- **llm/provider.py**: Abstraction cho OpenAI/DeepSeek
+- **llm/llm_analyze.py**: Sinh báo cáo SOC bằng LLM
+
 ### Utils
-- **push_alert.py**: Gửi alerts
 - **evaluate.py**: Đánh giá models
 - **visualization.py**: Tạo visualizations (feature importance, confusion matrix, ROC curves)
 - **main.py**: FastAPI server cho API endpoints
@@ -190,7 +199,7 @@ MODEL_PATH=data/model_isoforest.pkl
 CLASSIFIER_MODEL_PATH=data/classifier_model.pkl
 
 # Model settings
-MODEL_TYPE=ensemble  # 'ensemble' | 'single'
+MODEL_TYPE=ensemble  # 'ensemble' | 'single' | 'autoencoder'
 ENABLE_CLASSIFICATION=true
 
 # Action & Response
@@ -209,6 +218,14 @@ PFSENSE_SSH_PASS=your_password
 # Telegram (optional)
 TELEGRAM_BOT_TOKEN=your_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
+
+# LLM / DeepSeek (optional)
+LLM_PROVIDER=deepseek
+LLM_MODEL=deepseek-reasoner
+DEEPSEEK_API_KEY=replace-me
+DEEPSEEK_API_BASE=https://api.deepseek.com/v1
+LLM_MAX_EVENTS=100
+LLM_MAX_TOKENS=800
 ```
 
 ## Documentation
@@ -221,6 +238,8 @@ Xem các file trong thư mục `docs/` để biết thêm chi tiết:
 - **PFSENSE_INTEGRATION.md** - Hướng dẫn tích hợp pfSense
 - **ADVANCED_FEATURES.md** - Tính năng nâng cao
 - **VISUALIZATION.md** - Tài liệu visualization
+- **TRANSFER_LEARNING.md** - Transfer Learning để bootstrap models
+- **FEEDBACK_LOOP.md** - Feedback Loop hoàn chỉnh
 
 ## Testing
 
@@ -242,10 +261,12 @@ python -m unittest tests.test_integration
 1. **Export** logs từ Wazuh Indexer → `data/security_logs.csv`
 2. **Feature Engineering** → Tạo 71 features từ raw data
 3. **Train Models** → Anomaly detection (Isolation Forest/Ensemble) + Classification
+   - Hoặc **Transfer Learning** → Bootstrap từ pre-trained model
 4. **Detect** → Phát hiện và phân loại anomalies
 5. **Generate Actions** → Tự động generate actions (block IP/Port, notify)
 6. **Execute Actions** → Thực thi actions trên pfSense firewall
-7. **Visualize** → Xem visualizations (feature importance, confusion matrix, ROC curves)
+7. **Feedback Loop** → Analyze → Tune → Retrain → Test (cải thiện liên tục)
+8. **Visualize** → Xem visualizations (feature importance, confusion matrix, ROC curves)
 
 ## Features
 
@@ -258,6 +279,10 @@ python -m unittest tests.test_integration
 - ✅ **Visualization** - Feature importance, confusion matrix, ROC curves
 - ✅ **Real-time Detection** - Real-time monitoring và detection
 - ✅ **Auto Retrain** - Tự động retrain khi có data mới
+- ✅ **Autoencoder Detection** - Reconstruction-based anomaly scoring
+- ✅ **LLM Investigation** - DeepSeek/OpenAI phân tích log theo ngữ cảnh
+- ✅ **Transfer Learning** - Bootstrap models từ pre-trained hoặc public datasets
+- ✅ **Feedback Loop** - Chu trình hoàn chỉnh: Detect → Analyze → Tune → Retrain → Test
 - ✅ **Test Automation** - Unit tests và integration tests
 
 ## License
