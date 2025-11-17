@@ -3,7 +3,7 @@ Action Executor - Thực thi các actions
 """
 import os
 import json
-from typing import Dict, List, Optional, Any
+from typing import Callable, Dict, List, Optional, Any
 from datetime import datetime
 import pandas as pd
 from enum import Enum
@@ -50,6 +50,75 @@ def _schedule_unblock_if_needed(result: Dict, params: Dict, scheduler, action_ty
     return result
 
 
+def _ensure_param(field: str):
+    def validator(params: Dict) -> Optional[str]:
+        value = params.get(field)
+        if value is None:
+            return f'No {field} provided'
+        if isinstance(value, str) and not value.strip():
+            return f'No {field} provided'
+        return None
+    return validator
+
+
+def _ssh_block_ip(client, params):
+    return client.block_ip_pfctl(
+        params['ip'],
+        params.get('table_name', 'blocked_ips'),
+        params.get('action', 'block'),
+        params.get('interface', 'lan'),
+    )
+
+
+def _ssh_block_port(client, params):
+    return client.block_port_pfctl(
+        params['port'],
+        params.get('ip'),
+        params.get('action', 'block'),
+        params.get('interface', 'lan'),
+    )
+
+
+def _api_block_ip(client, params):
+    return client.block_ip(
+        params['ip'],
+        params.get('duration', 0),
+        params.get('reason', 'Security threat detected')
+    )
+
+
+def _api_block_port(client, params):
+    return client.block_port(
+        params['port'],
+        params.get('ip'),
+        params.get('duration', 0)
+    )
+
+
+_PFSENSE_VALIDATORS = {
+    'block_ip': _ensure_param('ip'),
+    'reject_ip': _ensure_param('ip'),
+    'block_port': _ensure_param('port'),
+    'reject_port': _ensure_param('port'),
+}
+
+
+_PFSENSE_EXECUTORS: Dict[str, Dict[str, Callable]] = {
+    'ssh': {
+        'block_ip': _ssh_block_ip,
+        'reject_ip': _ssh_block_ip,
+        'block_port': _ssh_block_port,
+        'reject_port': _ssh_block_port,
+    },
+    'api': {
+        'block_ip': _api_block_ip,
+        'reject_ip': _api_block_ip,
+        'block_port': _api_block_port,
+        'reject_port': _api_block_port,
+    }
+}
+
+
 def _execute_pfsense_action(action_type: str, action: Dict, executor) -> Dict:
     """Helper: Execute pfSense action (block/reject IP hoặc port)"""
     if not executor.enable_pfsense:
@@ -60,53 +129,28 @@ def _execute_pfsense_action(action_type: str, action: Dict, executor) -> Dict:
     
     try:
         from actions.pfsense_integration import get_pfsense_client, RuleScheduler
-        pfsense = get_pfsense_client(method=executor.pfsense_method)
+        params = action.get('params', {})
+        validator = _PFSENSE_VALIDATORS.get(action_type)
+        if validator:
+            error = validator(params)
+            if error:
+                return _create_result(False, error)
+        
+        method = executor.pfsense_method if executor.pfsense_method in _PFSENSE_EXECUTORS else 'ssh'
+        pfsense = get_pfsense_client(method=method)
         if not pfsense:
             return _create_result(False, 'Failed to get pfSense client')
         
-        params = action.get('params', {})
-        action_method = params.get('action', 'block')
-        duration = params.get('duration', 0)
-        interface = params.get('interface', 'lan')
-        table_name = params.get('table_name', 'blocked_ips')
-        scheduler = RuleScheduler() if duration > 0 else None
+        executor_fn = _PFSENSE_EXECUTORS.get(method, {}).get(action_type)
+        if not executor_fn:
+            return _create_result(False, f'Unsupported pfSense action: {action_type}')
+        result = executor_fn(pfsense, params)
         
-        # Execute action based on type
-        is_ip_action = action_type in ['block_ip', 'reject_ip']
-        is_port_action = action_type in ['block_port', 'reject_port']
-        
-        if is_ip_action:
-            ip = params.get('ip')
-            if not ip:
-                return _create_result(False, 'No IP address provided')
-            
-            if executor.pfsense_method == 'ssh':
-                result = pfsense.block_ip_pfctl(ip, table_name, action_method, interface)
-            else:
-                reason = params.get('reason', 'Security threat detected')
-                result = pfsense.block_ip(ip, duration, reason)
-        
-        elif is_port_action:
-            port = params.get('port')
-            if not port:
-                return _create_result(False, 'No port provided')
-            
-            if executor.pfsense_method == 'ssh':
-                result = pfsense.block_port_pfctl(port, params.get('ip'), action_method, interface)
-            else:
-                result = pfsense.block_port(port, params.get('ip'), duration)
-        
-        else:
-            return _create_result(False, f'Unknown action type: {action_type}')
-        
-        # Schedule unblock if needed
+        scheduler = RuleScheduler() if params.get('duration', 0) > 0 else None
         result = _schedule_unblock_if_needed(result, params, scheduler, action_type)
-        
-        # Return formatted result
         if result.get('success'):
             return _create_result(True, result.get('message', f'{action_type} executed successfully'), block_info=result)
-        else:
-            return _create_result(False, f'pfSense {action_type} failed: {result.get("message")}')
+        return _create_result(False, f'pfSense {action_type} failed: {result.get("message")}')
     
     except Exception as e:
         return _create_result(False, f'pfSense integration error: {str(e)}')
@@ -153,6 +197,15 @@ class ActionExecutor:
         # Initialize rule scheduler
         from actions.pfsense_integration import RuleScheduler
         self.scheduler = RuleScheduler()
+        self._handlers: Dict[ActionType, Callable[[Dict], Dict]] = {
+            ActionType.LOG: self._execute_log,
+            ActionType.ALERT: self._execute_alert,
+            ActionType.BLOCK_IP: self._execute_block_ip,
+            ActionType.BLOCK_PORT: self._execute_block_port,
+            ActionType.REJECT_IP: self._execute_reject_ip,
+            ActionType.REJECT_PORT: self._execute_reject_port,
+            ActionType.ESCALATE: self._execute_escalate,
+        }
     
     def execute_action(self, action: Dict) -> Dict:
         """
@@ -165,38 +218,16 @@ class ActionExecutor:
             Dict với kết quả: {'success': bool, 'message': str, 'timestamp': str}
         """
         action_type = ActionType(action['type'])
-        result = {
-            'success': False,
-            'message': '',
-            'timestamp': datetime.now().isoformat(),
-            'action_type': action_type.value,
-        }
-        
-        try:
-            # Use dict mapping for cleaner code
-            action_handlers = {
-                ActionType.LOG: self._execute_log,
-                ActionType.ALERT: self._execute_alert,
-                ActionType.BLOCK_IP: self._execute_block_ip,
-                ActionType.BLOCK_PORT: self._execute_block_port,
-                ActionType.REJECT_IP: self._execute_reject_ip,
-                ActionType.REJECT_PORT: self._execute_reject_port,
-                ActionType.ESCALATE: self._execute_escalate,
-            }
-            
-            handler = action_handlers.get(action_type)
-            if handler:
+        handler = self._handlers.get(action_type)
+        if not handler:
+            result = _create_result(False, f'Unknown action type: {action_type}')
+        else:
+            try:
                 result = handler(action)
-            else:
-                result['message'] = f'Unknown action type: {action_type}'
+            except Exception as exc:
+                result = _create_result(False, f'Error executing action: {exc}')
         
-        except Exception as e:
-            result['success'] = False
-            result['message'] = f'Error executing action: {str(e)}'
-        
-        # Log action result
         self._log_action(action, result)
-        
         return result
     
     def _execute_log(self, action: Dict) -> Dict:

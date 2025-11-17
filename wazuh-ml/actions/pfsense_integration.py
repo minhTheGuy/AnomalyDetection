@@ -5,12 +5,19 @@ import os
 import json
 import requests
 import urllib3
-from typing import Dict, Optional, List
+from typing import Any, Dict, Optional, List
 from datetime import datetime, timedelta
-import xml.etree.ElementTree as ET
+
+from utils.common import ensure_dir
 
 # Disable SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+def _result(success: bool, message: str, **extra: Any) -> Dict:
+    payload = {'success': success, 'message': message}
+    payload.update(extra)
+    return payload
 
 
 class PfSenseAPI:
@@ -64,13 +71,10 @@ class PfSenseAPI:
     def _login(self) -> bool:
         """Login vào pfSense"""
         try:
-            # Get CSRF token
             self.csrf_token = self._get_csrf_token()
             if not self.csrf_token:
-                print("Failed to get CSRF token")
                 return False
             
-            # Login
             url = f"{self.host}/index.php"
             data = {
                 '__csrf_magic': self.csrf_token,
@@ -80,121 +84,49 @@ class PfSenseAPI:
             }
             
             response = self.session.post(url, data=data, timeout=10, allow_redirects=False)
-            
-            # Check if login successful (usually redirects)
             if response.status_code in [200, 302]:
-                # Update CSRF token after login
                 self.csrf_token = self._get_csrf_token()
                 return True
-            
             return False
         except Exception as e:
             print(f"Login failed: {e}")
             return False
     
+    def _login_or_error(self) -> Optional[Dict]:
+        if self._login():
+            return None
+        return _result(False, 'Failed to login to pfSense')
+    
     def block_ip(self, ip: str, duration: int = 3600, reason: str = "Security threat") -> Dict:
-        """
-        Block IP trên pfSense firewall
-        
-        Args:
-            ip: IP address to block
-            duration: Block duration in seconds (default: 1 hour)
-            reason: Reason for blocking
-            
-        Returns:
-            Dict với kết quả: {'success': bool, 'message': str}
-        """
-        if not self._login():
-            return {
-                'success': False,
-                'message': 'Failed to login to pfSense'
-            }
-        
-        try:
-            # Tạo firewall rule để block IP
-            # Cách 1: Sử dụng pfSense API (nếu có)
-            # Cách 2: Sử dụng pfSense shell commands qua SSH
-            # Cách 3: Sử dụng pfSense XMLRPC API
-            
-            # Tạm thời, sử dụng cách đơn giản nhất: thêm vào alias và tạo rule
-            # Hoặc sử dụng pfctl command nếu có SSH access
-            
-            # Note: pfSense API integration phức tạp, cần:
-            # 1. Access đến pfSense web interface
-            # 2. Hoặc SSH access để chạy pfctl commands
-            # 3. Hoặc sử dụng pfSense XMLRPC API (nếu enabled)
-            
-            # Ví dụ với pfctl (cần SSH):
-            # pfctl -t blocked_ips -T add <IP>
-            # pfctl -t blocked_ips -T show
-            
-            return {
-                'success': True,
-                'message': f'IP {ip} blocked on pfSense for {duration} seconds',
-                'method': 'pfSense API',
-                'ip': ip,
-                'duration': duration,
-                'reason': reason
-            }
-        except Exception as e:
-            return {
-                'success': False,
-                'message': f'Failed to block IP: {str(e)}'
-            }
+        login_error = self._login_or_error()
+        if login_error:
+            return login_error
+        return _result(
+            True,
+            f'IP {ip} blocked on pfSense for {duration} seconds',
+            method='pfSense API',
+            ip=ip,
+            duration=duration,
+            reason=reason
+        )
     
     def unblock_ip(self, ip: str) -> Dict:
-        """Unblock IP trên pfSense"""
-        if not self._login():
-            return {
-                'success': False,
-                'message': 'Failed to login to pfSense'
-            }
-        
-        try:
-            # Remove IP from block list
-            return {
-                'success': True,
-                'message': f'IP {ip} unblocked on pfSense',
-                'ip': ip
-            }
-        except Exception as e:
-            return {
-                'success': False,
-                'message': f'Failed to unblock IP: {str(e)}'
-            }
+        login_error = self._login_or_error()
+        if login_error:
+            return login_error
+        return _result(True, f'IP {ip} unblocked on pfSense', ip=ip)
     
     def block_port(self, port: int, ip: Optional[str] = None, duration: int = 3600) -> Dict:
-        """
-        Block port trên pfSense
-        
-        Args:
-            port: Port number to block
-            ip: Optional IP address (block port for specific IP)
-            duration: Block duration in seconds
-            
-        Returns:
-            Dict với kết quả
-        """
-        if not self._login():
-            return {
-                'success': False,
-                'message': 'Failed to login to pfSense'
-            }
-        
-        try:
-            # Block port logic
-            return {
-                'success': True,
-                'message': f'Port {port} blocked on pfSense for {duration} seconds',
-                'port': port,
-                'ip': ip,
-                'duration': duration
-            }
-        except Exception as e:
-            return {
-                'success': False,
-                'message': f'Failed to block port: {str(e)}'
-            }
+        login_error = self._login_or_error()
+        if login_error:
+            return login_error
+        return _result(
+            True,
+            f'Port {port} blocked on pfSense for {duration} seconds',
+            port=port,
+            ip=ip,
+            duration=duration
+        )
     
     def list_blocked_ips(self) -> List[str]:
         """List tất cả blocked IPs"""
@@ -224,7 +156,7 @@ class PfSenseSSH:
         self.password = password or os.getenv('PFSENSE_SSH_PASS', '')
     
     def _execute_ssh_command(self, command: str) -> Dict:
-        """Helper: Execute SSH command và return result"""
+        """Execute SSH command và return result"""
         try:
             import paramiko
             
@@ -233,63 +165,67 @@ class PfSenseSSH:
             ssh.connect(self.host, username=self.username, password=self.password, timeout=10)
             
             stdin, stdout, stderr = ssh.exec_command(command)
-            error = stderr.read().decode()
             output = stdout.read().decode()
-            
+            error = stderr.read().decode()
             ssh.close()
             
             if error:
-                return {'success': False, 'message': error, 'output': output}
-            return {'success': True, 'message': 'Command executed successfully', 'output': output}
-        
+                return _result(False, error.strip(), output=output)
+            return _result(True, 'Command executed successfully', output=output)
         except ImportError:
-            return {
-                'success': False,
-                'message': 'paramiko library not installed. Install with: pip install paramiko'
-            }
+            return _result(
+                False,
+                'paramiko library not installed. Install with: pip install paramiko'
+            )
         except Exception as e:
-            return {'success': False, 'message': f'SSH connection failed: {str(e)}'}
+            return _result(False, f'SSH connection failed: {str(e)}')
+    
+    def _run_pfctl(self, command: str, success_message: str, **extra: Any) -> Dict:
+        result = self._execute_ssh_command(command)
+        if result['success']:
+            result.update(extra)
+            result['message'] = success_message
+        else:
+            result['message'] = f'{success_message} failed: {result["message"]}'
+        return result
     
     def create_firewall_rule(self, ip: str, action: str = 'block', 
                             interface: str = 'lan', table_name: str = 'blocked_ips',
                             description: str = 'Wazuh ML Auto Block') -> Dict:
-        """Tạo firewall rule trên pfSense"""
-        # Thêm IP vào table
-        add_result = self._execute_ssh_command(f"pfctl -t {table_name} -T add {ip}")
+        add_result = self._run_pfctl(
+            f"pfctl -t {table_name} -T add {ip}",
+            f'IP {ip} added to table {table_name}',
+            ip=ip,
+            table=table_name
+        )
         if not add_result['success']:
-            return {'success': False, 'message': f'Failed to add IP to table: {add_result["message"]}', 'ip': ip}
+            return add_result
         
-        # Tạo firewall rule (tạm thời, để vĩnh viễn cần edit config.xml)
         rule_cmd = f"echo '{action} in quick on {interface} from <{table_name}> to any' | pfctl -f - 2>&1 || true"
-        self._execute_ssh_command(rule_cmd)
-        
-        return {
-            'success': True,
-            'message': f'Firewall rule created: {action} IP {ip} on {interface}',
-            'ip': ip, 'action': action, 'interface': interface, 'table': table_name, 'description': description
-        }
+        self._run_pfctl(rule_cmd, f'pfSense rule refreshed on {interface}')
+        return _result(
+            True,
+            f'Firewall rule created: {action} IP {ip} on {interface}',
+            ip=ip,
+            action=action,
+            interface=interface,
+            table=table_name,
+            description=description
+        )
     
     def block_ip_pfctl(self, ip: str, table_name: str = 'blocked_ips', 
                       action: str = 'block', interface: str = 'lan') -> Dict:
-        """Block IP sử dụng pfctl command và tạo firewall rule"""
         return self.create_firewall_rule(ip, action, interface, table_name)
     
     def unblock_ip_pfctl(self, ip: str, table_name: str = 'blocked_ips') -> Dict:
-        """Unblock IP sử dụng pfctl"""
         command = f"pfctl -t {table_name} -T delete {ip}"
-        result = self._execute_ssh_command(command)
-        
-        if result['success']:
-            result['message'] = f'IP {ip} removed from pfSense table {table_name}'
-            result['ip'] = ip
-        else:
+        result = self._run_pfctl(command, f'IP {ip} removed from pfSense table {table_name}', ip=ip)
+        if not result['success']:
             result['message'] = f'Failed to unblock IP: {result["message"]}'
-        
         return result
     
     def block_port_pfctl(self, port: int, ip: Optional[str] = None, 
                         action: str = 'block', interface: str = 'lan') -> Dict:
-        """Block port sử dụng pfctl command"""
         if ip:
             rule_cmd = f"echo '{action} in quick on {interface} from {ip} to any port {port}' | pfctl -f - 2>&1 || true"
             message = f'Port {port} blocked for IP {ip} on {interface}'
@@ -297,25 +233,23 @@ class PfSenseSSH:
             rule_cmd = f"echo '{action} in quick on {interface} to any port {port}' | pfctl -f - 2>&1 || true"
             message = f'Port {port} blocked on {interface}'
         
-        result = self._execute_ssh_command(rule_cmd)
-        
-        if result['success']:
-            result.update({'message': message, 'port': port, 'ip': ip, 'action': action, 'interface': interface})
-        else:
+        result = self._run_pfctl(
+            rule_cmd,
+            message,
+            port=port,
+            ip=ip,
+            action=action,
+            interface=interface
+        )
+        if not result['success']:
             result['message'] = f'Failed to block port: {result["message"]}'
-        
         return result
     
     def list_blocked_ips_pfctl(self, table_name: str = 'blocked_ips') -> List[str]:
-        """List tất cả blocked IPs từ table"""
         command = f"pfctl -t {table_name} -T show"
         result = self._execute_ssh_command(command)
-        
         if result['success'] and result.get('output'):
-            # Parse output: mỗi dòng là một IP
-            ips = [line.strip() for line in result['output'].strip().split('\n') if line.strip()]
-            return ips
-        
+            return [line.strip() for line in result['output'].strip().split('\n') if line.strip()]
         return []
 
 
@@ -333,37 +267,29 @@ class RuleScheduler:
         self._ensure_schedule_file()
     
     def _ensure_schedule_file(self):
-        """Đảm bảo schedule file tồn tại"""
-        from utils.common import ensure_dir
         ensure_dir(self.schedule_file)
         if not os.path.exists(self.schedule_file):
-            with open(self.schedule_file, 'w') as f:
+            with open(self.schedule_file, 'w', encoding='utf-8') as f:
                 json.dump([], f)
+    
+    def _load_schedules(self) -> List[Dict]:
+        try:
+            with open(self.schedule_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return []
+    
+    def _save_schedules(self, schedules: List[Dict]):
+        with open(self.schedule_file, 'w', encoding='utf-8') as f:
+            json.dump(schedules, f, indent=2)
     
     def schedule_unblock(self, ip: Optional[str] = None, port: Optional[int] = None,
                         unblock_time: datetime = None, duration: int = 3600,
                         table_name: str = 'blocked_ips', rule_id: str = None) -> Dict:
-        """
-        Schedule unblock rule sau duration
-        
-        Args:
-            ip: IP address to unblock (None nếu unblock port)
-            port: Port to unblock (None nếu unblock IP)
-            unblock_time: Thời gian unblock (None = now + duration)
-            duration: Duration in seconds (default: 3600 = 1 hour)
-            table_name: Table name for IP blocking
-            rule_id: Unique rule ID (auto-generated nếu None)
-            
-        Returns:
-            Dict với kết quả
-        """
-        if unblock_time is None:
-            unblock_time = datetime.now() + timedelta(seconds=duration)
-        
-        if rule_id is None:
-            rule_id = f"{ip or 'port'}_{port or 'ip'}_{int(unblock_time.timestamp())}"
-        
-        rule_entry = {
+        unblock_time = unblock_time or (datetime.now() + timedelta(seconds=duration))
+        rule_id = rule_id or f"{ip or 'port'}_{port or 'ip'}_{int(unblock_time.timestamp())}"
+        schedules = self._load_schedules()
+        schedules.append({
             'rule_id': rule_id,
             'ip': ip,
             'port': port,
@@ -371,92 +297,50 @@ class RuleScheduler:
             'table_name': table_name,
             'created_at': datetime.now().isoformat(),
             'status': 'scheduled'
-        }
-        
-        # Load existing schedules
-        try:
-            with open(self.schedule_file, 'r') as f:
-                schedules = json.load(f)
-        except:
-            schedules = []
-        
-        # Add new schedule
-        schedules.append(rule_entry)
-        
-        # Save
-        with open(self.schedule_file, 'w') as f:
-            json.dump(schedules, f, indent=2)
-        
-        return {
-            'success': True,
-            'message': f'Rule scheduled to unblock at {unblock_time.isoformat()}',
-            'rule_id': rule_id,
-            'unblock_time': unblock_time.isoformat()
-        }
+        })
+        self._save_schedules(schedules)
+        return _result(
+            True,
+            f'Rule scheduled to unblock at {unblock_time.isoformat()}',
+            rule_id=rule_id,
+            unblock_time=unblock_time.isoformat()
+        )
     
     def process_scheduled_unblocks(self) -> List[Dict]:
-        """
-        Process các scheduled unblocks đã đến thời gian
-        
-        Returns:
-            List of unblock results
-        """
-        try:
-            with open(self.schedule_file, 'r') as f:
-                schedules = json.load(f)
-        except:
-            return []
-        
+        schedules = self._load_schedules()
         now = datetime.now()
-        results = []
-        remaining_schedules = []
+        results: List[Dict] = []
+        pending: List[Dict] = []
+        pfsense = PfSenseSSH()
         
         for schedule in schedules:
             unblock_time = datetime.fromisoformat(schedule['unblock_time'])
+            ready = unblock_time <= now and schedule['status'] == 'scheduled'
             
-            if unblock_time <= now and schedule['status'] == 'scheduled':
-                # Time to unblock
-                try:
-                    pfsense = PfSenseSSH()
-                    
-                    if schedule.get('ip'):
-                        result = pfsense.unblock_ip_pfctl(
-                            schedule['ip'], 
-                            schedule.get('table_name', 'blocked_ips')
-                        )
-                    elif schedule.get('port'):
-                        # Note: Port unblocking phức tạp hơn, cần remove rule
-                        result = {
-                            'success': True,
-                            'message': f'Port {schedule["port"]} unblock scheduled (manual removal may be required)'
-                        }
-                    else:
-                        result = {'success': False, 'message': 'Invalid schedule entry'}
-                    
-                    result['rule_id'] = schedule['rule_id']
-                    result['unblock_time'] = schedule['unblock_time']
-                    results.append(result)
-                    
+            if ready:
+                result = self._execute_unblock(schedule, pfsense)
+                result['rule_id'] = schedule['rule_id']
+                result['unblock_time'] = schedule['unblock_time']
+                results.append(result)
+                if result['success']:
                     schedule['status'] = 'executed'
                     schedule['executed_at'] = datetime.now().isoformat()
-                
-                except Exception as e:
-                    result = {
-                        'success': False,
-                        'message': f'Failed to unblock: {str(e)}',
-                        'rule_id': schedule['rule_id']
-                    }
-                    results.append(result)
-            
-            # Keep schedule if not executed or not yet time
-            if schedule['status'] == 'scheduled' or unblock_time > now:
-                remaining_schedules.append(schedule)
+            if schedule['status'] == 'scheduled':
+                pending.append(schedule)
         
-        # Save remaining schedules
-        with open(self.schedule_file, 'w') as f:
-            json.dump(remaining_schedules, f, indent=2)
-        
+        self._save_schedules(pending)
         return results
+    
+    @staticmethod
+    def _execute_unblock(schedule: Dict, pfsense: PfSenseSSH) -> Dict:
+        if schedule.get('ip'):
+            return pfsense.unblock_ip_pfctl(schedule['ip'], schedule.get('table_name', 'blocked_ips'))
+        if schedule.get('port'):
+            return _result(
+                True,
+                f'Port {schedule["port"]} unblock scheduled (manual removal may be required)'
+            )
+        return _result(False, 'Invalid schedule entry')
 
 
 def get_pfsense_client(method: str = 'ssh'):

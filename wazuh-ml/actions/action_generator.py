@@ -1,22 +1,32 @@
 """
 Action Generator - Tự động tạo actions dựa trên detected anomalies
 """
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from enum import Enum
 import pandas as pd
 
+PRIVATE_PREFIXES = tuple([
+    '192.168.', '10.', '172.16.', '172.17.', '172.18.', '172.19.',
+    '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.',
+    '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.'
+])
 
-def _is_external_ip(ip: str) -> bool:
-    """Check if IP is external (not private)"""
-    if not ip or pd.isna(ip):
-        return False
-    ip_str = str(ip)
-    private_prefixes = [
-        '192.168.', '10.', '172.16.', '172.17.', '172.18.', '172.19.',
-        '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.',
-        '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.'
-    ]
-    return not any(ip_str.startswith(prefix) for prefix in private_prefixes)
+ATTACK_SEVERITY_MAP = {
+    'malware': 4,
+    'privilege_escalation': 4,
+    'data_exfiltration': 4,
+    'dos_ddos': 3,
+    'brute_force': 3,
+    'sql_injection': 3,
+    'xss': 2,
+    'port_scan': 2,
+    'web_attack': 2,
+    'suspicious_activity': 1,
+    'benign': 1,
+    'unknown': 1,
+}
+
+BLOCK_REQUIRED_ATTACKS = {'malware', 'dos_ddos', 'brute_force', 'privilege_escalation'}
 
 
 class ActionType(Enum):
@@ -55,56 +65,33 @@ class ActionGenerator:
         """
         self.config = config or {}
         self.enable_auto_block = self.config.get('enable_auto_block', False)
-        
-        # Convert int sang enum SeverityLevel
-        min_block_int = self.config.get('min_severity_for_block', 3)  # HIGH
-        min_notify_int = self.config.get('min_severity_for_notify', 2)  # MEDIUM
-        
-        # Map int sang enum SeverityLevel
-        severity_map = {
+        self.min_severity_for_block = self._severity_from_int(self.config.get('min_severity_for_block', 3))
+        self.min_severity_for_notify = self._severity_from_int(self.config.get('min_severity_for_notify', 2))
+    
+    @staticmethod
+    def _severity_from_int(value: int) -> SeverityLevel:
+        return {
             1: SeverityLevel.LOW,
             2: SeverityLevel.MEDIUM,
             3: SeverityLevel.HIGH,
-            4: SeverityLevel.CRITICAL
-        }
-        self.min_severity_for_block = severity_map.get(min_block_int, SeverityLevel.HIGH)
-        self.min_severity_for_notify = severity_map.get(min_notify_int, SeverityLevel.MEDIUM)
+            4: SeverityLevel.CRITICAL,
+        }.get(int(value), SeverityLevel.HIGH)
         
     def get_severity_from_anomaly(self, anomaly_row: pd.Series) -> SeverityLevel:
         """Xác định severity level từ anomaly"""
-        # Dựa vào rule_level
-        rule_level = anomaly_row.get('rule_level', 0)
-        if pd.isna(rule_level):
-            rule_level = 0
-        else:
-            rule_level = int(rule_level)
-        
+        rule_level = int(anomaly_row.get('rule_level') or 0)
         if rule_level >= 15:
             return SeverityLevel.CRITICAL
-        elif rule_level >= 12:
+        if rule_level >= 12:
             return SeverityLevel.HIGH
-        elif rule_level >= 7:
+        if rule_level >= 7:
             return SeverityLevel.MEDIUM
-        else:
-            return SeverityLevel.LOW
+        return SeverityLevel.LOW
     
     def get_severity_from_attack_type(self, attack_type: str) -> SeverityLevel:
         """Xác định severity level từ attack type"""
-        severity_map = {
-            'malware': SeverityLevel.CRITICAL,
-            'dos_ddos': SeverityLevel.HIGH,
-            'brute_force': SeverityLevel.HIGH,
-            'sql_injection': SeverityLevel.HIGH,
-            'xss': SeverityLevel.MEDIUM,
-            'port_scan': SeverityLevel.MEDIUM,
-            'privilege_escalation': SeverityLevel.CRITICAL,
-            'data_exfiltration': SeverityLevel.CRITICAL,
-            'web_attack': SeverityLevel.MEDIUM,
-            'suspicious_activity': SeverityLevel.LOW,
-            'benign': SeverityLevel.LOW,
-            'unknown': SeverityLevel.LOW,
-        }
-        return severity_map.get(attack_type.lower(), SeverityLevel.MEDIUM)
+        score = ATTACK_SEVERITY_MAP.get((attack_type or '').lower(), 2)
+        return self._severity_from_int(score)
     
     def generate_actions(self, anomaly_row: pd.Series) -> List[Dict]:
         """
@@ -124,82 +111,103 @@ class ActionGenerator:
             }
         """
         actions = []
-        
-        # Xác định severity
-        rule_severity = self.get_severity_from_anomaly(anomaly_row)
         attack_type = anomaly_row.get('predicted_attack_type', 'unknown')
-        attack_severity = self.get_severity_from_attack_type(attack_type)
+        severity = max(
+            self.get_severity_from_anomaly(anomaly_row),
+            self.get_severity_from_attack_type(attack_type),
+            key=lambda lvl: lvl.value
+        )
         
-        # Lấy severity cao hơn
-        severity = max(rule_severity, attack_severity, key=lambda x: x.value)
+        context = self._extract_context(anomaly_row)
+        actions.append(self._log_action(severity, context))
         
-        # Extract thông tin
-        src_ip = anomaly_row.get('src_ip')
-        dst_ip = anomaly_row.get('dst_ip')
-        dst_port = anomaly_row.get('dst_port')
-        event_desc = anomaly_row.get('event_desc', 'Unknown event')
-        agent = anomaly_row.get('agent', 'Unknown agent')
-        timestamp = anomaly_row.get('timestamp', 'Unknown time')
-        anomaly_score = anomaly_row.get('anomaly_score', 0)
-        confidence = anomaly_row.get('attack_type_confidence', 0)
+        if severity.value >= self.min_severity_for_notify.value:
+            actions.append(self._alert_action(severity, attack_type, context))
         
-        # 1. LOG action (luôn luôn)
-        actions.append({
-            'type': ActionType.LOG,
-            'target': 'system',
-            'reason': f'Anomaly detected: {event_desc}',
-            'severity': severity,
-            'params': {
-                'event_desc': event_desc,
-                'agent': agent,
-                'timestamp': timestamp,
-                'anomaly_score': float(anomaly_score) if pd.notna(anomaly_score) else 0,
-            }
-        })
+        if self._should_block_ip(severity, attack_type, context['src_ip']):
+            actions.append(self._create_block_ip_action(context['src_ip'], attack_type, context['event_desc'], severity))
         
-        # 2. ALERT action (nếu severity >= MEDIUM)
-        if severity.value >= SeverityLevel.MEDIUM.value:
-            actions.append({
-                'type': ActionType.ALERT,
-                'target': 'security_team',
-                'reason': f'{attack_type.upper()} detected: {event_desc}',
-                'severity': severity,
-                'params': {
-                    'attack_type': attack_type,
-                    'event_desc': event_desc,
-                    'agent': agent,
-                    'src_ip': src_ip if pd.notna(src_ip) else None,
-                    'dst_ip': dst_ip if pd.notna(dst_ip) else None,
-                    'confidence': float(confidence) if pd.notna(confidence) else 0,
-                }
-            })
+        if self._should_block_port(severity, attack_type, context['dst_port']):
+            actions.append(self._create_block_port_action(context['dst_port'], context['dst_ip'], attack_type, severity))
         
-        # 3. BLOCK_IP trên pfSense
-        if (self.enable_auto_block and severity.value >= self.min_severity_for_block.value and 
-            pd.notna(src_ip) and src_ip and 
-            (_is_external_ip(src_ip) or attack_type in ['malware', 'dos_ddos', 'brute_force', 'privilege_escalation'])):
-            actions.append(self._create_block_ip_action(src_ip, attack_type, event_desc, severity))
-        
-        # 4. BLOCK_PORT trên pfSense
-        if (severity == SeverityLevel.CRITICAL and pd.notna(dst_port) and dst_port and
-            attack_type in ['dos_ddos', 'port_scan']):
-            actions.append(self._create_block_port_action(dst_port, dst_ip, attack_type, severity))
-        
-        # 5. ESCALATE (nếu severity CRITICAL)
         if severity == SeverityLevel.CRITICAL:
-            actions.append({
-                'type': ActionType.ESCALATE,
-                'target': 'security_manager',
-                'reason': f'CRITICAL: {attack_type} detected - Immediate attention required',
-                'severity': severity,
-                'params': {
-                    'attack_type': attack_type,
-                    'event_desc': event_desc,
-                    'agent': agent,
-                }
-            })
+            actions.append(self._escalate_action(severity, attack_type, context))
         
         return actions
+    
+    @staticmethod
+    def _extract_context(anomaly_row: pd.Series) -> Dict:
+        return {
+            'src_ip': anomaly_row.get('src_ip'),
+            'dst_ip': anomaly_row.get('dst_ip'),
+            'dst_port': anomaly_row.get('dst_port'),
+            'event_desc': anomaly_row.get('event_desc', 'Unknown event'),
+            'agent': anomaly_row.get('agent', 'Unknown agent'),
+            'timestamp': anomaly_row.get('timestamp', 'Unknown time'),
+            'anomaly_score': float(anomaly_row.get('anomaly_score') or 0),
+            'confidence': float(anomaly_row.get('attack_type_confidence') or 0),
+        }
+    
+    @staticmethod
+    def _log_action(severity: SeverityLevel, context: Dict) -> Dict:
+        return {
+            'type': ActionType.LOG,
+            'target': 'system',
+            'reason': f'Anomaly detected: {context["event_desc"]}',
+            'severity': severity,
+            'params': {
+                'event_desc': context['event_desc'],
+                'agent': context['agent'],
+                'timestamp': context['timestamp'],
+                'anomaly_score': context['anomaly_score'],
+            }
+        }
+    
+    @staticmethod
+    def _alert_action(severity: SeverityLevel, attack_type: str, context: Dict) -> Dict:
+        return {
+            'type': ActionType.ALERT,
+            'target': 'security_team',
+            'reason': f'{attack_type.upper()} detected: {context["event_desc"]}',
+            'severity': severity,
+            'params': {
+                'attack_type': attack_type,
+                'event_desc': context['event_desc'],
+                'agent': context['agent'],
+                'src_ip': context['src_ip'],
+                'dst_ip': context['dst_ip'],
+                'confidence': context['confidence'],
+            }
+        }
+    
+    def _escalate_action(self, severity: SeverityLevel, attack_type: str, context: Dict) -> Dict:
+        return {
+            'type': ActionType.ESCALATE,
+            'target': 'security_manager',
+            'reason': f'CRITICAL: {attack_type} detected - Immediate attention required',
+            'severity': severity,
+            'params': {
+                'attack_type': attack_type,
+                'event_desc': context['event_desc'],
+                'agent': context['agent'],
+            }
+        }
+    
+    def _should_block_ip(self, severity: SeverityLevel, attack_type: str, ip: Optional[str]) -> bool:
+        if not (self.enable_auto_block and ip and pd.notna(ip)):
+            return False
+        external_ip = not str(ip).startswith(PRIVATE_PREFIXES)
+        attack_requires_block = attack_type in BLOCK_REQUIRED_ATTACKS
+        return (severity.value >= self.min_severity_for_block.value) and (external_ip or attack_requires_block)
+    
+    @staticmethod
+    def _should_block_port(severity: SeverityLevel, attack_type: str, port: Optional[str]) -> bool:
+        return (
+            severity == SeverityLevel.CRITICAL
+            and pd.notna(port)
+            and port
+            and attack_type in {'dos_ddos', 'port_scan'}
+        )
     
     def _create_block_ip_action(self, src_ip: str, attack_type: str, event_desc: str, severity: SeverityLevel) -> Dict:
         """Helper: Tạo BLOCK_IP action"""
@@ -234,21 +242,10 @@ class ActionGenerator:
         }
     
     def generate_actions_batch(self, anomalies_df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Generate actions cho nhiều anomalies
-        
-        Args:
-            anomalies_df: DataFrame chứa anomalies
-            
-        Returns:
-            DataFrame với columns: anomaly_index, action_type, target, reason, severity, params
-        """
-        all_actions = []
-        
+        records = []
         for idx, row in anomalies_df.iterrows():
-            actions = self.generate_actions(row)
-            for action in actions:
-                all_actions.append({
+            for action in self.generate_actions(row):
+                records.append({
                     'anomaly_index': idx,
                     'action_type': action['type'].value,
                     'target': action['target'],
@@ -257,6 +254,5 @@ class ActionGenerator:
                     'severity_value': action['severity'].value,
                     'params': action['params'],
                 })
-        
-        return pd.DataFrame(all_actions)
+        return pd.DataFrame(records)
 
