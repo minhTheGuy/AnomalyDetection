@@ -43,17 +43,23 @@ MIN_ANOMALY_RATE = float(os.getenv("MIN_ANOMALY_RATE", "0.01"))       # 1%
 MAX_ANOMALY_RATE = float(os.getenv("MAX_ANOMALY_RATE", "0.10"))       # 10%
 
 # Training configuration
-# MODEL_TYPE: 'ensemble' | 'single'
+# MODEL_TYPE: 'ensemble' | 'single' | 'autoencoder'
 MODEL_TYPE = os.getenv("MODEL_TYPE", "ensemble").strip().lower()
 
 # Single-model (IsolationForest) normalization
 SINGLE_IF_NORMALIZE = os.getenv("SINGLE_IF_NORMALIZE", "true").strip().lower() in ("1", "true", "yes", "on")
 
 # LLM analysis configuration
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai").strip().lower()  # 'openai' | 'local'
+# Supported providers: openai | deepseek | local
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai").strip().lower()
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini").strip()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "random-key")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 LLM_MAX_EVENTS = int(os.getenv("LLM_MAX_EVENTS", "100"))
+LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "800"))
+
+# DeepSeek-specific settings
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+DEEPSEEK_API_BASE = os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com/v1")
 
 # Classification model configuration
 CLASSIFIER_MODEL_PATH = os.getenv("CLASSIFIER_MODEL_PATH", "data/classifier_model.pkl")
