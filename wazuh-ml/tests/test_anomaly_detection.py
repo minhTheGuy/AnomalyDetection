@@ -6,109 +6,93 @@ import pandas as pd
 import numpy as np
 import os
 import sys
-import tempfile
-import shutil
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.svm import OneClassSVM
+from sklearn.preprocessing import StandardScaler
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from detection.ensemble_detector import EnsembleAnomalyDetector
+from detection.detect_anomaly import _predict_ensemble
 from data_processing.feature_engineering import engineer_all_features
 from data_processing.preprocessing import preprocess_dataframe
 
 
 class TestAnomalyDetection(unittest.TestCase):
-    """Test cases cho anomaly detection"""
+    """Tests for the current ensemble prediction helpers"""
     
     @classmethod
     def setUpClass(cls):
-        """Setup test data"""
+        """Prepare synthetic dataset and trained base models"""
         cls.test_data = pd.DataFrame({
-            'timestamp': pd.date_range('2025-01-01', periods=100, freq='1h'),
-            'agent': ['test-agent'] * 100,
-            'rule_level': np.random.randint(0, 15, 100),
-            'src_ip': [f'192.168.1.{i%255}' for i in range(100)],
-            'dst_ip': [f'10.0.0.{i%255}' for i in range(100)],
-            'src_port': np.random.randint(1024, 65535, 100),
-            'dst_port': np.random.choice([22, 80, 443, 3306, 5432], 100),
-            'proto': np.random.choice(['tcp', 'udp', 'icmp'], 100),
-            'event_desc': ['test event'] * 100,
-            'bytes_toserver': np.random.randint(0, 10000, 100),
-            'bytes_toclient': np.random.randint(0, 10000, 100),
+            'timestamp': pd.date_range('2025-01-01', periods=200, freq='1h'),
+            'agent': ['test-agent'] * 200,
+            'rule_level': np.random.randint(0, 15, 200),
+            'src_ip': [f'10.0.0.{i%255}' for i in range(200)],
+            'dst_ip': [f'172.16.0.{i%255}' for i in range(200)],
+            'src_port': np.random.randint(1024, 65535, 200),
+            'dst_port': np.random.choice([22, 80, 443, 3306, 5432], 200),
+            'proto': np.random.choice(['tcp', 'udp', 'icmp'], 200),
+            'event_desc': ['test event'] * 200,
+            'bytes_toserver': np.random.randint(0, 10000, 200),
+            'bytes_toclient': np.random.randint(0, 10000, 200),
         })
         
-        # Apply feature engineering
-        cls.test_data = engineer_all_features(cls.test_data)
+        engineered = engineer_all_features(cls.test_data.copy())
+        _, X, _ = preprocess_dataframe(engineered)
+        cls.X = X
         
-    def test_ensemble_detector_initialization(self):
-        """Test ensemble detector initialization"""
-        detector = EnsembleAnomalyDetector()
-        self.assertIsNotNone(detector)
-        self.assertFalse(detector.fitted)
-        self.assertEqual(len(detector.models), 0)
+        scaler = StandardScaler().fit(X)
+        X_scaled = scaler.transform(X)
+        cls.scaler = scaler
         
-    def test_ensemble_detector_training(self):
-        """Test ensemble detector training"""
-        detector = EnsembleAnomalyDetector(voting_threshold=2)
-        
-        # Preprocess data
-        df_processed, X, _ = preprocess_dataframe(self.test_data.copy())
-        
-        # Train
-        detector.fit(X, contamination=0.1)
-        
-        # Check models are trained
-        self.assertTrue(detector.fitted)
-        self.assertIn('iforest', detector.models)
-        self.assertIn('lof', detector.models)
-        self.assertIn('svm', detector.models)
-        self.assertIsNotNone(detector.scaler)
-        
-    def test_ensemble_detector_prediction(self):
-        """Test ensemble detector prediction"""
-        detector = EnsembleAnomalyDetector(voting_threshold=2)
-        
-        # Preprocess data
-        df_processed, X, _ = preprocess_dataframe(self.test_data.copy())
-        
-        # Train
-        detector.fit(X, contamination=0.1)
-        
-        # Predict
-        predictions, votes, anomaly_votes = detector.predict(X)
-        
-        # Check predictions
-        self.assertEqual(len(predictions), len(X))
-        self.assertTrue(all(p in [-1, 1] for p in predictions))
-        self.assertEqual(len(votes), 3)  # iforest, lof, svm
-        
-    def test_ensemble_detector_save_load(self):
-        """Test save and load model"""
-        detector = EnsembleAnomalyDetector(voting_threshold=2)
-        
-        # Preprocess data
-        df_processed, X, _ = preprocess_dataframe(self.test_data.copy())
-        
-        # Train
-        detector.fit(X, contamination=0.1)
-        
-        # Save
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pkl') as f:
-            temp_path = f.name
-            detector.save(temp_path)
-            
-            # Load
-            detector2 = EnsembleAnomalyDetector()
-            detector2.load(temp_path)
-            
-            # Check models are loaded
-            self.assertTrue(detector2.fitted)
-            self.assertIn('iforest', detector2.models)
-            self.assertIn('lof', detector2.models)
-            self.assertIn('svm', detector2.models)
-            
-            # Cleanup
-            os.unlink(temp_path)
+        models = {
+            'iforest': IsolationForest(
+                contamination=0.1,
+                random_state=42
+            ).fit(X_scaled),
+            'lof': LocalOutlierFactor(
+                n_neighbors=20,
+                novelty=True
+            ).fit(X_scaled),
+            'svm': OneClassSVM(
+                nu=0.1,
+                kernel='rbf',
+                gamma='scale'
+            ).fit(X_scaled),
+        }
+        cls.models = models
+    
+    def test_predict_ensemble_shapes(self):
+        predictions, votes, anomaly_votes, scores = _predict_ensemble(
+            self.models, self.scaler, self.X, voting_threshold=2
+        )
+        self.assertEqual(len(predictions), len(self.X))
+        self.assertEqual(len(anomaly_votes), len(self.X))
+        self.assertEqual(scores.shape[0], len(self.X))
+        self.assertSetEqual(set(votes.keys()), {'iforest', 'lof', 'svm'})
+    
+    def test_predict_ensemble_threshold_effect(self):
+        preds_majority, *_ = _predict_ensemble(
+            self.models, self.scaler, self.X, voting_threshold=2
+        )
+        preds_unanimous, *_ = _predict_ensemble(
+            self.models, self.scaler, self.X, voting_threshold=3
+        )
+        rate_majority = (preds_majority == -1).mean()
+        rate_unanimous = (preds_unanimous == -1).mean()
+        self.assertGreater(rate_majority, rate_unanimous)
+        self.assertGreater(rate_majority, 0)
+    
+    def test_predict_ensemble_vote_consistency(self):
+        _, votes, anomaly_votes, _ = _predict_ensemble(
+            self.models, self.scaler, self.X, voting_threshold=2
+        )
+        reconstructed_votes = (votes['iforest'] == -1).astype(int)
+        reconstructed_votes += (votes['lof'] == -1).astype(int)
+        reconstructed_votes += (votes['svm'] == -1).astype(int)
+        np.testing.assert_array_equal(reconstructed_votes, anomaly_votes)
 
 
 class TestFeatureEngineering(unittest.TestCase):

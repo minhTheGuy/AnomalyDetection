@@ -13,7 +13,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from data_processing.feature_engineering import engineer_all_features
 from data_processing.preprocessing import preprocess_dataframe
-from detection.ensemble_detector import EnsembleAnomalyDetector
+from detection.detect_anomaly import _predict_ensemble
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.svm import OneClassSVM
+from sklearn.preprocessing import StandardScaler
 
 
 class TestIntegration(unittest.TestCase):
@@ -46,11 +50,26 @@ class TestIntegration(unittest.TestCase):
         self.assertIsNotNone(df_processed)
         self.assertIsNotNone(X)
         
-        # Detection
-        detector = EnsembleAnomalyDetector(voting_threshold=2)
-        detector.fit(X, contamination=0.1)
+        scaler = StandardScaler().fit(X)
+        X_scaled = scaler.transform(X)
+        models = {
+            'iforest': IsolationForest(
+                contamination=0.1,
+                random_state=1
+            ).fit(X_scaled),
+            'lof': LocalOutlierFactor(
+                n_neighbors=25,
+                novelty=True
+            ).fit(X_scaled),
+            'svm': OneClassSVM(
+                nu=0.1,
+                gamma='scale'
+            ).fit(X_scaled),
+        }
         
-        predictions, votes, anomaly_votes = detector.predict(X)
+        predictions, votes, anomaly_votes, scores = _predict_ensemble(
+            models, scaler, X, voting_threshold=2
+        )
         self.assertEqual(len(predictions), len(X))
         
         # Check anomaly rate
