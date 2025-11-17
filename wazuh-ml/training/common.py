@@ -237,6 +237,37 @@ def create_classifier_bundle(
     return bundle
 
 
+def create_autoencoder_bundle(
+    autoencoder,
+    scaler,
+    threshold: float,
+    encoders: Dict,
+    feature_names: List[str],
+    *,
+    X: pd.DataFrame | None = None,
+    contamination: float = 0.05,
+) -> Dict:
+    """
+    Tạo bundle cho autoencoder anomaly detector.
+    """
+    bundle = {
+        "model_type": "autoencoder",
+        "autoencoder": autoencoder,
+        "scaler": scaler,
+        "autoencoder_threshold": threshold,
+        "encoders": encoders,
+        "feature_names": feature_names,
+        "training_date": pd.Timestamp.now().isoformat(),
+        "contamination": contamination,
+    }
+
+    if X is not None:
+        bundle["n_features"] = X.shape[1]
+        bundle["n_samples"] = X.shape[0]
+
+    return bundle
+
+
 def align_features(
     X_target: pd.DataFrame,
     source_features: List[str],

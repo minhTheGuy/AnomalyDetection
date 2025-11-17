@@ -263,6 +263,93 @@ class FeedbackLoop:
         self.analyzer = PerformanceAnalyzer()
         self.tuner = ModelTuner()
         self.iteration = 0
+
+    def _step_detect(self):
+        print_section("STEP 1: DETECT")
+        try:
+            anomalies = ensure_dataframe(detect())
+            if anomalies.empty:
+                return anomalies, {'status': 'no_anomalies', 'anomalies_count': 0}
+            print(f"Detected {len(anomalies)} anomalies")
+            return anomalies, {'status': 'success', 'anomalies_count': len(anomalies)}
+        except Exception as exc:
+            print(f"Detection failed: {exc}")
+            return None, {'status': 'failed', 'error': str(exc)}
+
+    def _step_analyze(self, anomalies_df, save_results):
+        print_section("STEP 2: ANALYZE")
+        try:
+            analysis = self.analyzer.analyze_detection_results(
+                anomalies_df=anomalies_df,
+                actions_df=safe_load_csv(ACTIONS_CSV_PATH),
+                action_results_df=safe_load_csv(ACTION_RESULTS_CSV_PATH),
+            )
+            status = {
+                'status': 'success',
+                'issues_count': len(analysis['issues']),
+                'recommendations_count': len(analysis['recommendations']),
+            }
+            if save_results:
+                self.analyzer.save_analysis()
+            return analysis, status
+        except Exception as exc:
+            print(f"Analysis failed: {exc}")
+            return None, {'status': 'failed', 'error': str(exc)}
+
+    def _step_tune(self, analysis, save_results):
+        print_section("STEP 3: TUNE")
+        if analysis is None:
+            return {'status': 'skipped', 'reason': 'no_analysis'}
+        try:
+            model_info = get_model_info(MODEL_PATH)
+            current_params = model_info.get('best_params', {}) if model_info else {}
+            recommended = self.tuner.tune_parameters(analysis_results=analysis, current_params=current_params)
+            if save_results:
+                self.tuner.save_tuning_history()
+            return {'status': 'success', 'recommended_params': recommended}
+        except Exception as exc:
+            print(f"Tuning failed: {exc}")
+            return {'status': 'failed', 'error': str(exc)}
+
+    def _step_retrain(self, detect_only, retrain):
+        if detect_only or not retrain:
+            return {'status': 'skipped', 'reason': 'retrain disabled or detect_only mode'}
+        print_section("STEP 4: RETRAIN")
+        try:
+            should_train, reason = should_retrain(force=False, max_age_days=7)
+            if not should_train:
+                print(reason)
+                return {'status': 'skipped', 'reason': reason}
+            print(f"   Reason: {reason}")
+            success = auto_retrain(fetch_new_data=True, force=False, enable_tuning=True)
+            return {'status': 'success' if success else 'skipped', 'reason': reason}
+        except Exception as exc:
+            print(f"Retrain failed: {exc}")
+            return {'status': 'failed', 'error': str(exc)}
+
+    def _step_test(self, run_tests_flag):
+        if not run_tests_flag:
+            return {'status': 'skipped', 'reason': 'tests disabled'}
+        print_section("STEP 5: TEST")
+        try:
+            success = run_all_tests()
+            return {'status': 'success' if success else 'failed', 'all_passed': success}
+        except Exception as exc:
+            print(f"Tests failed: {exc}")
+            return {'status': 'failed', 'error': str(exc)}
+
+    def _summarize(self, cycle_results, save_results):
+        print_header("FEEDBACK LOOP SUMMARY")
+        print(f"Iteration: {self.iteration}")
+        print(f"Timestamp: {cycle_results['timestamp']}")
+        for step, result in cycle_results['steps'].items():
+            print(f"  {step.upper()}: {result.get('status', 'unknown')}")
+        if save_results:
+            cycle_path = f"data/feedback_loop_iteration_{self.iteration}.json"
+            os.makedirs(os.path.dirname(cycle_path), exist_ok=True)
+            with open(cycle_path, 'w') as f:
+                json.dump(cycle_results, f, indent=2, default=str)
+            print(f"\nCycle results saved to: {cycle_path}")
     
     def run_full_cycle(
         self,
@@ -292,166 +379,19 @@ class FeedbackLoop:
             'steps': {}
         }
         
-        # Step 1: Detect
-        print_section("STEP 1: DETECT")
-        try:
-            anomalies = detect()
-            anomalies_df = ensure_dataframe(anomalies)
-            
-            if len(anomalies_df) > 0:
-                print(f"Detected {len(anomalies_df)} anomalies")
-                cycle_results['steps']['detect'] = {
-                    'status': 'success',
-                    'anomalies_count': len(anomalies_df)
-                }
-            else:
-                print("No anomalies detected")
-                cycle_results['steps']['detect'] = {
-                    'status': 'no_anomalies',
-                    'anomalies_count': 0
-                }
-        except Exception as e:
-            print(f"Detection failed: {e}")
-            cycle_results['steps']['detect'] = {
-                'status': 'failed',
-                'error': str(e)
-            }
+        anomalies_df, detect_status = self._step_detect()
+        cycle_results['steps']['detect'] = detect_status
+        if detect_status['status'] == 'failed':
             return cycle_results
-        
-        # Step 2: Analyze
-        print_section("STEP 2: ANALYZE")
-        try:
-            # Load actions và results nếu có
-            actions_df = safe_load_csv(ACTIONS_CSV_PATH)
-            action_results_df = safe_load_csv(ACTION_RESULTS_CSV_PATH)
-            
-            analysis = self.analyzer.analyze_detection_results(
-                anomalies_df=anomalies_df,
-                actions_df=actions_df,
-                action_results_df=action_results_df
-            )
-            
-            cycle_results['steps']['analyze'] = {
-                'status': 'success',
-                'issues_count': len(analysis['issues']),
-                'recommendations_count': len(analysis['recommendations'])
-            }
-            
-            if save_results:
-                self.analyzer.save_analysis()
-        except Exception as e:
-            print(f"Analysis failed: {e}")
-            cycle_results['steps']['analyze'] = {
-                'status': 'failed',
-                'error': str(e)
-            }
-        
-        # Step 3: Tune
-        print_section("STEP 3: TUNE")
-        try:
-            if analysis is None:
-                print("  No analysis results, skipping tuning")
-                cycle_results['steps']['tune'] = {
-                    'status': 'skipped',
-                    'reason': 'no_analysis'
-                }
-            else:
-                # Load current model params
-                model_info = get_model_info(MODEL_PATH)
-                current_params = model_info.get('best_params', {}) if model_info else {}
-                
-                recommended_params = self.tuner.tune_parameters(
-                    analysis_results=analysis,
-                    current_params=current_params
-                )
-                
-                cycle_results['steps']['tune'] = {
-                    'status': 'success',
-                    'recommended_params': recommended_params
-                }
-                
-                if save_results:
-                    self.tuner.save_tuning_history()
-        except Exception as e:
-            print(f"Tuning failed: {e}")
-            cycle_results['steps']['tune'] = {
-                'status': 'failed',
-                'error': str(e)
-            }
-        
-        # Step 4: Retrain (nếu cần)
-        if retrain and not detect_only:
-            print_section("STEP 4: RETRAIN")
-            try:
-                # Check if retrain is needed
-                should_train, reason = should_retrain(force=False, max_age_days=7)
-                
-                if should_train:
-                    print(f"   Reason: {reason}")
-                    success = auto_retrain(
-                        fetch_new_data=True,
-                        force=False,
-                        enable_tuning=True
-                    )
-                    cycle_results['steps']['retrain'] = {
-                        'status': 'success' if success else 'skipped',
-                        'reason': reason
-                    }
-                else:
-                    print(f"{reason}")
-                    cycle_results['steps']['retrain'] = {
-                        'status': 'skipped',
-                        'reason': reason
-                    }
-            except Exception as e:
-                print(f"Retrain failed: {e}")
-                cycle_results['steps']['retrain'] = {
-                    'status': 'failed',
-                    'error': str(e)
-                }
-        else:
-            cycle_results['steps']['retrain'] = {
-                'status': 'skipped',
-                'reason': 'retrain disabled or detect_only mode'
-            }
-        
-        # Step 5: Test
-        if run_tests:
-            print_section("STEP 5: TEST")
-            try:
-                test_success = run_all_tests()
-                cycle_results['steps']['test'] = {
-                    'status': 'success' if test_success else 'failed',
-                    'all_passed': test_success
-                }
-            except Exception as e:
-                print(f"Tests failed: {e}")
-                cycle_results['steps']['test'] = {
-                    'status': 'failed',
-                    'error': str(e)
-                }
-        else:
-            cycle_results['steps']['test'] = {
-                'status': 'skipped',
-                'reason': 'tests disabled'
-            }
-        
-        # Summary
-        print_header("FEEDBACK LOOP SUMMARY")
-        print(f"Iteration: {self.iteration}")
-        print(f"Timestamp: {cycle_results['timestamp']}")
-        for step, result in cycle_results['steps'].items():
-            status = result.get('status', 'unknown')
-            print(f"  {step.upper()}: {status}")
-        
-        # Save cycle results
-        if save_results:
-            cycle_path = f"data/feedback_loop_iteration_{self.iteration}.json"
-            os.makedirs(os.path.dirname(cycle_path), exist_ok=True)
-            with open(cycle_path, 'w') as f:
-                json.dump(cycle_results, f, indent=2, default=str)
-            print(f"\nCycle results saved to: {cycle_path}")
-        
+
+        analysis, analyze_status = self._step_analyze(anomalies_df, save_results)
+        cycle_results['steps']['analyze'] = analyze_status
+
+        cycle_results['steps']['tune'] = self._step_tune(analysis, save_results)
+        cycle_results['steps']['retrain'] = self._step_retrain(detect_only, retrain)
+        cycle_results['steps']['test'] = self._step_test(run_tests)
+
+        self._summarize(cycle_results, save_results)
         return cycle_results
 
 
