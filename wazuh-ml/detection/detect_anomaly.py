@@ -7,14 +7,10 @@ import numpy as np
 from core.config import (
     CSV_PATH,
     MODEL_PATH,
-    CLASSIFIER_MODEL_PATH,
     TARGET_ANOMALY_RATE,
     MIN_ANOMALY_RATE,
     MAX_ANOMALY_RATE,
     MODEL_TYPE,
-    AUTO_EXECUTE_ACTIONS,
-    ACTIONS_CSV_PATH,
-    ACTION_RESULTS_CSV_PATH,
 )
 from utils.common import print_header, print_section, safe_load_joblib, safe_load_csv
 from data_processing.feature_engineering import engineer_all_features
@@ -176,49 +172,6 @@ def _load_model_and_prepare_data(logs, feature_names):
     return bundle, models, detector, scaler, encoders, df, X, model_type, voting_threshold
 
 
-def _run_classification(df, X, feature_names):
-    """Helper: Chạy classification trên events (sử dụng classify_events module)"""
-    try:
-        print("\nRunning classification on events...")
-        from classification.classify_events import (
-            _load_classifier_bundle,
-            _align_features,
-            _classify_attack_type,
-            _classify_event_category
-        )
-        
-        classifier_data = _load_classifier_bundle(CLASSIFIER_MODEL_PATH)
-        if classifier_data is None:
-            return df
-        
-        attack_classifier = classifier_data['attack_classifier']
-        attack_encoder = classifier_data['attack_encoder']
-        category_classifier = classifier_data['category_classifier']
-        category_encoder = classifier_data['category_encoder']
-        classifier_feature_names = classifier_data['feature_names']
-        feature_selector = classifier_data['feature_selector']
-        selected_feature_names = classifier_data['selected_feature_names']
-        
-        # Prepare features (X đã được preprocessed, chỉ cần align)
-        from classification.classify_events import _align_features
-        X_classify = _align_features(X, classifier_feature_names, feature_selector, selected_feature_names)
-        
-        # Run classification
-        if attack_classifier:
-            df = _classify_attack_type(df, X_classify, attack_classifier, attack_encoder)
-        
-        if category_classifier:
-            df = _classify_event_category(df, X_classify, category_classifier, category_encoder)
-        
-        print("Classification completed")
-    except Exception as e:
-        print(f"Classification failed: {e}")
-        import traceback
-        traceback.print_exc()
-    
-    return df
-
-
 def _apply_dynamic_threshold(df):
     scores = df.get("anomaly_score")
     if scores is None or scores is False:
@@ -298,90 +251,6 @@ def _print_anomaly_lists(anomalies, model_type):
     print(anomalies.sort_values("anomaly_score")[display_cols].to_string(index=False))
 
 
-def _print_classification_summary(anomalies):
-    if anomalies.empty or "predicted_attack_type" not in anomalies.columns:
-        return
-
-    print_header("ANOMALY CLASSIFICATION SUMMARY")
-    attack_dist = anomalies["predicted_attack_type"].value_counts()
-    attack_types = {k: v for k, v in attack_dist.items() if k not in {"benign", "unknown"}}
-    benign = {k: v for k, v in attack_dist.items() if k in {"benign", "unknown"}}
-
-    total_attack = sum(attack_types.values())
-    total_benign = sum(benign.values())
-    print(f"\nTỔNG QUAN:")
-    print(f"  Total Anomalies:    {len(anomalies)}")
-    print(f"  Attack Anomalies:   {total_attack} ({total_attack/len(anomalies)*100:.1f}%)")
-    print(f"  Benign/Unknown:     {total_benign} ({total_benign/len(anomalies)*100:.1f}%)")
-
-    if attack_types:
-        print_header("ATTACK ANOMALIES DETECTED")
-        for attack_type, count in sorted(attack_types.items(), key=lambda x: x[1], reverse=True):
-            confidence_avg = (
-                anomalies.loc[anomalies["predicted_attack_type"] == attack_type, "attack_type_confidence"].mean()
-                if "attack_type_confidence" in anomalies.columns
-                else None
-            )
-            conf_str = f" (confidence: {confidence_avg:.2f})" if confidence_avg else ""
-            print(f"  {attack_type:25s}: {count:4d}{conf_str}")
-
-    if benign:
-        print_header("BENIGN ANOMALIES")
-        for label, count in benign.items():
-            print(f"  {label:25s}: {count:4d}")
-
-    if "predicted_event_category" in anomalies.columns:
-        print_header("EVENT CATEGORIES IN ANOMALIES")
-        for category, count in anomalies["predicted_event_category"].value_counts().items():
-            print(f"  {category:25s}: {count:4d}")
-
-
-def _generate_actions(anomalies_filtered):
-    if anomalies_filtered.empty:
-        return
-    try:
-        print_header("ACTION GENERATION & EXECUTION")
-        from actions.action_manager import ActionManager
-        from core.config import (
-            ENABLE_AUTO_BLOCK,
-            ENABLE_TELEGRAM,
-            TELEGRAM_BOT_TOKEN,
-            TELEGRAM_CHAT_ID,
-            MIN_SEVERITY_FOR_BLOCK,
-            MIN_SEVERITY_FOR_NOTIFY,
-        )
-
-        action_config = {
-            "enable_auto_block": ENABLE_AUTO_BLOCK,
-            "enable_telegram": ENABLE_TELEGRAM,
-            "telegram_bot_token": TELEGRAM_BOT_TOKEN,
-            "telegram_chat_id": TELEGRAM_CHAT_ID,
-            "min_severity_for_block": MIN_SEVERITY_FOR_BLOCK,
-            "min_severity_for_notify": MIN_SEVERITY_FOR_NOTIFY,
-            "auto_execute": AUTO_EXECUTE_ACTIONS,
-        }
-
-        action_manager = ActionManager(action_config)
-        result = action_manager.process_anomalies(anomalies_filtered, execute=AUTO_EXECUTE_ACTIONS)
-
-        if result["actions"]:
-            action_manager.save_actions(result["actions"], ACTIONS_CSV_PATH)
-        if result["results"]:
-            action_manager.save_results(result["results"], ACTION_RESULTS_CSV_PATH)
-
-        summary = result["summary"]
-        print(f"\nAction Summary:")
-        print(f"  Total anomalies: {summary['total_anomalies']}")
-        print(f"  Total actions generated: {summary['total_actions']}")
-        if summary["executed"]:
-            print(f"  Actions executed: {summary['success_count']} success, {summary['fail_count']} failed")
-    except Exception as exc:  # pragma: no cover
-        print(f"\n   Action generation failed: {exc}")
-        import traceback
-
-        traceback.print_exc()
-
-
 def detect(logs=None):
     print("Đang tải mô hình đã huấn luyện...")
     result = _load_model_and_prepare_data(logs, None)
@@ -395,14 +264,12 @@ def detect(logs=None):
     df, agreement = _apply_model_predictions(df, X, bundle, model_type, models, detector, scaler, voting_threshold)
     df = _apply_dynamic_threshold(df)
 
-    df = _run_classification(df, X, feature_names)
     df = _apply_filters(df)
 
     anomalies_filtered = df[df["anomaly_label_filtered"] == -1]
     _report_detection(df, anomalies_filtered, model_type, agreement)
     _print_anomaly_lists(anomalies_filtered, model_type)
-    _print_classification_summary(anomalies_filtered)
-    _generate_actions(anomalies_filtered)
+    print()
 
     print()
     return anomalies_filtered.to_dict(orient="records")
