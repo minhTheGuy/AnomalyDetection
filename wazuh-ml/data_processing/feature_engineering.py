@@ -234,24 +234,36 @@ def create_sequence_features(df, window_minutes=10):
         return df
     
     df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
-    df = df.sort_values('timestamp')
-    df['time_delta'] = df.groupby('agent')['timestamp'].diff().dt.total_seconds().fillna(0)
+    df['__orig_idx'] = np.arange(len(df))
+    df_sorted = df.sort_values(['agent', 'timestamp']).reset_index(drop=True)
+    df_sorted['time_delta'] = (
+        df_sorted.groupby('agent')['timestamp']
+        .diff()
+        .dt.total_seconds()
+        .fillna(0)
+    )
 
     rolling_counts = (
-        df.set_index('timestamp')
-          .groupby('agent')
-          .rolling(f'{window_minutes}min')
-          .size()
-          .reset_index(level=0, drop=True)
-          .reindex(df.index, fill_value=0)
+        df_sorted
+        .groupby('agent')
+        .rolling(window=f'{window_minutes}min', on='timestamp')
+        ['timestamp']
+        .count()
+        .reset_index(level=0, drop=True)
+        .astype(int)
     )
-    df['events_in_window'] = rolling_counts.astype(int)
-    df['avg_event_frequency'] = df['events_in_window'] / max(window_minutes, 1)
+    df_sorted['events_in_window'] = rolling_counts.to_numpy()
+    df_sorted['avg_event_frequency'] = df_sorted['events_in_window'] / max(window_minutes, 1)
 
-    threshold = df['events_in_window'].mean() + 2 * df['events_in_window'].std()
-    df['is_burst'] = (df['events_in_window'] > threshold).astype(int)
-    df['event_velocity'] = df.groupby('agent')['events_in_window'].diff().fillna(0)
-    
+    threshold = df_sorted['events_in_window'].mean() + 2 * df_sorted['events_in_window'].std()
+    df_sorted['is_burst'] = (df_sorted['events_in_window'] > threshold).astype(int)
+    df_sorted['event_velocity'] = df_sorted.groupby('agent')['events_in_window'].diff().fillna(0)
+
+    df = (
+        df_sorted.sort_values('__orig_idx')
+        .drop(columns='__orig_idx')
+        .reset_index(drop=True)
+    )
     return df
 
 
