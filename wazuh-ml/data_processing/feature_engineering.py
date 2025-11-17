@@ -2,9 +2,21 @@
 Module trích xuất các đặc trưng nâng cao cho anomaly detection
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from utils.common import print_header
+
+
+def _ensure_numeric(series, default=0):
+    return pd.to_numeric(series, errors="coerce").fillna(default)
+
+
+def _apply_keyword_flags(df, column, keyword_sets):
+    col = df.get(column, pd.Series(dtype=str)).astype(str).str.lower()
+    for new_col, keywords in keyword_sets.items():
+        df[new_col] = col.apply(lambda text: int(any(k in text for k in keywords)))
+    return df
 
 def extract_time_features(df):
     """
@@ -20,27 +32,16 @@ def extract_time_features(df):
     
     # Chuyển đổi timestamp sang datetime
     if 'timestamp' in df.columns:
-        df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
-        
-        # Giờ trong ngày (0-23)
-        df['hour'] = df['timestamp'].dt.hour
-        
-        # Ngày trong tuần (0=Monday, 6=Sunday)
-        df['day_of_week'] = df['timestamp'].dt.dayofweek
-        
-        # Phút trong giờ (0-59)
-        df['minute'] = df['timestamp'].dt.minute
-        
-        # Phân loại thời gian
+        ts = pd.to_datetime(df['timestamp'], errors='coerce')
+        df['timestamp'] = ts
+        df['hour'] = ts.dt.hour.fillna(0).astype(int)
+        df['day_of_week'] = ts.dt.dayofweek.fillna(0).astype(int)
+        df['minute'] = ts.dt.minute.fillna(0).astype(int)
         df['is_night'] = ((df['hour'] >= 22) | (df['hour'] <= 6)).astype(int)
         df['is_weekend'] = (df['day_of_week'] >= 5).astype(int)
-        df['is_business_hours'] = ((df['hour'] >= 9) & (df['hour'] <= 17) & (df['day_of_week'] < 5)).astype(int)
-        
-        # Fill NaN cho các trường hợp timestamp invalid
-        time_cols = ['hour', 'day_of_week', 'minute', 'is_night', 'is_weekend', 'is_business_hours']
-        for col in time_cols:
-            if col in df.columns:
-                df[col] = df[col].fillna(0)
+        df['is_business_hours'] = (
+            df['hour'].between(9, 17) & (df['day_of_week'] < 5)
+        ).astype(int)
     
     return df
 
@@ -80,14 +81,13 @@ def extract_network_features(df):
     
     # Tính toán bytes features - ưu tiên từ flow stats, sau đó từ bytes field
     if 'bytes_toserver' in df.columns or 'bytes_toclient' in df.columns:
-        df['bytes_toserver'] = pd.to_numeric(df.get('bytes_toserver', 0), errors='coerce').fillna(0)
-        df['bytes_toclient'] = pd.to_numeric(df.get('bytes_toclient', 0), errors='coerce').fillna(0)
-        # Tính tổng bytes nếu chưa có
+        df['bytes_toserver'] = _ensure_numeric(df.get('bytes_toserver', 0))
+        df['bytes_toclient'] = _ensure_numeric(df.get('bytes_toclient', 0))
         if 'bytes' not in df.columns or df['bytes'].isna().all():
             df['bytes'] = df['bytes_toserver'] + df['bytes_toclient']
     
     if 'bytes' in df.columns:
-        df['bytes'] = pd.to_numeric(df['bytes'], errors='coerce').fillna(0)
+        df['bytes'] = _ensure_numeric(df['bytes'])
         df['log_bytes'] = np.log1p(df['bytes'])  # log transform để giảm skewness
         
         # Phân loại kích thước packet
@@ -100,18 +100,18 @@ def extract_network_features(df):
     
     # Length từ syscheck size hoặc length field
     if 'syscheck_size' in df.columns:
-        df['syscheck_size'] = pd.to_numeric(df['syscheck_size'], errors='coerce').fillna(0)
+        df['syscheck_size'] = _ensure_numeric(df['syscheck_size'])
         if 'length' not in df.columns or df['length'].isna().all():
             df['length'] = df['syscheck_size']
     
     if 'length' in df.columns:
-        df['length'] = pd.to_numeric(df['length'], errors='coerce').fillna(0)
+        df['length'] = _ensure_numeric(df['length'])
         df['log_length'] = np.log1p(df['length'])
     
     # Flow stats features (nếu có)
     if 'pkts_toserver' in df.columns or 'pkts_toclient' in df.columns:
-        df['pkts_toserver'] = pd.to_numeric(df.get('pkts_toserver', 0), errors='coerce').fillna(0)
-        df['pkts_toclient'] = pd.to_numeric(df.get('pkts_toclient', 0), errors='coerce').fillna(0)
+        df['pkts_toserver'] = _ensure_numeric(df.get('pkts_toserver', 0))
+        df['pkts_toclient'] = _ensure_numeric(df.get('pkts_toclient', 0))
         df['total_packets'] = df['pkts_toserver'] + df['pkts_toclient']
         df['packet_ratio'] = np.where(
             df['total_packets'] > 0,
@@ -123,13 +123,9 @@ def extract_network_features(df):
     if 'src_ip' in df.columns and 'dst_ip' in df.columns:
         def is_private(ip_str):
             s = str(ip_str)
-            return (
-                s.startswith('10.') or
-                s.startswith('172.16.') or  # lab existing
-                s.startswith('192.168.')
-            )
-        df['is_internal_src'] = df['src_ip'].apply(lambda x: 1 if is_private(x) else 0)
-        df['is_internal_dst'] = df['dst_ip'].apply(lambda x: 1 if is_private(x) else 0)
+            return s.startswith(('10.', '172.16.', '192.168.'))
+        df['is_internal_src'] = df['src_ip'].apply(lambda x: int(is_private(x)))
+        df['is_internal_dst'] = df['dst_ip'].apply(lambda x: int(is_private(x)))
         df['is_internal_communication'] = (df['is_internal_src'] & df['is_internal_dst']).astype(int)
     
     return df
@@ -149,10 +145,11 @@ def extract_event_features(df):
     
     # Syscheck (File Integrity Monitoring) features
     if 'syscheck_event' in df.columns:
-        df['is_syscheck_event'] = df['syscheck_event'].notna().astype(int)
-        df['is_file_added'] = (df['syscheck_event'].astype(str).str.lower() == 'added').astype(int)
-        df['is_file_modified'] = (df['syscheck_event'].astype(str).str.lower() == 'modified').astype(int)
-        df['is_file_deleted'] = (df['syscheck_event'].astype(str).str.lower() == 'deleted').astype(int)
+        se_lower = df['syscheck_event'].astype(str).str.lower()
+        df['is_syscheck_event'] = se_lower.notna().astype(int)
+        df['is_file_added'] = (se_lower == 'added').astype(int)
+        df['is_file_modified'] = (se_lower == 'modified').astype(int)
+        df['is_file_deleted'] = (se_lower == 'deleted').astype(int)
     
     if 'syscheck_path' in df.columns:
         df['syscheck_path_length'] = df['syscheck_path'].astype(str).str.len()
@@ -183,57 +180,39 @@ def extract_event_features(df):
     
     # App protocol features
     if 'app_proto' in df.columns:
-        df['has_app_proto'] = df['app_proto'].notna().astype(int)
-        # Phân loại app protocols
-        df['is_http_proto'] = df['app_proto'].astype(str).str.contains('http', case=False, na=False).astype(int)
-        df['is_ssl_proto'] = df['app_proto'].astype(str).str.contains('ssl|tls', case=False, na=False).astype(int)
+        proto_lower = df['app_proto'].astype(str).str.lower()
+        df['has_app_proto'] = proto_lower.notna().astype(int)
+        df['is_http_proto'] = proto_lower.str.contains('http', na=False).astype(int)
+        df['is_ssl_proto'] = proto_lower.str.contains('ssl|tls', na=False).astype(int)
     
     if 'event_desc' in df.columns:
-        # Độ dài mô tả event
-        df['event_desc_length'] = df['event_desc'].astype(str).str.len()
-        
-        # Đếm số từ
-        df['event_word_count'] = df['event_desc'].astype(str).str.split().str.len()
-        
-        # Đếm từ khóa nguy hiểm
+        event_desc = df['event_desc'].astype(str)
+        lower_desc = event_desc.str.lower()
+        df['event_desc_length'] = event_desc.str.len()
+        df['event_word_count'] = event_desc.str.split().str.len()
         danger_keywords = [
-            'failed', 'error', 'attack', 'denied', 'unauthorized', 
+            'failed', 'error', 'attack', 'denied', 'unauthorized',
             'malicious', 'suspicious', 'breach', 'intrusion', 'exploit',
             'backdoor', 'trojan', 'virus', 'malware', 'ransomware',
             'brute', 'scan', 'flood', 'injection', 'overflow'
         ]
-        
-        df['danger_keyword_count'] = df['event_desc'].astype(str).str.lower().apply(
-            lambda x: sum(keyword in x for keyword in danger_keywords)
-        )
-        
-        # Từ khóa authentication
-        auth_keywords = ['login', 'logout', 'authentication', 'auth', 'session', 'password']
-        df['is_auth_event'] = df['event_desc'].astype(str).str.lower().apply(
-            lambda x: any(keyword in x for keyword in auth_keywords)
-        ).astype(int)
-        
-        # Từ khóa file integrity
-        fim_keywords = ['file', 'changed', 'modified', 'deleted', 'integrity', 'checksum']
-        df['is_fim_event'] = df['event_desc'].astype(str).str.lower().apply(
-            lambda x: any(keyword in x for keyword in fim_keywords)
-        ).astype(int)
+        df['danger_keyword_count'] = lower_desc.apply(lambda x: sum(k in x for k in danger_keywords))
+        df = _apply_keyword_flags(df, 'event_desc', {
+            'is_auth_event': ['login', 'logout', 'authentication', 'auth', 'session', 'password'],
+            'is_fim_event': ['file', 'changed', 'modified', 'deleted', 'integrity', 'checksum'],
+        })
     
     if 'rule_level' in df.columns:
-        df['rule_level'] = pd.to_numeric(df['rule_level'], errors='coerce').fillna(0)
-        
-        # Phân loại mức độ nghiêm trọng
+        df['rule_level'] = _ensure_numeric(df['rule_level'])
         df['severity_category'] = pd.cut(
-            df['rule_level'], 
+            df['rule_level'],
             bins=[0, 3, 7, 11, 15, 20],
             labels=['info', 'low', 'medium', 'high', 'critical'],
             include_lowest=True
         ).astype(str)
-        
-        # Binary flag cho các mức nghiêm trọng
         df['is_critical'] = (df['rule_level'] >= 15).astype(int)
-        df['is_high'] = ((df['rule_level'] >= 11) & (df['rule_level'] < 15)).astype(int)
-        df['is_medium'] = ((df['rule_level'] >= 7) & (df['rule_level'] < 11)).astype(int)
+        df['is_high'] = df['rule_level'].between(11, 14).astype(int)
+        df['is_medium'] = df['rule_level'].between(7, 10).astype(int)
     
     return df
 
@@ -254,45 +233,23 @@ def create_sequence_features(df, window_minutes=10):
     if 'timestamp' not in df.columns or 'agent' not in df.columns:
         return df
     
-    # Đảm bảo timestamp là datetime
     df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
-    
-    # Sắp xếp theo thời gian
     df = df.sort_values('timestamp')
-    
-    # Tính time delta (giây giữa các event)
     df['time_delta'] = df.groupby('agent')['timestamp'].diff().dt.total_seconds().fillna(0)
-    
-    # Đếm số event trong window cho mỗi agent
-    df['events_in_window'] = 0
-    for agent in df['agent'].unique():
-        if pd.notna(agent):
-            agent_mask = df['agent'] == agent
-            agent_data = df[agent_mask].copy()
-            
-            # Rolling count trong window
-            window_counts = []
-            for i, row in agent_data.iterrows():
-                current_time = row['timestamp']
-                if pd.notna(current_time):
-                    window_start = current_time - pd.Timedelta(minutes=window_minutes)
-                    count = ((agent_data['timestamp'] >= window_start) & 
-                            (agent_data['timestamp'] <= current_time)).sum()
-                    window_counts.append(count)
-                else:
-                    window_counts.append(0)
-            
-            df.loc[agent_mask, 'events_in_window'] = window_counts
-    
-    # Tính tần suất event trung bình (events per minute)
-    df['avg_event_frequency'] = df['events_in_window'] / window_minutes
-    
-    # Phát hiện burst (đột biến): events nhiều hơn mean + 2*std
-    mean_events = df['events_in_window'].mean()
-    std_events = df['events_in_window'].std()
-    df['is_burst'] = (df['events_in_window'] > mean_events + 2 * std_events).astype(int)
-    
-    # Velocity (tốc độ thay đổi)
+
+    rolling_counts = (
+        df.set_index('timestamp')
+          .groupby('agent')
+          .rolling(f'{window_minutes}min')
+          .size()
+          .reset_index(level=0, drop=True)
+          .reindex(df.index, fill_value=0)
+    )
+    df['events_in_window'] = rolling_counts.astype(int)
+    df['avg_event_frequency'] = df['events_in_window'] / max(window_minutes, 1)
+
+    threshold = df['events_in_window'].mean() + 2 * df['events_in_window'].std()
+    df['is_burst'] = (df['events_in_window'] > threshold).astype(int)
     df['event_velocity'] = df.groupby('agent')['events_in_window'].diff().fillna(0)
     
     return df
