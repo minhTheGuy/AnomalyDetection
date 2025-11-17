@@ -9,6 +9,134 @@ sys.path.insert(0, PROJECT_ROOT)
 from utils.common import print_header
 
 
+def _add_common_arguments(parser):
+    parser.add_argument("--menu", "-m", action="store_true", help="Hiển thị menu tương tác")
+    parser.add_argument(
+        "--no-tuning",
+        action="store_true",
+        help="Disable hyperparameter tuning (chỉ cho train commands)",
+    )
+    parser.add_argument(
+        "--with-autoencoder",
+        action="store_true",
+        help="Also train autoencoder model (for train-all or menu mode)",
+    )
+    parser.add_argument(
+        "--num-events",
+        type=int,
+        default=5000,
+        help="Number of events to generate (for generate-data command)",
+    )
+    parser.add_argument(
+        "--benign-ratio",
+        type=float,
+        default=0.7,
+        help="Ratio of benign events 0.0-1.0 (for generate-data command)",
+    )
+    parser.add_argument(
+        "--days",
+        type=int,
+        default=7,
+        help="Number of days to span (for generate-data command)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default=None,
+        help="Output JSON file path (for generate-data command)",
+    )
+    parser.add_argument(
+        "--csv-output",
+        type=str,
+        default=None,
+        help="Output CSV file path (for generate-data command, auto-generated if not specified)",
+    )
+    parser.add_argument(
+        "--test-module",
+        type=str,
+        default=None,
+        help="Specific test module to run (for test command)",
+    )
+    parser.add_argument("--ip", type=str, default=None, help="IP address to check (for threat-intel command)")
+    parser.add_argument(
+        "--hash",
+        type=str,
+        default=None,
+        help="File hash to check (for threat-intel command)",
+    )
+    parser.add_argument(
+        "--anomalies-csv",
+        type=str,
+        default=None,
+        help="Anomalies CSV file path (for generate-actions command)",
+    )
+    parser.add_argument(
+        "--execute",
+        action="store_true",
+        help="Execute actions immediately (for generate-actions command)",
+    )
+    parser.add_argument(
+        "--source-model",
+        type=str,
+        default=None,
+        help="Source model path for transfer learning (for transfer-learning command)",
+    )
+    parser.add_argument(
+        "--contamination",
+        type=float,
+        default=0.05,
+        help="Contamination rate for transfer learning (for transfer-learning command)",
+    )
+    parser.add_argument(
+        "--ensemble",
+        action="store_true",
+        help="Use ensemble model for transfer learning (for transfer-learning command, default: True)",
+    )
+    parser.add_argument(
+        "--no-ensemble",
+        action="store_true",
+        help="Disable ensemble model for transfer learning (for transfer-learning command)",
+    )
+    parser.add_argument(
+        "--iterations",
+        type=int,
+        default=1,
+        help="Number of feedback loop iterations (for feedback-loop command)",
+    )
+    parser.add_argument(
+        "--detect-only",
+        action="store_true",
+        help="Only run detection in feedback loop, skip retraining (for feedback-loop command)",
+    )
+    parser.add_argument(
+        "--no-retrain",
+        action="store_true",
+        help="Skip retraining in feedback loop (for feedback-loop command)",
+    )
+    parser.add_argument(
+        "--no-tests",
+        action="store_true",
+        help="Skip tests in feedback loop (for feedback-loop command)",
+    )
+    return parser
+
+
+def build_parser():
+    description = "Wazuh ML - Security Analytics System"
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+        Examples:
+        python main.py export              # Export logs
+        python main.py train-all           # Train cả 2 models
+        python main.py detect              # Detect anomalies
+        python main.py --menu              # Hiển thị menu tương tác
+                """,
+            )
+    return _add_common_arguments(parser)
+
+
 def export_logs():
     """Export logs từ Wazuh Indexer"""
     print("=" * 70)
@@ -36,13 +164,26 @@ def train_classifier(enable_tuning=True):
     train_classification_models(enable_tuning=enable_tuning)
 
 
-def train_all_models(enable_tuning=True):
+def train_all_models(enable_tuning=True, include_autoencoder=False, autoencoder_params=None):
     """Train cả anomaly detection và classification models"""
     print("=" * 70)
     print("TRAINING ALL MODELS")
     print("=" * 70)
     from training.train_all_models import train_all
-    train_all(enable_tuning=enable_tuning)
+    train_all(
+        enable_tuning=enable_tuning,
+        include_autoencoder=include_autoencoder,
+        autoencoder_params=autoencoder_params,
+    )
+
+
+def train_autoencoder():
+    """Train autoencoder anomaly model"""
+    print("=" * 70)
+    print("TRAINING AUTOENCODER MODEL")
+    print("=" * 70)
+    from training.train_autoencoder import train_autoencoder_model
+    train_autoencoder_model()
 
 
 def detect_anomalies():
@@ -71,7 +212,7 @@ def realtime_detection():
     from detection.realtime_detector import RealtimeDetector
     detector = RealtimeDetector()
     try:
-        detector.start()
+        detector.run()
     except KeyboardInterrupt:
         print("\n\nĐã dừng real-time detection")
 
@@ -259,6 +400,7 @@ def generate_actions(anomalies_csv=None, execute=False):
         print(f"    {action_type}: {count}")
     if summary['executed']:
         print(f"  Execution: {summary['success_count']} success, {summary['fail_count']} failed")
+
 def show_menu():
     """Hiển thị menu chọn chức năng"""
     print("\n" + "=" * 70)
@@ -280,264 +422,91 @@ def show_menu():
     print("  13. Generate actions from anomalies")
     print("  14. Transfer Learning (bootstrap model)")
     print("  15. Feedback Loop (Detect → Analyze → Tune → Retrain → Test)")
+    print("  16. Train autoencoder model")
     print("  0. Thoát")
     print("=" * 70)
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Wazuh ML - Security Analytics System",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  python main.py export              # Export logs
-  python main.py train-all           # Train cả 2 models
-  python main.py detect              # Detect anomalies
-  python main.py --menu              # Hiển thị menu tương tác
-        """
-    )
-    
-    parser.add_argument(
-        "command",
-        nargs="?",
-        choices=[
-            "export", "train", "train-classifier", "train-all",
-            "detect", "classify", "realtime", "evaluate", "llm", "generate-data",
-            "test", "threat-intel", "generate-actions",
-            "transfer-learning", "feedback-loop"
-        ],
-        help="Command to run"
-    )
-    parser.add_argument(
-        "--menu", "-m",
-        action="store_true",
-        help="Hiển thị menu tương tác"
-    )
-    parser.add_argument(
-        "--no-tuning",
-        action="store_true",
-        help="Disable hyperparameter tuning (chỉ cho train commands)"
-    )
-    parser.add_argument(
-        "--num-events",
-        type=int,
-        default=5000,
-        help="Number of events to generate (for generate-data command)"
-    )
-    parser.add_argument(
-        "--benign-ratio",
-        type=float,
-        default=0.7,
-        help="Ratio of benign events 0.0-1.0 (for generate-data command)"
-    )
-    parser.add_argument(
-        "--days",
-        type=int,
-        default=7,
-        help="Number of days to span (for generate-data command)"
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        default=None,
-        help="Output JSON file path (for generate-data command)"
-    )
-    parser.add_argument(
-        "--csv-output",
-        type=str,
-        default=None,
-        help="Output CSV file path (for generate-data command, auto-generated if not specified)"
-    )
-    parser.add_argument(
-        "--test-module",
-        type=str,
-        default=None,
-        help="Specific test module to run (for test command)"
-    )
-    parser.add_argument(
-        "--ip",
-        type=str,
-        default=None,
-        help="IP address to check (for threat-intel command)"
-    )
-    parser.add_argument(
-        "--hash",
-        type=str,
-        default=None,
-        help="File hash to check (for threat-intel command)"
-    )
-    parser.add_argument(
-        "--anomalies-csv",
-        type=str,
-        default=None,
-        help="Anomalies CSV file path (for generate-actions command)"
-    )
-    parser.add_argument(
-        "--execute",
-        action="store_true",
-        help="Execute actions immediately (for generate-actions command)"
-    )
-    parser.add_argument(
-        "--source-model",
-        type=str,
-        default=None,
-        help="Source model path for transfer learning (for transfer-learning command)"
-    )
-    parser.add_argument(
-        "--contamination",
-        type=float,
-        default=0.05,
-        help="Contamination rate for transfer learning (for transfer-learning command)"
-    )
-    parser.add_argument(
-        "--ensemble",
-        action="store_true",
-        help="Use ensemble model for transfer learning (for transfer-learning command, default: True)"
-    )
-    parser.add_argument(
-        "--no-ensemble",
-        action="store_true",
-        help="Disable ensemble model for transfer learning (for transfer-learning command)"
-    )
-    parser.add_argument(
-        "--iterations",
-        type=int,
-        default=1,
-        help="Number of feedback loop iterations (for feedback-loop command)"
-    )
-    parser.add_argument(
-        "--detect-only",
-        action="store_true",
-        help="Only run detection in feedback loop, skip retraining (for feedback-loop command)"
-    )
-    parser.add_argument(
-        "--no-retrain",
-        action="store_true",
-        help="Skip retraining in feedback loop (for feedback-loop command)"
-    )
-    parser.add_argument(
-        "--no-tests",
-        action="store_true",
-        help="Skip tests in feedback loop (for feedback-loop command)"
-    )
-    args = parser.parse_args()
-    
-    # Nếu có --menu hoặc không có command, hiển thị menu
-    if args.menu or not args.command:
-        while True:
-            show_menu()
-            try:
-                choice = input("\nNhập lựa chọn (0-15): ").strip()
-                
-                if choice == "0":
-                    print("\nTạm biệt!")
-                    break
-                elif choice == "1":
-                    export_logs()
-                elif choice == "2":
-                    train_anomaly_model(enable_tuning=not args.no_tuning)
-                elif choice == "3":
-                    train_classifier(enable_tuning=not args.no_tuning)
-                elif choice == "4":
-                    train_all_models(enable_tuning=not args.no_tuning)
-                elif choice == "5":
-                    detect_anomalies()
-                elif choice == "6":
-                    classify_events()
-                elif choice == "7":
-                    realtime_detection()
-                elif choice == "8":
-                    evaluate_models()
-                elif choice == "9":
-                    llm_analyze()
-                elif choice == "10":
-                    generate_synthetic_data(
-                        num_events=args.num_events,
-                        benign_ratio=args.benign_ratio,
-                        days=args.days,
-                        output=args.output,
-                        csv_output=args.csv_output
-                    )
-                elif choice == "11":
-                    run_tests(test_module=args.test_module)
-                elif choice == "12":
-                    check_threat_intelligence(ip=args.ip, file_hash=args.hash)
-                elif choice == "13":
-                    generate_actions(anomalies_csv=args.anomalies_csv, execute=args.execute)
-                elif choice == "14":
-                    # Default: use ensemble (True), unless --no-ensemble is set
-                    use_ensemble = not args.no_ensemble
-                    run_transfer_learning(
-                        source_model=args.source_model,
-                        contamination=args.contamination,
-                        use_ensemble=use_ensemble
-                    )
-                elif choice == "15":
-                    run_feedback_loop(
-                        iterations=args.iterations,
-                        detect_only=args.detect_only,
-                        retrain=not args.no_retrain,
-                        run_tests=not args.no_tests
-                    )
-                else:
-                    print("Lựa chọn không hợp lệ! Vui lòng chọn từ 0-15.")
-                
-                if choice != "0":
-                    input("\nNhấn Enter để tiếp tục...")
-                    
-            except KeyboardInterrupt:
-                print("\n\nTạm biệt!")
-                break
-            except EOFError:
-                print("\n\nTạm biệt!")
-                break
+def _handle_menu_choice(choice, args):
+    if choice == "0":
+        print("\nTạm biệt!")
+        return False
+    if choice == "1":
+        export_logs()
+    elif choice == "2":
+        train_anomaly_model(enable_tuning=not args.no_tuning)
+    elif choice == "3":
+        train_classifier(enable_tuning=not args.no_tuning)
+    elif choice == "4":
+        train_all_models(
+            enable_tuning=not args.no_tuning,
+            include_autoencoder=args.with_autoencoder,
+        )
+    elif choice == "5":
+        detect_anomalies()
+    elif choice == "6":
+        classify_events()
+    elif choice == "7":
+        realtime_detection()
+    elif choice == "8":
+        evaluate_models()
+    elif choice == "9":
+        llm_analyze()
+    elif choice == "10":
+        generate_synthetic_data(
+            num_events=args.num_events,
+            benign_ratio=args.benign_ratio,
+            days=args.days,
+            output=args.output,
+            csv_output=args.csv_output,
+        )
+    elif choice == "11":
+        run_tests(test_module=args.test_module)
+    elif choice == "12":
+        check_threat_intelligence(ip=args.ip, file_hash=args.hash)
+    elif choice == "13":
+        generate_actions(anomalies_csv=args.anomalies_csv, execute=args.execute)
+    elif choice == "14":
+        use_ensemble = not args.no_ensemble
+        run_transfer_learning(
+            source_model=args.source_model,
+            contamination=args.contamination,
+            use_ensemble=use_ensemble,
+        )
+    elif choice == "15":
+        run_feedback_loop(
+            iterations=args.iterations,
+            detect_only=args.detect_only,
+            retrain=not args.no_retrain,
+            run_tests=not args.no_tests,
+        )
+    elif choice == "16":
+        train_autoencoder()
     else:
-        # Chạy command trực tiếp
-        if args.command == "export":
-            export_logs()
-        elif args.command == "train":
-            train_anomaly_model(enable_tuning=not args.no_tuning)
-        elif args.command == "train-classifier":
-            train_classifier(enable_tuning=not args.no_tuning)
-        elif args.command == "train-all":
-            train_all_models(enable_tuning=not args.no_tuning)
-        elif args.command == "detect":
-            detect_anomalies()
-        elif args.command == "classify":
-            classify_events()
-        elif args.command == "realtime":
-            realtime_detection()
-        elif args.command == "evaluate":
-            evaluate_models()
-        elif args.command == "llm":
-            llm_analyze()
-        elif args.command == "generate-data":
-            generate_synthetic_data(
-                num_events=args.num_events,
-                benign_ratio=args.benign_ratio,
-                days=args.days,
-                output=args.output,
-                csv_output=args.csv_output
-            )
-        elif args.command == "test":
-            run_tests(test_module=args.test_module)
-        elif args.command == "threat-intel":
-            check_threat_intelligence(ip=args.ip, file_hash=args.hash)
-        elif args.command == "generate-actions":
-            generate_actions(anomalies_csv=args.anomalies_csv, execute=args.execute)
-        elif args.command == "transfer-learning":
-            run_transfer_learning(
-                source_model=args.source_model,
-                contamination=args.contamination,
-                use_ensemble=args.ensemble
-            )
-        elif args.command == "feedback-loop":
-            run_feedback_loop(
-                iterations=args.iterations,
-                detect_only=args.detect_only,
-                retrain=not args.no_retrain,
-                run_tests=not args.no_tests
-            )
+        print("Lựa chọn không hợp lệ! Vui lòng chọn từ 0-16.")
+    return True
+
+
+def run_menu_loop(args):
+    while True:
+        show_menu()
+        try:
+            choice = input("\nNhập lựa chọn (0-16): ").strip()
+            if not _handle_menu_choice(choice, args):
+                break
+            input("\nNhấn Enter để tiếp tục...")
+        except KeyboardInterrupt:
+            print("\n\nTạm biệt!")
+            break
+        except EOFError:
+            print("\n\nTạm biệt!")
+            break
+
+
+def main():
+    parser = build_parser()
+    args = parser.parse_args()
+    run_menu_loop(args)
 
 if __name__ == "__main__":
     main()
