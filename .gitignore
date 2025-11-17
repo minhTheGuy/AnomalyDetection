@@ -13,20 +13,15 @@ __pycache__/
 *.pyzzzz
 *.pywzzzz
 *.venv
+*.pytest_cache/
 wazuh-ml/__pycache__/
 wazuh-ml/tests/__pycache__/
-
-# Data
-wazuh-ml/data/
 
 # Logs
 wazuh-ml/logs/
 
 # Env
 wazuh-ml/.env
-
-# .gitignore
-wazuh-ml/.gitignore
 
 # Jupyter Notebook
 *.ipynb_checkpoints
@@ -39,6 +34,3 @@ wazuh-logging-info
 
 # script
 wazuh-ml/scripts/
-
-# llm
-wazuh-ml/llm/
