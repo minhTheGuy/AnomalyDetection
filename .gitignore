@@ -34,3 +34,6 @@ wazuh-logging-info
 
 # script
 wazuh-ml/scripts/
+
+# reports
+wazuh-ml/data/anomaly_reports/
