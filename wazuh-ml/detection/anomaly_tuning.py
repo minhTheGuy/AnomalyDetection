@@ -1,9 +1,14 @@
 """
 Module tinh chỉnh anomaly detection để giảm false positives
 """
-import pandas as pd
+import re
+from numbers import Number
+
 import numpy as np
+import pandas as pd
+
 from utils.common import print_header, safe_load_csv
+from detection.anomaly_patterns import WHITELISTED_PATTERNS, SUSPICIOUS_PATTERNS
 
 
 class AnomalyFilter:
@@ -11,149 +16,47 @@ class AnomalyFilter:
     
     def __init__(self):
         # Whitelist: Các sự kiện được coi là bình thường
-        self.whitelisted_patterns = {
-            'ssh_internal_admin': {
-                'description': 'SSH login từ admin nội bộ',
-                'conditions': {
-                    'event_desc': ['sshd: authentication success'],
-                    'src_ip': ['172.16.158.1', '172.16.158.100'],
-                    'is_business_hours': [1],
-                }
-            },
-            'dns_queries_internal': {
-                'description': 'Internal DNS queries/responses',
-                'conditions': {'proto': ['udp'], 'dst_port': [53], 'is_internal_src': [1], 'is_internal_dst': [1]}
-            },
-            'icmp_ping_internal': {
-                'description': 'ICMP echo internal monitoring',
-                'conditions': {'event_desc': ['icmp echo request', 'icmp echo reply'], 'is_internal_communication': [1]}
-            },
-            'ntp_sync': {'description': 'NTP time synchronization', 'conditions': {'dst_port': [123], 'proto': ['udp']}},
-            'dhcp_activity': {'description': 'DHCP client/server traffic', 'conditions': {'dst_port': [67, 68], 'proto': ['udp']}},
-            'pfSense_webui': {
-                'description': 'pfSense WebUI access from admin',
-                'conditions': {'dst_ip': ['172.16.158.100', '172.16.158.1'], 'dst_port': [443, 4443], 'is_internal_src': [1]}
-            },
-            'system_update': {
-                'description': 'System updates và package management',
-                'conditions': {'event_desc': ['apt user-agent', 'package management'], 'rule_level': [0, 1, 2, 3, 4]}
-            },
-            'scheduled_integrity_check': {
-                'description': 'FIM checks định kỳ',
-                'conditions': {'event_desc': ['integrity checksum changed'], 'hour': [2, 3], 'rule_level': list(range(8))}
-            },
-            'compliance_check': {
-                'description': 'CIS compliance checks',
-                'conditions': {'event_desc': ['cis', 'benchmark', 'status changed from failed to passed']}
-            }
-        }
-        
-        # Suspicious patterns (tăng score)
-        self.suspicious_patterns = {
-            'brute_force': {
-                'description': 'Brute force attempts',
-                'conditions': {'event_desc': ['non-existent user', 'failed password', 'invalid user']},
-                'score_multiplier': 2.0
-            },
-            'port_scan': {
-                'description': 'Potential port scanning activity',
-                'conditions': {'event_desc': ['port scan', 'nmap', 'syn scan', 'xmas scan']},
-                'score_multiplier': 2.0
-            },
-            'external_rdp_attempt': {
-                'description': 'RDP access attempts from external source',
-                'conditions': {'is_internal_src': [0], 'dst_port': [3389]},
-                'score_multiplier': 2.5
-            },
-            'http_scan_tools': {
-                'description': 'Web scanning tools detected',
-                'conditions': {'event_desc': ['nikto', 'sqlmap', 'gobuster', 'dirb']},
-                'score_multiplier': 2.2
-            },
-            'web_sql_injection_signatures': {
-                'description': 'Possible SQL injection payload patterns',
-                'conditions': {'event_desc': ["sql injection", "union select", "or 1=1", "' or '1'='1"]},
-                'score_multiplier': 2.8
-            },
-            'ssh_password_spray': {
-                'description': 'Multiple SSH auth failures',
-                'conditions': {'event_desc': ['failed password', 'authentication failure']},
-                'score_multiplier': 2.3
-            },
-            'high_egress_to_external': {
-                'description': 'High egress bytes to external destination',
-                'conditions': {'is_internal_src': [1], 'is_internal_dst': [0], 'bytes': [1000000]},
-                'score_multiplier': 1.8
-            },
-            'lateral_movement': {
-                'description': 'Internal-to-internal lateral movement',
-                'conditions': {'is_internal_src': [1], 'is_internal_dst': [1], 'dst_port': [445, 3389, 5985, 5986]},
-                'score_multiplier': 2.2
-            },
-            'night_activity': {
-                'description': 'Activity vào ban đêm',
-                'conditions': {'is_night': [1], 'rule_level': list(range(5, 16))},
-                'score_multiplier': 1.5
-            },
-            'external_access': {
-                'description': 'Access từ external IPs',
-                'conditions': {'is_internal_src': [0], 'rule_level': list(range(5, 16))},
-                'score_multiplier': 1.8
-            },
-            'high_severity': {'description': 'High/Critical severity events', 'conditions': {'is_critical': [1]}, 'score_multiplier': 2.5},
-            'burst_activity': {'description': 'Burst of events', 'conditions': {'is_burst': [1]}, 'score_multiplier': 1.3}
-        }
+        self.whitelisted_patterns = WHITELISTED_PATTERNS
+        self.suspicious_patterns = SUSPICIOUS_PATTERNS
     
-    def _match_pattern(self, row, conditions):
-        """Kiểm tra xem row có match với pattern conditions không"""
+    def _build_mask(self, df, conditions):
+        mask = pd.Series(True, index=df.index)
         for col, values in conditions.items():
-            if col not in row.index:
+            series = df.get(col)
+            if series is None:
+                mask &= False
                 continue
-            
-            row_value = row[col]
-            
-            # String matching (contains)
-            if isinstance(values[0], str):
-                if not any(str(v).lower() in str(row_value).lower() for v in values):
-                    return False
-            # Numeric matching
+            sample = values[0]
+            if isinstance(sample, str):
+                pattern = "|".join(re.escape(str(v).lower()) for v in values)
+                cond = series.astype(str).str.lower().str.contains(pattern, na=False, regex=True)
             else:
-                try:
-                    # Single numeric threshold → treat as >=
-                    if len(values) == 1 and isinstance(values[0], (int, float)):
-                        if float(row_value) < float(values[0]):
-                            return False
-                    else:
-                        if row_value not in values:
-                            return False
-                except Exception:
-                    return False
-        
-        return True
-    
+                if len(values) == 1 and isinstance(sample, Number):
+                    cond = pd.to_numeric(series, errors="coerce") >= float(sample)
+                else:
+                    cond = series.isin(values)
+            mask &= cond.fillna(False)
+            if not mask.any():
+                break
+        return mask
+
     def _apply_patterns(self, df, patterns, result_col, reason_col, default_value):
-        """Helper: Áp dụng patterns lên DataFrame"""
         df = df.copy()
         df[result_col] = default_value
-        df[reason_col] = ''
-        
-        for pattern_name, pattern_config in patterns.items():
-            conditions = pattern_config['conditions']
-            description = pattern_config['description']
-            
-            # Vectorized matching
-            mask = df.apply(lambda row: self._match_pattern(row, conditions), axis=1)
-            
-            if result_col == 'is_whitelisted':
+        df[reason_col] = ""
+
+        for pattern_config in patterns.values():
+            mask = self._build_mask(df, pattern_config["conditions"])
+            if not mask.any():
+                continue
+            if result_col == "is_whitelisted":
                 df.loc[mask, result_col] = True
-                df.loc[mask, reason_col] = description
-            elif result_col == 'score_multiplier':
-                multiplier = pattern_config.get('score_multiplier', 1.0)
-                # Chỉ update nếu multiplier cao hơn
+                df.loc[mask, reason_col] = pattern_config["description"]
+            else:
+                multiplier = pattern_config.get("score_multiplier", 1.0)
                 update_mask = mask & (df[result_col] < multiplier)
                 df.loc[update_mask, result_col] = multiplier
-                df.loc[update_mask, reason_col] = description
-        
+                df.loc[update_mask, reason_col] = pattern_config["description"]
         return df
     
     def apply_whitelist(self, df):

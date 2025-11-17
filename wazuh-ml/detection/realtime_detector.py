@@ -5,6 +5,7 @@ import time
 import requests
 import urllib3
 import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
 import signal
 import sys
@@ -51,34 +52,37 @@ class RealtimeDetector:
         self.last_check_time = None
         self.total_processed = 0
         self.total_anomalies = 0
-        
-        # Load model và prepare
+        self.autoencoder_threshold = None
         print("Initializing Real-time Anomaly Detector")
         self._init_model()
-    
+        
     def _init_model(self):
         """Load trained model"""
         try:
-            print(f"Loading model from {MODEL_PATH}...")
             bundle = safe_load_joblib(MODEL_PATH)
             if bundle is None:
                 raise FileNotFoundError(f"Model not found at {MODEL_PATH}")
             
             self.bundle = bundle
-            model_type = bundle.get("model_type", MODEL_TYPE or "single")
+            model_type = bundle.get("model_type", MODEL_TYPE or "ensemble")
+            self.model_type = model_type
+            self.autoencoder_threshold = None
             
             if model_type == "ensemble":
                 self.models = bundle["models"]
                 self.scaler = bundle["scaler"]
                 self.voting_threshold = bundle.get("voting_threshold", 2)
-                self.is_ensemble = True
                 self.detector = None
-            else:
-                self.detector = bundle["model"]
+            elif model_type == "autoencoder":
+                self.detector = bundle["autoencoder"]
                 self.models = None
-                self.is_ensemble = False
                 self.scaler = bundle.get("scaler")
                 self.voting_threshold = None
+                self.autoencoder_threshold = bundle.get("autoencoder_threshold")
+            else:
+                raise ValueError(
+                    f"Unsupported model_type '{model_type}'. Use 'ensemble' or 'autoencoder'."
+                )
             
             self.encoders = bundle["encoders"]
             self.feature_names = bundle.get("feature_names", [])
@@ -89,7 +93,7 @@ class RealtimeDetector:
             print(f"Model loaded successfully")
             print(f"   Training date: {training_date}")
             print(f"   Features: {n_features}")
-            print(f"   Model type: {'Ensemble' if self.is_ensemble else 'Single'}")
+            print(f"   Model type: {model_type}")
             
         except Exception as e:
             print(f"Error loading model: {e}")
@@ -97,20 +101,8 @@ class RealtimeDetector:
             sys.exit(1)
     
     def fetch_recent_events(self):
-        """
-        Fetch recent events from Wazuh Indexer
-        
-        Returns:
-            DataFrame với parsed events
-        """
-        # Calculate time range
         now = datetime.utcnow()
-        if self.last_check_time:
-            from_time = self.last_check_time
-        else:
-            from_time = now - timedelta(minutes=self.lookback_minutes)
-        
-        # Elasticsearch query
+        from_time = self.last_check_time or (now - timedelta(minutes=self.lookback_minutes))
         query = {
             "size": 1000,
             "query": {
@@ -145,41 +137,21 @@ class RealtimeDetector:
         }
         
         try:
-            url = f"{WAZUH_INDEXER_URL}/{WAZUH_INDEX_PATTERN}/_search"
             response = requests.post(
-                url,
+                f"{WAZUH_INDEXER_URL}/{WAZUH_INDEX_PATTERN}/_search",
                 auth=(INDEXER_USER, INDEXER_PASS),
                 json=query,
                 verify=get_requests_verify(),
-                timeout=30
+                timeout=30,
             )
             response.raise_for_status()
-            
-            data = response.json()
-            hits = data.get("hits", {}).get("hits", [])
-            
-            # Sử dụng parse_hits_to_dataframe từ common.py
-            df = parse_hits_to_dataframe(hits)
-            
-            # Update last check time
             self.last_check_time = now
-            
-            return df
-            
+            return parse_hits_to_dataframe(response.json().get("hits", {}).get("hits", []))
         except Exception as e:
             print(f"Error fetching events: {e}")
             return pd.DataFrame()
     
     def detect_anomalies(self, df):
-        """
-        Detect anomalies in events DataFrame
-        
-        Args:
-            df: DataFrame với events
-        
-        Returns:
-            DataFrame với anomaly predictions
-        """
         if df.empty:
             return pd.DataFrame()
         
@@ -201,23 +173,27 @@ class RealtimeDetector:
         X = X[self.feature_names]
         
         # Predict
-        if self.is_ensemble:
+        if self.model_type == "ensemble":
             predictions, votes, anomaly_votes, scores = _predict_ensemble(
                 self.models, self.scaler, X, self.voting_threshold
             )
             df["anomaly_label"] = predictions
             df["anomaly_score"] = scores
             df["anomaly_votes"] = anomaly_votes
+        elif self.model_type == "autoencoder":
+            if self.detector is None or self.scaler is None:
+                raise RuntimeError("Autoencoder bundle missing detector/scaler")
+            X_scaled = self.scaler.transform(X)
+            reconstruction = self.detector.predict(X_scaled)
+            errors = np.mean((reconstruction - X_scaled) ** 2, axis=1)
+            threshold = self.autoencoder_threshold
+            if threshold is None:
+                threshold = float(np.quantile(errors, 0.95))
+            df["reconstruction_error"] = errors
+            df["anomaly_score"] = -errors
+            df["anomaly_label"] = np.where(errors >= threshold, -1, 1)
         else:
-            # Single model
-            X_infer = X
-            if self.scaler is not None:
-                try:
-                    X_infer = self.scaler.transform(X)
-                except Exception:
-                    X_infer = X
-            df["anomaly_label"] = self.detector.predict(X_infer)
-            df["anomaly_score"] = self.detector.decision_function(X_infer)
+            raise RuntimeError(f"Unsupported model type: {self.model_type}")
         
         return df
     
@@ -244,7 +220,6 @@ class RealtimeDetector:
             self.total_anomalies += 1
     
     def run(self):
-        """Run detector in continuous mode"""
         print_header("REAL-TIME ANOMALY DETECTOR STARTED")
         print(f"Poll interval:     {self.poll_interval}s")
         print(f"Lookback window:   {self.lookback_minutes} minutes")
@@ -257,7 +232,6 @@ class RealtimeDetector:
             print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Iteration #{iteration}")
             
             try:
-                # Fetch recent events
                 print("  Fetching recent events...")
                 df = self.fetch_recent_events()
                 
@@ -266,7 +240,6 @@ class RealtimeDetector:
                 else:
                     print(f"  Found {len(df)} new events")
                     
-                    # Detect anomalies
                     print("  Analyzing events...")
                     df = self.detect_anomalies(df)
                     
@@ -301,17 +274,5 @@ class RealtimeDetector:
 
 
 if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Real-time anomaly detection for Wazuh")
-    parser.add_argument("--interval", type=int, default=60, help="Poll interval in seconds (default: 60)")
-    parser.add_argument("--lookback", type=int, default=5, help="Lookback window in minutes (default: 5)")
-    
-    args = parser.parse_args()
-    
-    detector = RealtimeDetector(
-        poll_interval=args.interval,
-        lookback_minutes=args.lookback
-    )
-    
+    detector = RealtimeDetector()
     detector.run()
