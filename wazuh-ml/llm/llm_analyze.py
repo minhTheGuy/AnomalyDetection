@@ -1,8 +1,6 @@
 import os
 import json
-import time
-import argparse
-from datetime import datetime, timedelta
+from datetime import datetime
 import pandas as pd
 import requests
 import urllib3
@@ -127,24 +125,38 @@ def build_prompt(anomaly_row: pd.Series, context_summary: dict) -> str:
 
 def write_report(out_dir: str, anomaly_idx: int, text: str, anomaly_row: pd.Series):
     os.makedirs(out_dir, exist_ok=True)
-    ts = anomaly_row.get('timestamp', datetime.utcnow().isoformat())
-    safe_id = f"{anomaly_idx}_{str(ts).replace(':','-')[:19]}"
+    # Use current date/time for filename
+    now = datetime.now()
+    safe_id = f"{anomaly_idx}_{now.strftime('%Y-%m-%d %H-%M-%S')}"
     path = os.path.join(out_dir, f"report_{safe_id}.md")
+    
+    # Ensure text is not empty
+    if not text or not text.strip():
+        text = "[LLM ERROR: Empty response received]"
+    
     with open(path, 'w', encoding='utf-8') as f:
         f.write(text)
     return path
 
 
-def main():
-    parser = argparse.ArgumentParser(description="LLM analysis for anomalies")
-    parser.add_argument("--since", type=str, default=None, help="ISO time to filter anomalies since")
-    parser.add_argument("--limit", type=int, default=10, help="Max anomalies to analyze")
-    parser.add_argument("--window", type=int, default=15, help="Minutes window for related events")
-    parser.add_argument("--post-alert", action="store_true", help="Post short summary to Wazuh")
-    parser.add_argument("--out", type=str, default="data/anomaly_reports", help="Output reports directory")
-    args = parser.parse_args()
-
-    anomalies = read_anomalies(limit=args.limit, since_iso=args.since)
+def analyze_anomalies(
+    since_iso: str = None,
+    limit: int = 10,
+    window_minutes: int = 15,
+    post_alert: bool = False,
+    out_dir: str = "data/anomaly_reports"
+):
+    """
+    Phân tích anomalies bằng LLM
+    
+    Args:
+        since_iso: ISO time để filter anomalies từ thời điểm này
+        limit: Số lượng anomalies tối đa để phân tích
+        window_minutes: Số phút window để tìm related events
+        post_alert: Có post alert lên Wazuh không
+        out_dir: Thư mục output cho reports
+    """
+    anomalies = read_anomalies(limit=limit, since_iso=since_iso)
     if anomalies.empty:
         print("No anomalies to analyze.")
         return
@@ -152,19 +164,22 @@ def main():
     for i, row in anomalies.iterrows():
         base_ts = row.get('timestamp', None)
         agent = row.get('agent', None)
-        related = fetch_related_events(base_ts, agent, window_minutes=args.window)
+        related = fetch_related_events(base_ts, agent, window_minutes=window_minutes)
         summary = summarize_context(related)
         prompt = build_prompt(row, summary)
+        
+        print(f"Analyzing anomaly {i+1}/{len(anomalies)}...")
         result = call_llm_provider(prompt, system_prompt="You are a helpful SOC analyst.")
-        report_path = write_report(args.out, i, result, row)
-        print(f"Saved report → {report_path}")
+        
+        if not result or not result.strip():
+            print(f"  Warning: Empty response from LLM for anomaly {i}")
+            result = "[LLM ERROR: Empty response received]"
+        
+        report_path = write_report(out_dir, i, result, row)
+        print(f"  Saved report → {report_path}")
 
-        if args.post_alert:
+        if post_alert:
             short = result.splitlines()[0][:480]
             print(f"[LLM SUMMARY] {short}")
-
-
-if __name__ == "__main__":
-    main()
 
 
