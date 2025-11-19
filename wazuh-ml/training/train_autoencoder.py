@@ -3,10 +3,7 @@ Train autoencoder-based anomaly detector for Wazuh logs.
 """
 from __future__ import annotations
 
-import argparse
-
 import numpy as np
-import pandas as pd
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 
@@ -95,37 +92,5 @@ def train_autoencoder_model(
         "training_samples": n_samples,
         "features": n_features,
     }
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Train autoencoder anomaly detector")
-    parser.add_argument("--contamination", type=float, default=0.05, help="Expected anomaly ratio (default 0.05)")
-    parser.add_argument(
-        "--hidden-ratio",
-        type=float,
-        default=0.5,
-        help="Hidden layer size as a ratio of feature count (default 0.5)",
-    )
-    parser.add_argument("--max-iter", type=int, default=250, help="Max training iterations (default 250)")
-    parser.add_argument("--learning-rate", type=float, default=0.001, help="Learning rate (default 0.001)")
-    parser.add_argument("--output", type=str, default=None, help="Output path for the bundle")
-    parser.add_argument("--no-feature-engineering", action="store_true", help="Skip feature engineering step")
-    return parser.parse_args()
-
-
-def main():
-    args = parse_args()
-    train_autoencoder_model(
-        contamination=args.contamination,
-        hidden_ratio=args.hidden_ratio,
-        max_iter=args.max_iter,
-        learning_rate=args.learning_rate,
-        output_path=args.output,
-        engineer_features=not args.no_feature_engineering,
-    )
-
-
-if __name__ == "__main__":
-    main()
 
 
