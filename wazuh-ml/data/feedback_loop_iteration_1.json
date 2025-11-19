@@ -1,21 +1,19 @@
 {
   "iteration": 1,
-  "timestamp": "2025-11-16T17:22:18.785388",
+  "timestamp": "2025-11-17T19:22:59.942403",
   "steps": {
     "detect": {
       "status": "success",
-      "anomalies_count": 511
+      "anomalies_count": 269
     },
     "analyze": {
       "status": "success",
-      "issues_count": 2,
+      "issues_count": 1,
       "recommendations_count": 1
     },
     "tune": {
       "status": "success",
-      "recommended_params": {
-        "min_severity_threshold": 7
-      }
+      "recommended_params": {}
     },
     "retrain": {
       "status": "skipped",

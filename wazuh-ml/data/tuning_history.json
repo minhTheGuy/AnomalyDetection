@@ -1,40 +1,31 @@
 [
   {
-    "timestamp": "2025-11-16T17:22:35.441434",
+    "timestamp": "2025-11-17T19:23:00.949164",
     "analysis": {
-      "timestamp": "2025-11-16T17:22:35.282103",
-      "total_anomalies": 511,
+      "timestamp": "2025-11-17T19:23:00.850069",
+      "total_anomalies": 269,
       "issues": [
-        {
-          "type": "too_many_low_severity",
-          "severity": "low",
-          "description": "445 low severity anomalies detected",
-          "count": "445"
-        },
         {
           "type": "action_execution_failures",
           "severity": "high",
-          "description": "391 actions failed to execute (22.2%)",
-          "count": 391
+          "description": "230 actions failed to execute (18.0%)",
+          "count": 230
         }
       ],
       "recommendations": [
         "Check pfSense configuration and network connectivity"
       ],
       "metrics": {
-        "benign_anomalies_ratio": 0.20743639921722112,
-        "low_severity_ratio": 0.8708414872798435,
-        "high_severity_ratio": 0.0,
+        "low_severity_ratio": 0.49070631970260226,
+        "high_severity_ratio": 0.3420074349442379,
         "score_statistics": {
-          "mean": -11.551416348547601,
-          "std": 12.541111715381733,
-          "min": -107.4484008767004,
-          "max": -2.0120632144758113
+          "mean": -1.3468503606522595,
+          "std": 1.1789877817894534,
+          "min": -7.616856523895557,
+          "max": -0.32122087593399107
         }
       }
     },
-    "recommended_params": {
-      "min_severity_threshold": 7
-    }
+    "recommended_params": {}
   }
 ]
