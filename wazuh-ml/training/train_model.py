@@ -134,42 +134,24 @@ def hyperparameter_tuning_ensemble(X, contamination_range=None, voting_threshold
     return best_models, best_scaler, best_params, results
 
 
-def train_model_with_tuning(enable_tuning=True):
+def train_model_with_tuning():
     """
     Train ensemble model (IF + LOF + SVM) với feature engineering và hyperparameter tuning
-    
-    Args:
-        enable_tuning: True để bật hyperparameter tuning, False để dùng default params
     """
     print_header("ENSEMBLE ANOMALY DETECTION - TRAINING")
     
     # Load và prepare data
     print("\nLoading data...")
     df, X, encoders = load_and_prepare_data(CSV_PATH, engineer_features=True)
-    print(f"  ✓ Loaded {len(df)} records")
+    print(f"  Loaded {len(df)} records")
     print(f"  Features: {X.shape[1]}")
     print(f"  Samples: {X.shape[0]}")
-    
-    if enable_tuning:
-        # Hyperparameter tuning
-        best_models, best_scaler, best_params, tuning_results = hyperparameter_tuning_ensemble(
-            X,
-            contamination_range=[0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10],
-            voting_thresholds=[2, 3]
-        )
-    else:
-        # Use default parameters
-        print("\nTraining with default parameters...")
-        best_params = {
-            'contamination': 0.05,
-            'voting_threshold': 2
-        }
-        best_models, best_scaler, _ = train_models(
-            X,
-            contamination=best_params['contamination'],
-            voting_threshold=best_params['voting_threshold']
-        )
-        tuning_results = []
+    # Hyperparameter tuning luôn bật
+    best_models, best_scaler, best_params, tuning_results = hyperparameter_tuning_ensemble(
+        X,
+        contamination_range=[0.01, 0.02, 0.03, 0.04, 0.05],
+        voting_thresholds=[2, 3]
+    )
     
     print_header("FINAL ENSEMBLE PREDICTIONS")
     predictions, votes, anomaly_votes, scores = predict_ensemble(

@@ -15,7 +15,7 @@ from data_processing.feature_engineering import engineer_all_features
 from data_processing.preprocessing import preprocess_dataframe
 from training.train_model import train_models, predict_ensemble
 from training.common import _align_features_to_source
-from utils.common import print_header, safe_load_joblib, safe_save_joblib, safe_load_csv
+from utils.common import print_header, safe_load_joblib, safe_save_joblib
 
 
 class TransferLearning:
@@ -154,7 +154,7 @@ class TransferLearning:
                 self.create_feature_mapping(source_features, target_features)
                 
                 # Align features
-                X_aligned = self._align_features(X_target, source_features, target_features)
+                X_aligned = _align_features_to_source(X_target, source_features, self.feature_mapping)
                 
                 # Use source model predictions as pseudo-labels
                 print("   Using source model for pseudo-labeling...")
@@ -192,25 +192,6 @@ class TransferLearning:
             return self._train_from_scratch(X_target, contamination, use_ensemble)
         
         return self.target_model
-    
-    def _align_features(
-        self,
-        X_target: pd.DataFrame,
-        source_features: List[str],
-        target_features: List[str]
-    ) -> pd.DataFrame:
-        """
-        Align target features với source features
-        
-        Args:
-            X_target: Target feature matrix
-            source_features: Source feature names
-            target_features: Target feature names (unused, kept for compatibility)
-            
-        Returns:
-            Aligned feature matrix
-        """
-        return _align_features_to_source(X_target, source_features, self.feature_mapping)
     
     def _train_from_scratch(
         self,

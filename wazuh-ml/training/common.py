@@ -268,7 +268,7 @@ def create_autoencoder_bundle(
     return bundle
 
 
-def align_features(
+def _align_features_to_source(
     X_target: pd.DataFrame,
     source_features: List[str],
     feature_mapping: Dict[str, str] = None

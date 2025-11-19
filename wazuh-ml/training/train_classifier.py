@@ -24,7 +24,6 @@ from training.feature_selection import (
 from utils.common import print_header, safe_save_joblib
 from utils.visualization import create_training_visualizations
 
-# Path cho classification model
 CLASSIFIER_MODEL_PATH = "data/classifier_model.pkl"
 FEATURE_SELECTOR_PATH = "data/feature_selector.pkl"
 ENABLE_FEATURE_SELECTION = True  # False để tắt feature selection
@@ -36,7 +35,6 @@ def _train_classifier_common(
     y: pd.Series,
     feature_names: list,
     model_name: str,
-    enable_tuning: bool = True
 ) -> tuple:
     """
     Common logic để train classifier (attack type hoặc event category)
@@ -46,7 +44,6 @@ def _train_classifier_common(
         y: Labels
         feature_names: Feature names
         model_name: Tên model (cho visualization)
-        enable_tuning: Có tuning không
         
     Returns:
         (classifier, label_encoder)
@@ -58,28 +55,26 @@ def _train_classifier_common(
     print("\n".join(f"  {cls:20s}: {count}" for cls, count in pd.Series(y).value_counts().items()))
     print(f"\nTraining set={X_train.shape[0]}, Test set={X_test.shape[0]}")
 
-    if enable_tuning:
-        param_grid = {
-            "n_estimators": [100, 200],
-            "max_depth": [10, 20, None],
-            "min_samples_split": [2, 5],
-            "min_samples_leaf": [1, 2],
-        }
-        cv_folds = get_cv_folds(y_train)
-        print(f"\n  Hyperparameter tuning (CV folds: {cv_folds})...")
-        grid = GridSearchCV(
-            RandomForestClassifier(random_state=42, n_jobs=-1),
-            param_grid,
-            cv=cv_folds,
-            scoring="f1_macro",
-            n_jobs=-1,
-            verbose=1,
-        )
-        grid.fit(X_train, y_train)
-        classifier = grid.best_estimator_
-        print(f"Best params: {grid.best_params_}")
-    else:
-        classifier = RandomForestClassifier(random_state=42, n_jobs=-1).fit(X_train, y_train)
+    param_grid = {
+        "n_estimators": [100, 200],
+        "max_depth": [10, 20, None],
+        "min_samples_split": [2, 5],
+        "min_samples_leaf": [1, 2],
+    }
+    cv_folds = get_cv_folds(y_train)
+    print(f"\n  Hyperparameter tuning (CV folds: {cv_folds})...")
+    # k-fold cross-validation
+    grid = GridSearchCV(
+        RandomForestClassifier(random_state=42, n_jobs=-1),
+        param_grid,
+        cv=cv_folds,
+        scoring="f1_macro",
+        n_jobs=-1,
+        verbose=1,
+    )
+    grid.fit(X_train, y_train)
+    classifier = grid.best_estimator_
+    print(f"Best params: {grid.best_params_}")
 
     y_pred = classifier.predict(X_test)
     print_header("EVALUATION RESULTS", width=60)
@@ -126,7 +121,7 @@ def _train_classifier_common(
     return classifier, label_encoder
 
 
-def train_attack_type_classifier(X, y_attack, feature_names, enable_tuning=True):
+def train_attack_type_classifier(X, y_attack, feature_names):
     """
     Huấn luyện classifier cho attack types
     
@@ -134,19 +129,17 @@ def train_attack_type_classifier(X, y_attack, feature_names, enable_tuning=True)
         X: Feature matrix
         y_attack: Attack type labels
         feature_names: Tên các features
-        enable_tuning: Có tuning không
         
     Returns:
         Trained classifier model và label encoder
     """
     return _train_classifier_common(
-        X, y_attack, feature_names, 
-        "Attack Type Classifier", 
-        enable_tuning
+        X, y_attack, feature_names,
+        "Attack Type Classifier",
     )
 
 
-def train_event_category_classifier(X, y_category, feature_names, enable_tuning=True):
+def train_event_category_classifier(X, y_category, feature_names):
     """
     Huấn luyện classifier cho event categories
     
@@ -154,7 +147,6 @@ def train_event_category_classifier(X, y_category, feature_names, enable_tuning=
         X: Feature matrix
         y_category: Event category labels
         feature_names: Tên các features
-        enable_tuning: Có tuning không
         
     Returns:
         Trained classifier model và label encoder
@@ -162,16 +154,13 @@ def train_event_category_classifier(X, y_category, feature_names, enable_tuning=
     return _train_classifier_common(
         X, y_category, feature_names,
         "Event Category Classifier",
-        enable_tuning
     )
 
 
-def train_classification_models(enable_tuning=True):
+def train_classification_models():
     """
     Huấn luyện cả hai classification models (attack type và event category)
     
-    Args:
-        enable_tuning: True để bật hyperparameter tuning
     """
     print_header("CLASSIFICATION MODEL TRAINING", width=60)
     
@@ -220,7 +209,6 @@ def train_classification_models(enable_tuning=True):
             X.values,
             df["attack_type"],
             feature_names,
-            enable_tuning,
         )
     else:
         print("No attack_type column found, skipping attack type classifier")
@@ -232,7 +220,6 @@ def train_classification_models(enable_tuning=True):
             X.values,
             df["event_category"],
             feature_names,
-            enable_tuning,
         )
     else:
         print("No event_category column found, skipping event category classifier")

@@ -58,14 +58,13 @@ def should_retrain(force=False, max_age_days=7):
 
 
 
-def auto_retrain(fetch_new_data=True, force=False, enable_tuning=True, max_age_days=7):
+def auto_retrain(fetch_new_data=True, force=False, max_age_days=7):
     """
     Tự động retrain model nếu cần
     
     Args:
         fetch_new_data: True để fetch log mới từ Wazuh trước khi train
         force: Bắt buộc retrain
-        enable_tuning: Bật hyperparameter tuning
         max_age_days: Số ngày tối đa trước khi tự động retrain
     
     Returns:
@@ -111,7 +110,7 @@ def auto_retrain(fetch_new_data=True, force=False, enable_tuning=True, max_age_d
     start_time = time.time()
     
     try:
-        train_model_with_tuning(enable_tuning=enable_tuning)
+        train_model_with_tuning()
         
         elapsed = time.time() - start_time
         print(f"\n  Retrain completed successfully in {elapsed:.2f} seconds")

@@ -9,12 +9,11 @@ from training.train_autoencoder import train_autoencoder_model
 from utils.common import print_header
 
 
-def train_all(enable_tuning=True, include_autoencoder=False, autoencoder_params=None):
+def train_all(include_autoencoder=False, autoencoder_params=None):
     """
     Train cả anomaly detection và classification models
     
     Args:
-        enable_tuning: True để bật hyperparameter tuning
         include_autoencoder: Train thêm autoencoder reconstruction model
         autoencoder_params: Dict custom hyperparameters cho autoencoder
     """
@@ -30,7 +29,7 @@ def train_all(enable_tuning=True, include_autoencoder=False, autoencoder_params=
     # Train anomaly detection model
     print_header("STEP 1: Training Anomaly Detection Model")
     try:
-        train_model_with_tuning(enable_tuning=enable_tuning)
+        train_model_with_tuning()
         print("Anomaly detection model training completed\n")
     except Exception as e:
         print(f"Anomaly detection model training failed: {e}")
@@ -39,7 +38,7 @@ def train_all(enable_tuning=True, include_autoencoder=False, autoencoder_params=
     # Train classification model
     print_header("STEP 2: Training Classification Model")
     try:
-        train_classification_models(enable_tuning=enable_tuning)
+        train_classification_models()
         print("Classification model training completed\n")
     except Exception as e:
         print(f"Classification model training failed: {e}")

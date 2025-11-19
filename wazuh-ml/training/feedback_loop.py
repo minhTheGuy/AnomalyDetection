@@ -321,7 +321,7 @@ class FeedbackLoop:
                 print(reason)
                 return {'status': 'skipped', 'reason': reason}
             print(f"   Reason: {reason}")
-            success = auto_retrain(fetch_new_data=True, force=False, enable_tuning=True)
+            success = auto_retrain(fetch_new_data=True, force=False)
             return {'status': 'success' if success else 'skipped', 'reason': reason}
         except Exception as exc:
             print(f"Retrain failed: {exc}")
