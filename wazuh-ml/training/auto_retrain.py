@@ -4,10 +4,9 @@ Kiểm tra ngày modified của file CSV, nếu mới hơn model thì retrain
 """
 
 import os
-import sys
 import time
-from datetime import datetime, timedelta
-from core.config import CSV_PATH, MODEL_PATH, ANALYZED_CSV_PATH
+from datetime import datetime
+from core.config import CSV_PATH, MODEL_PATH
 from data_processing.export_from_es import fetch_logs
 from training.train_model import train_model_with_tuning
 from training.common import get_file_age, get_model_info
@@ -134,24 +133,3 @@ def auto_retrain(fetch_new_data=True, force=False, enable_tuning=True, max_age_d
         import traceback
         traceback.print_exc()
         return False
-
-
-if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Auto-retrain ML model for anomaly detection")
-    parser.add_argument("--force", action="store_true", help="Force retrain even if not needed")
-    parser.add_argument("--no-fetch", action="store_true", help="Don't fetch new data before training")
-    parser.add_argument("--no-tuning", action="store_true", help="Disable hyperparameter tuning (faster)")
-    parser.add_argument("--max-age-days", type=int, default=7, help="Max age in days before auto-retrain (default: 7)")
-    
-    args = parser.parse_args()
-    
-    success = auto_retrain(
-        fetch_new_data=not args.no_fetch,
-        force=args.force,
-        enable_tuning=not args.no_tuning,
-        max_age_days=args.max_age_days
-    )
-    
-    sys.exit(0 if success else 1)
