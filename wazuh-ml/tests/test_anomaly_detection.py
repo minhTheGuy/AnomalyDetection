@@ -125,7 +125,3 @@ class TestFeatureEngineering(unittest.TestCase):
         self.assertIn('is_internal_src', df.columns)
         self.assertIn('is_internal_dst', df.columns)
 
-
-if __name__ == '__main__':
-    unittest.main()
-

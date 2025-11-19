@@ -67,7 +67,3 @@ class TestClassification(unittest.TestCase):
             result = extract_event_category(desc)
             self.assertEqual(result, expected, f"Failed for: {desc}")
 
-
-if __name__ == '__main__':
-    unittest.main()
-

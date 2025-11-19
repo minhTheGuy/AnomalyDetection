@@ -34,15 +34,3 @@ def run_specific_test(test_module):
     
     return result.wasSuccessful()
 
-
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        # Run specific test
-        test_module = sys.argv[1]
-        success = run_specific_test(test_module)
-    else:
-        # Run all tests
-        success = run_all_tests()
-    
-    sys.exit(0 if success else 1)
-

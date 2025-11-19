@@ -77,7 +77,3 @@ class TestIntegration(unittest.TestCase):
         self.assertGreater(anomaly_rate, 0)
         self.assertLess(anomaly_rate, 0.5)  # Should be reasonable
 
-
-if __name__ == '__main__':
-    unittest.main()
-
