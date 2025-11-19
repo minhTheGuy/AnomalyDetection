@@ -390,7 +390,7 @@ def generate_malware_alert_event(base_time: datetime, offset: int) -> Dict:
 # ============================================================================
 
 def generate_synthetic_data(
-    num_events: int = 5000,
+    num_events: int = 1000,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     benign_ratio: float = 0.7,
@@ -526,29 +526,4 @@ def generate_synthetic_data(
     print(f"  Attack: {num_attack}")
     
     return result
-
-
-if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Generate synthetic Wazuh logs")
-    parser.add_argument("--num-events", type=int, default=5000, help="Number of events to generate")
-    parser.add_argument("--benign-ratio", type=float, default=0.7, help="Ratio of benign events (0.0-1.0)")
-    parser.add_argument("--days", type=int, default=7, help="Number of days to span")
-    parser.add_argument("--output", type=str, default=None, help="Output JSON file path (CSV will be auto-generated)")
-    parser.add_argument("--csv-output", type=str, default=None, help="Output CSV file path (optional, auto-generated if not specified)")
-    
-    args = parser.parse_args()
-    
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=args.days)
-    
-    generate_synthetic_data(
-        num_events=args.num_events,
-        start_date=start_date,
-        end_date=end_date,
-        benign_ratio=args.benign_ratio,
-        output_path=args.output,
-        csv_output_path=getattr(args, 'csv_output', None)
-    )
 
