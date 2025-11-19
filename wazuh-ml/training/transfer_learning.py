@@ -5,19 +5,16 @@ Bootstrap models từ pre-trained models hoặc public datasets
 
 import os
 import pandas as pd
-import numpy as np
 import joblib
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, Optional, List
 from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
 from sklearn.base import BaseEstimator
-import warnings
 
-from core.config import MODEL_PATH, CSV_PATH, CLASSIFIER_MODEL_PATH
+from core.config import MODEL_PATH, CSV_PATH
 from data_processing.feature_engineering import engineer_all_features
 from data_processing.preprocessing import preprocess_dataframe
 from training.train_model import train_models, predict_ensemble
-from training.common import align_features
+from training.common import _align_features_to_source
 from utils.common import print_header, safe_load_joblib, safe_save_joblib, safe_load_csv
 
 
@@ -213,7 +210,7 @@ class TransferLearning:
         Returns:
             Aligned feature matrix
         """
-        return align_features(X_target, source_features, self.feature_mapping)
+        return _align_features_to_source(X_target, source_features, self.feature_mapping)
     
     def _train_from_scratch(
         self,
@@ -275,8 +272,9 @@ class TransferLearning:
         }
         
         if model_type == "ensemble":
-            bundle['detector'] = self.target_model
-            bundle['voting_threshold'] = self.target_model.voting_threshold
+            bundle['models'] = self.target_model.get('models')
+            bundle['scaler'] = self.target_model.get('scaler')
+            bundle['voting_threshold'] = self.target_model.get('voting_threshold', 2)
         else:
             bundle['model'] = self.target_model
         
@@ -345,27 +343,3 @@ def bootstrap_with_transfer_learning(
     
     print("\nTransfer learning completed successfully!")
     return True
-
-
-if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Transfer Learning for Anomaly Detection")
-    parser.add_argument("--source-model", type=str, help="Path to source pre-trained model")
-    parser.add_argument("--target-data", type=str, default=CSV_PATH, help="Path to target domain data")
-    parser.add_argument("--output-model", type=str, default=MODEL_PATH, help="Path to save transferred model")
-    parser.add_argument("--contamination", type=float, default=0.05, help="Expected anomaly ratio")
-    parser.add_argument("--ensemble", action="store_true", help="Use ensemble model")
-    
-    args = parser.parse_args()
-    
-    success = bootstrap_with_transfer_learning(
-        target_data_path=args.target_data,
-        source_model_path=args.source_model,
-        output_model_path=args.output_model,
-        contamination=args.contamination,
-        use_ensemble=args.ensemble
-    )
-    
-    exit(0 if success else 1)
-
