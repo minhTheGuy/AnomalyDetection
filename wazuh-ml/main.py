@@ -12,11 +12,6 @@ from utils.common import print_header
 def _add_common_arguments(parser):
     parser.add_argument("--menu", "-m", action="store_true", help="Hiển thị menu tương tác")
     parser.add_argument(
-        "--no-tuning",
-        action="store_true",
-        help="Disable hyperparameter tuning (chỉ cho train commands)",
-    )
-    parser.add_argument(
         "--with-autoencoder",
         action="store_true",
         help="Also train autoencoder model (for train-all or menu mode)",
@@ -24,13 +19,13 @@ def _add_common_arguments(parser):
     parser.add_argument(
         "--num-events",
         type=int,
-        default=5000,
+        default=1000,
         help="Number of events to generate (for generate-data command)",
     )
     parser.add_argument(
         "--benign-ratio",
         type=float,
-        default=0.7,
+        default=0.85,
         help="Ratio of benign events 0.0-1.0 (for generate-data command)",
     )
     parser.add_argument(
@@ -146,32 +141,31 @@ def export_logs():
     fetch_logs()
 
 
-def train_anomaly_model(enable_tuning=True):
+def train_anomaly_model():
     """Train anomaly detection model"""
     print("=" * 70)
     print("TRAINING ANOMALY DETECTION MODEL")
     print("=" * 70)
     from training.train_model import train_model_with_tuning
-    train_model_with_tuning(enable_tuning=enable_tuning)
+    train_model_with_tuning()
 
 
-def train_classifier(enable_tuning=True):
+def train_classifier():
     """Train classification model"""
     print("=" * 70)
     print("TRAINING CLASSIFICATION MODEL")
     print("=" * 70)
     from training.train_classifier import train_classification_models
-    train_classification_models(enable_tuning=enable_tuning)
+    train_classification_models()
 
 
-def train_all_models(enable_tuning=True, include_autoencoder=False, autoencoder_params=None):
+def train_all_models(include_autoencoder=False, autoencoder_params=None):
     """Train cả anomaly detection và classification models"""
     print("=" * 70)
     print("TRAINING ALL MODELS")
     print("=" * 70)
     from training.train_all_models import train_all
     train_all(
-        enable_tuning=enable_tuning,
         include_autoencoder=include_autoencoder,
         autoencoder_params=autoencoder_params,
     )
@@ -231,11 +225,11 @@ def llm_analyze():
     print("=" * 70)
     print("LLM ANALYSIS")
     print("=" * 70)
-    from llm.llm_analyze import main as llm_main
-    llm_main()
+    from llm.llm_analyze import analyze_anomalies
+    analyze_anomalies()
 
 
-def generate_synthetic_data(num_events=5000, benign_ratio=0.7, days=7, output=None, csv_output=None):
+def generate_synthetic_data(num_events=1000, benign_ratio=0.85, days=7, output=None, csv_output=None):
     """Generate synthetic training data"""
     print_header("GENERATING SYNTHETIC DATA")
     from data_processing.generate_synthetic_data import generate_synthetic_data as gen_data
@@ -398,6 +392,7 @@ def generate_actions(anomalies_csv=None, execute=False):
     if summary['executed']:
         print(f"  Execution: {summary['success_count']} success, {summary['fail_count']} failed")
 
+
 def show_menu():
     """Hiển thị menu chọn chức năng"""
     print("\n" + "=" * 70)
@@ -431,12 +426,11 @@ def _handle_menu_choice(choice, args):
     if choice == "1":
         export_logs()
     elif choice == "2":
-        train_anomaly_model(enable_tuning=not args.no_tuning)
+        train_anomaly_model()
     elif choice == "3":
-        train_classifier(enable_tuning=not args.no_tuning)
+        train_classifier()
     elif choice == "4":
         train_all_models(
-            enable_tuning=not args.no_tuning,
             include_autoencoder=args.with_autoencoder,
         )
     elif choice == "5":
