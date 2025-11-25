@@ -132,6 +132,15 @@ def create_classification_labels(df: pd.DataFrame) -> pd.DataFrame:
     category_counts = df['event_category'].value_counts()
     for category, count in category_counts.items():
         print(f"     {category:20s}: {count:4d} ({count/len(df)*100:.1f}%)")
+
+    # Binary label (normal vs anomaly)
+    df['binary_label'] = df['attack_type'].apply(
+        lambda label: 'normal' if label in ['benign', 'unknown'] else 'anomaly'
+    )
+    print(f"\n   Binary label distribution (normal/anomaly):")
+    binary_counts = df['binary_label'].value_counts()
+    for label, count in binary_counts.items():
+        print(f"     {label:20s}: {count:4d} ({count/len(df)*100:.1f}%)")
     
     return df
 
