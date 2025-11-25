@@ -1,6 +1,7 @@
 """
 Module phân loại sự kiện bảo mật sử dụng trained classification models
 """
+import os
 import pandas as pd
 import numpy as np
 from core.config import CSV_PATH, CLASSIFIER_MODEL_PATH
@@ -25,6 +26,7 @@ def _load_classifier_bundle(classifier_path=CLASSIFIER_MODEL_PATH):
     feature_names = bundle.get("feature_names", [])
     feature_selector = bundle.get("feature_selector")
     selected_feature_names = bundle.get("selected_feature_names", feature_names)
+    binary_classifier_meta = bundle.get("binary_classifier_meta")
     
     if attack_classifier is None and category_classifier is None:
         print("  No classifiers found in model bundle")
@@ -38,7 +40,8 @@ def _load_classifier_bundle(classifier_path=CLASSIFIER_MODEL_PATH):
         'category_encoder': category_encoder,
         'feature_names': feature_names,
         'feature_selector': feature_selector,
-        'selected_feature_names': selected_feature_names
+        'selected_feature_names': selected_feature_names,
+        'binary_classifier_meta': binary_classifier_meta,
     }
 
 
@@ -114,7 +117,40 @@ def _classify_event_category(df, X, classifier, encoder):
     return df
 
 
-def _print_classification_results(df, attack_classifier, category_classifier):
+def _load_binary_ann_model(model_path: str):
+    if not model_path or not os.path.exists(model_path):
+        print(f"  Binary ANN model not found at {model_path}")
+        return None
+    try:
+        from tensorflow import keras
+    except ImportError:
+        print("  TensorFlow not installed. Please install to use binary ANN classifier.")
+        return None
+    return keras.models.load_model(model_path)
+
+
+def _classify_binary_ann(df, X, binary_meta, model):
+    scaler = binary_meta.get("scaler")
+    if scaler is None:
+        print("  Binary ANN classifier missing scaler, skipping.")
+        return df
+
+    feature_names = binary_meta.get("feature_names", X.columns.tolist())
+    for feat in feature_names:
+        if feat not in X.columns:
+            X[feat] = 0
+
+    X_binary = X[feature_names].values
+    X_scaled = scaler.transform(X_binary)
+    probs = model.predict(X_scaled, verbose=0).ravel()
+    threshold = binary_meta.get("decision_threshold", 0.5)
+
+    df["binary_normal_score"] = probs
+    df["binary_predicted_label"] = np.where(probs >= threshold, "normal", "anomaly")
+    return df
+
+
+def _print_classification_results(df, attack_classifier, category_classifier, has_binary_classifier):
     """Helper: Print classification results"""
     print_header("KẾT QUẢ PHÂN LOẠI", width=70)
     
@@ -152,6 +188,12 @@ def _print_classification_results(df, attack_classifier, category_classifier):
             display_cols = [c for c in display_cols if c in low_conf.columns]
             print(low_conf[display_cols].head(10).to_string(index=False))
     
+    if has_binary_classifier and "binary_predicted_label" in df.columns:
+        print(f"\nBINARY NORMAL vs ANOMALY:")
+        binary_dist = df["binary_predicted_label"].value_counts()
+        for label, count in binary_dist.items():
+            avg_score = df[df["binary_predicted_label"] == label]["binary_normal_score"].mean()
+            print(f"  {label:10s}: {count:4d} events (avg normal score: {avg_score:.2%})")
     print()
 
 
@@ -178,6 +220,7 @@ def classify(logs=None, classifier_path=CLASSIFIER_MODEL_PATH):
     feature_names = classifier_data['feature_names']
     feature_selector = classifier_data['feature_selector']
     selected_feature_names = classifier_data['selected_feature_names']
+    binary_classifier_meta = classifier_data['binary_classifier_meta']
     
     print(f"    Model trained with {len(feature_names)} features")
     if attack_classifier:
@@ -217,6 +260,19 @@ def classify(logs=None, classifier_path=CLASSIFIER_MODEL_PATH):
         df = _classify_event_category(df, X_classify, category_classifier, category_encoder)
     
     # Print results
-    _print_classification_results(df, attack_classifier, category_classifier)
+    if binary_classifier_meta:
+        print("   Running binary ANN classifier (normal vs anomaly)...")
+        binary_model = _load_binary_ann_model(binary_classifier_meta.get("model_path"))
+        if binary_model is not None:
+            df = _classify_binary_ann(df, X_classify.copy(), binary_classifier_meta, binary_model)
+        else:
+            print("   Skipped binary ANN classifier (model unavailable).")
+
+    _print_classification_results(
+        df,
+        attack_classifier,
+        category_classifier,
+        has_binary_classifier=binary_classifier_meta is not None,
+    )
     
     return df
