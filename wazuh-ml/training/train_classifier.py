@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import GridSearchCV, cross_val_score
 
-from classification.classification import create_classification_labels
+from classification import create_classification_labels
 from core.config import CSV_PATH
 from training.common import (
     create_classifier_bundle,
@@ -22,12 +22,15 @@ from training.feature_selection import (
     select_features_rfe,
 )
 from utils.common import print_header, safe_save_joblib
+from training.ann_classifier import train_binary_ann_classifier
 from utils.visualization import create_training_visualizations
 
 CLASSIFIER_MODEL_PATH = "data/classifier_model.pkl"
 FEATURE_SELECTOR_PATH = "data/feature_selector.pkl"
+ANN_MODEL_PATH = "data/ann_classifier.keras"
 ENABLE_FEATURE_SELECTION = True  # False để tắt feature selection
 ENABLE_VISUALIZATION = True  # False để tắt visualization
+ENABLE_BINARY_ANN = True
 
 
 def _train_classifier_common(
@@ -203,6 +206,8 @@ def train_classification_models():
     else:
         print(f"\nFeature selection disabled or no attack_type labels")
     
+    binary_classifier_meta = None
+
     # Train attack type classifier
     if "attack_type" in df.columns:
         attack_classifier, attack_encoder = train_attack_type_classifier(
@@ -225,6 +230,36 @@ def train_classification_models():
         print("No event_category column found, skipping event category classifier")
         category_classifier, category_encoder = None, None
     
+    # Train binary ANN classifier (normal vs anomaly)
+    if ENABLE_BINARY_ANN and "binary_label" in df.columns:
+        print_header("BINARY ANN CLASSIFIER", width=60)
+        label_mapping = {"normal": 1, "anomaly": 0}
+        y_binary = df["binary_label"].map(label_mapping).fillna(0).astype(int).values
+
+        ann_result = train_binary_ann_classifier(
+            X.values,
+            y_binary,
+            feature_names,
+            model_output_path=ANN_MODEL_PATH,
+        )
+
+        binary_classifier_meta = {
+            "model_path": ann_result.model_path,
+            "scaler": ann_result.scaler,
+            "history": ann_result.history,
+            "metrics": ann_result.metrics,
+            "feature_names": feature_names,
+            "decision_threshold": ann_result.decision_threshold,
+        }
+
+        print(
+            f"\nBinary ANN accuracy: {binary_classifier_meta['metrics']['accuracy']:.4f}, "
+            f"ROC-AUC: {binary_classifier_meta['metrics']['roc_auc']:.4f}"
+        )
+        print(f"Saved ANN model → {ANN_MODEL_PATH}")
+    else:
+        print("\nBinary ANN classifier skipped (missing labels or disabled)")
+
     # Save models
     classifier_bundle = create_classifier_bundle(
         attack_classifier=attack_classifier,
@@ -235,7 +270,8 @@ def train_classification_models():
         feature_names=feature_names,
         feature_selector=feature_selector,
         selected_feature_names=selected_feature_names,
-        X=X
+        X=X,
+        binary_classifier_meta=binary_classifier_meta,
     )
     
     if safe_save_joblib(classifier_bundle, CLASSIFIER_MODEL_PATH):
