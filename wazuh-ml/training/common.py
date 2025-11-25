@@ -197,7 +197,8 @@ def create_classifier_bundle(
     feature_names: List[str],
     feature_selector=None,
     selected_feature_names: List[str] = None,
-    X: pd.DataFrame = None
+    X: pd.DataFrame = None,
+    binary_classifier_meta: Dict | None = None,
 ) -> Dict:
     """
     Tạo classifier bundle
@@ -230,6 +231,9 @@ def create_classifier_bundle(
         bundle["feature_selector"] = feature_selector
         bundle["selected_feature_names"] = selected_feature_names or feature_names
     
+    if binary_classifier_meta is not None:
+        bundle["binary_classifier_meta"] = binary_classifier_meta
+
     if X is not None:
         bundle["n_features"] = X.shape[1]
         bundle["n_samples"] = X.shape[0]
