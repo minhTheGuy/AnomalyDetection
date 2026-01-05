@@ -1,0 +1,19 @@
+# Wazuh-ML Whitelist Configuration
+# IPs listed here will NEVER be blocked by the NIDS
+# One IP per line, comments start with #
+
+# ========================================
+# Public DNS Servers
+# ========================================
+8.8.8.8
+8.8.4.4
+1.1.1.1
+1.0.0.1
+
+# ========================================
+# Ubuntu/Canonical Update Servers
+# ========================================
+185.125.190.58
+185.125.190.36
+91.189.91.49
+91.189.91.48

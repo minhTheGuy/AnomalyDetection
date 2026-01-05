@@ -1,0 +1,115 @@
+<!--
+Wazuh Active Response Configuration for Hybrid NIDS
+
+This configuration enables automatic IP blocking when critical 
+threats are detected by the Hybrid NIDS ML system.
+
+Installation:
+1. Add to ossec.conf on Wazuh Manager: /var/ossec/etc/ossec.conf
+2. Copy block script to agents (or use built-in firewall-drop)
+3. Restart Wazuh Manager
+
+Note: These are configuration snippets to add to ossec.conf
+-->
+
+<!-- Add inside <ossec_config> section -->
+
+<!-- ========================================== -->
+<!-- Log file monitoring for Hybrid NIDS       -->
+<!-- ========================================== -->
+
+<!-- Option 1: Monitor JSON log file -->
+<localfile>
+  <log_format>json</log_format>
+  <location>/var/log/hybrid-nids/alerts.json</location>
+  <label key="source">hybrid-nids</label>
+</localfile>
+
+<!-- Option 2: If using syslog forwarding -->
+<!--
+<remote>
+  <connection>syslog</connection>
+  <port>514</port>
+  <protocol>udp</protocol>
+  <allowed-ips>YOUR_NIDS_HOST_IP</allowed-ips>
+</remote>
+-->
+
+<!-- ========================================== -->
+<!-- Active Response Commands                   -->
+<!-- ========================================== -->
+
+<!-- Block IP using iptables (Linux) -->
+<command>
+  <name>hybrid-nids-block</name>
+  <executable>firewall-drop</executable>
+  <timeout_allowed>yes</timeout_allowed>
+</command>
+
+<!-- Block IP on pfSense (if Wazuh agent on pfSense) -->
+<command>
+  <name>pfsense-block</name>
+  <executable>pfsense-block.sh</executable>
+  <timeout_allowed>yes</timeout_allowed>
+</command>
+
+<!-- ========================================== -->
+<!-- Active Response Rules                      -->
+<!-- ========================================== -->
+
+<!-- Auto-block for critical ML detections -->
+<active-response>
+  <command>hybrid-nids-block</command>
+  <location>local</location>
+  <rules_id>100150,100151</rules_id>
+  <timeout>3600</timeout>
+</active-response>
+
+<!-- Auto-block for DDoS attacks -->
+<active-response>
+  <command>hybrid-nids-block</command>
+  <location>all</location>
+  <rules_id>100120</rules_id>
+  <level>12</level>
+  <timeout>7200</timeout>
+</active-response>
+
+<!-- Auto-block for brute force -->
+<active-response>
+  <command>hybrid-nids-block</command>
+  <location>local</location>
+  <rules_id>100122</rules_id>
+  <level>10</level>
+  <timeout>1800</timeout>
+</active-response>
+
+<!-- Auto-block for attack chains -->
+<active-response>
+  <command>hybrid-nids-block</command>
+  <location>all</location>
+  <rules_id>100141,100142</rules_id>
+  <timeout>14400</timeout>
+</active-response>
+
+<!-- ========================================== -->
+<!-- Integration with external systems          -->
+<!-- ========================================== -->
+
+<!-- Webhook integration for critical alerts -->
+<integration>
+  <name>custom-webhook</name>
+  <hook_url>http://YOUR_WEBHOOK_URL/api/alerts</hook_url>
+  <rule_id>100104,100150,100151</rule_id>
+  <alert_format>json</alert_format>
+</integration>
+
+<!-- Slack integration example -->
+<!--
+<integration>
+  <name>slack</name>
+  <hook_url>https://hooks.slack.com/services/YOUR/WEBHOOK/URL</hook_url>
+  <level>10</level>
+  <group>hybrid_nids</group>
+  <alert_format>json</alert_format>
+</integration>
+-->

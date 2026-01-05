@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*.pywz
+*.pyzz
+*.pywzz
+*.pyzzz
+*.pywzzz
+*.pyzzzz
+*.pywzzzz
+*.venv
+*.pytest_cache/
+wazuh-ml/__pycache__/
+wazuh-ml/tests/__pycache__/
+
+# Logs
+wazuh-ml/logs/
+
+# Env
+wazuh-ml/.env
+
+# Jupyter Notebook
+*.ipynb_checkpoints
+
+# VSCode
+.vscode/
+
+#wazuh logging info
+wazuh-logging-info
+
+# script
+wazuh-ml/scripts/
+
+# reports
+wazuh-ml/data/anomaly_reports/

@@ -1,0 +1,31 @@
+# Core ML Libraries
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+joblib>=1.3.0
+xgboost>=2.0.0
+imbalanced-learn>=0.11.0  # SMOTE for class balancing
+tensorflow>=2.15.0        # VAE Model (Keras)
+
+# Flow Extraction (PCAP → Features)
+cicflowmeter>=0.1.6       # Replaces nfstream
+
+# HTTP Requests & SSH (pfSense, webhooks)
+requests>=2.31.0
+urllib3>=2.0.0
+paramiko>=3.4.0           # SSH to pfSense
+
+# Data Processing
+python-dateutil>=2.8.2
+pytz>=2023.3
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Configuration & Environment
+python-dotenv>=1.0.0
+pyyaml>=6.0.0
+
+# Logging
+loguru>=0.7.0

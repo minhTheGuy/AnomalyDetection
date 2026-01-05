@@ -1,0 +1,39 @@
+# Wazuh-ML Log Rotation Configuration
+# Install: sudo cp config/wazuh-ml.logrotate /etc/logrotate.d/wazuh-ml
+# Test:    sudo logrotate -d /etc/logrotate.d/wazuh-ml
+# Force:   sudo logrotate -f /etc/logrotate.d/wazuh-ml
+
+/home/dangminh0113/Desktop/DACNTT_V2/wazuh-ml/logs/*.jsonl {
+    # Rotate daily
+    daily
+    
+    # Keep 14 days of logs
+    rotate 14
+    
+    # Compress old logs
+    compress
+    delaycompress
+    
+    # Don't error if log file is missing
+    missingok
+    
+    # Don't rotate if empty
+    notifempty
+    
+    # Truncate original file after copying (no restart needed)
+    copytruncate
+    
+    # Set permissions on new log files
+    create 0644 dangminh0113 dangminh0113
+}
+
+# Optional: Rotate captured PCAP files (large files)
+/opt/wazuh-ml/data/captured/pcap/*.pcap {
+    daily
+    rotate 7
+    compress
+    missingok
+    notifempty
+    olddir /opt/wazuh-ml/data/captured/pcap/archive
+    createolddir 755 dangminh0113 dangminh0113
+}

@@ -1,0 +1,51 @@
+[Unit]
+Description=Wazuh-ML Intrusion Detection System
+Documentation=file:///opt/wazuh-ml/docs/PROJECT_GUIDE.md
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/wazuh-ml
+
+# Python environment (updated path)
+Environment="PATH=/opt/wazuh-ml/mlenv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+
+# pfSense connection
+Environment="PFSENSE_HOST=172.16.158.100"
+Environment="PFSENSE_USER=admin"
+Environment="PFSENSE_PORT=22"
+Environment="PFSENSE_INTERFACE=em1"
+
+# Whitelist IPs (comma-separated) - these will NEVER be blocked
+Environment="WHITELIST_IPS=172.16.158.1,172.16.158.100"
+
+# Detection command
+ExecStart=/home/dangminh0113/mlenv/bin/python \
+    scripts/detection_pipeline.py \
+    --continuous \
+    --interval 60 \
+    --action log \
+    --action alert \
+    --block-duration 300
+
+# Restart policy
+Restart=always
+RestartSec=10
+TimeoutStopSec=30
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=wazuh-ml
+
+# Security hardening (optional)
+# NoNewPrivileges=true
+# ProtectSystem=strict
+# ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target

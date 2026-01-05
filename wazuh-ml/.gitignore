@@ -1,0 +1,119 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+mlenv/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Logs
+logs/*.log
+*.log
+
+# Sensitive Info
+*.pem
+*.key
+credentials.yaml
+secrets.yaml
+
+# ----------------------------------------------------------------------------
+# Data Files (Large / Messy)
+# ----------------------------------------------------------------------------
+# Ignore all CSVs (except specific samples if verified)
+data/raw/*.csv
+data/processed/*.csv
+data/cicids/*.csv
+data/captured/*.csv
+
+# Ignore all JSONs in data (except metadata if needed)
+data/raw/*.json
+data/reports/*.json
+data/models/*.json
+
+# Ignore Model Binaries (Large)
+data/models/*.pkl
+data/models/*.pt
+data/models/*.keras
+data/models/*.h5
+
+# Ignore Image Reports
+data/reports/*.png
+
+# Ignore Captured Traffic
+data/captured/flows/
+data/captured/pcap/
+data/labeled/
+
+# CIC-IDS-2017 Datasets (Very Large)
+data/cicids/
+
+# Keep directory structure (do not delete .gitkeep files)
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/models/.gitkeep
+!data/reports/.gitkeep
+!data/captured/.gitkeep

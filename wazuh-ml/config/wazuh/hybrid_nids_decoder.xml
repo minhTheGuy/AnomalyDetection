@@ -1,0 +1,97 @@
+<!--
+Wazuh Custom Decoder for Hybrid NIDS ML Detections
+
+This decoder parses JSON logs from the Hybrid NIDS (3-Layer ML Detection System)
+and extracts relevant fields for Wazuh rules processing.
+
+Installation:
+1. Copy to Wazuh Manager: /var/ossec/etc/decoders/hybrid_nids_decoder.xml
+2. Restart Wazuh Manager: systemctl restart wazuh-manager
+
+Log Format Expected:
+hybrid-nids: {"source":"hybrid-nids","attack_type":"DDoS",...}
+-->
+
+<!-- Primary decoder - matches "hybrid-nids:" prefix -->
+<decoder name="hybrid-nids">
+  <prematch>^hybrid-nids: </prematch>
+</decoder>
+
+<!-- Primary decoder for hybrid_nids JSON format -->
+<decoder name="hybrid-nids-fields">
+  <parent>hybrid-nids</parent>
+  <regex type="pcre2">"src_ip":"([^"]+)"</regex>
+  <order>srcip</order>
+</decoder>
+
+<decoder name="hybrid-nids-fields">
+  <parent>hybrid-nids</parent>
+  <regex type="pcre2">"dst_ip":"([^"]+)"</regex>
+  <order>dstip</order>
+</decoder>
+
+<decoder name="hybrid-nids-fields">
+  <parent>hybrid-nids</parent>
+  <regex type="pcre2">"src_port":(\d+)</regex>
+  <order>srcport</order>
+</decoder>
+
+<decoder name="hybrid-nids-fields">
+  <parent>hybrid-nids</parent>
+  <regex type="pcre2">"dst_port":(\d+)</regex>
+  <order>dstport</order>
+</decoder>
+
+<decoder name="hybrid-nids-fields">
+  <parent>hybrid-nids</parent>
+  <regex type="pcre2">"attack_type":"([^"]+)"</regex>
+  <order>nids.attack_type</order>
+</decoder>
+
+<decoder name="hybrid-nids-fields">
+  <parent>hybrid-nids</parent>
+  <regex type="pcre2">"confidence":([0-9.]+)</regex>
+  <order>nids.confidence</order>
+</decoder>
+
+<decoder name="hybrid-nids-fields">
+  <parent>hybrid-nids</parent>
+  <regex type="pcre2">"threat_level":"([^"]+)"</regex>
+  <order>nids.threat_level</order>
+</decoder>
+
+<decoder name="hybrid-nids-fields">
+  <parent>hybrid-nids</parent>
+  <regex type="pcre2">"threat_level_value":(\d+)</regex>
+  <order>nids.threat_level_value</order>
+</decoder>
+
+<decoder name="hybrid-nids-fields">
+  <parent>hybrid-nids</parent>
+  <regex type="pcre2">"detection_layer":"([^"]+)"</regex>
+  <order>nids.layer</order>
+</decoder>
+
+<decoder name="hybrid-nids-fields">
+  <parent>hybrid-nids</parent>
+  <regex type="pcre2">"protocol":"([^"]+)"</regex>
+  <order>protocol</order>
+</decoder>
+
+<decoder name="hybrid-nids-fields">
+  <parent>hybrid-nids</parent>
+  <regex type="pcre2">"anomaly_score":(-?[0-9.]+)</regex>
+  <order>nids.anomaly_score</order>
+</decoder>
+
+<!-- Alternative: Socket-based messages format -->
+<decoder name="hybrid-nids-socket">
+  <prematch>^1:hybrid-nids:</prematch>
+  <program_name>hybrid-nids</program_name>
+</decoder>
+
+<decoder name="hybrid-nids-socket-json">
+  <parent>hybrid-nids-socket</parent>
+  <regex>^1:hybrid-nids:(.+)$</regex>
+  <order>extra_data</order>
+</decoder>

@@ -1,0 +1,234 @@
+<!--
+Wazuh Custom Rules for Hybrid NIDS ML Detections
+
+These rules process decoded Hybrid NIDS alerts and generate appropriate
+Wazuh alerts based on threat level, attack type, and detection layer.
+
+Installation:
+1. Copy to Wazuh Manager: /var/ossec/etc/rules/hybrid_nids_rules.xml
+2. Restart Wazuh Manager: systemctl restart wazuh-manager
+
+Rule ID Range: 100100 - 100199 (custom rules)
+-->
+
+<group name="hybrid_nids,">
+
+  <!-- ========================================== -->
+  <!-- Base Rule - All Hybrid NIDS Detections    -->
+  <!-- ========================================== -->
+  
+  <rule id="100100" level="3">
+    <decoded_as>hybrid-nids</decoded_as>
+    <description>Hybrid NIDS: Network detection event</description>
+    <group>nids,network,</group>
+  </rule>
+
+  <!-- ========================================== -->
+  <!-- Threat Level Based Rules                  -->
+  <!-- ========================================== -->
+
+  <!-- LOW Threat Level -->
+  <rule id="100101" level="3">
+    <if_sid>100100</if_sid>
+    <field name="nids.threat_level">LOW</field>
+    <description>Hybrid NIDS [LOW]: $(nids.attack_type) from $(srcip) to $(dstip)</description>
+    <group>nids,low_priority,</group>
+  </rule>
+
+  <!-- MEDIUM Threat Level -->
+  <rule id="100102" level="7">
+    <if_sid>100100</if_sid>
+    <field name="nids.threat_level">MEDIUM</field>
+    <description>Hybrid NIDS [MEDIUM]: $(nids.attack_type) from $(srcip) to $(dstip)</description>
+    <group>nids,medium_priority,</group>
+  </rule>
+
+  <!-- HIGH Threat Level -->
+  <rule id="100103" level="10">
+    <if_sid>100100</if_sid>
+    <field name="nids.threat_level">HIGH</field>
+    <description>Hybrid NIDS [HIGH]: $(nids.attack_type) from $(srcip) to $(dstip)</description>
+    <group>nids,high_priority,attack,</group>
+  </rule>
+
+  <!-- CRITICAL Threat Level -->
+  <rule id="100104" level="13">
+    <if_sid>100100</if_sid>
+    <field name="nids.threat_level">CRITICAL</field>
+    <description>Hybrid NIDS [CRITICAL]: $(nids.attack_type) from $(srcip) to $(dstip)</description>
+    <group>nids,critical,attack,</group>
+  </rule>
+
+  <!-- ========================================== -->
+  <!-- Detection Layer Based Rules               -->
+  <!-- ========================================== -->
+
+  <!-- Suricata Layer 1 - Signature Match -->
+  <rule id="100110" level="8">
+    <if_sid>100100</if_sid>
+    <field name="nids.layer">suricata</field>
+    <description>Hybrid NIDS [Suricata Signature]: $(nids.attack_type) from $(srcip)</description>
+    <group>nids,suricata,signature,</group>
+  </rule>
+
+  <!-- XGBoost Layer 2 - ML Classification -->
+  <rule id="100111" level="7">
+    <if_sid>100100</if_sid>
+    <field name="nids.layer">xgboost</field>
+    <description>Hybrid NIDS [ML Classifier]: $(nids.attack_type) from $(srcip) (confidence: $(nids.confidence))</description>
+    <group>nids,ml,classifier,</group>
+  </rule>
+
+  <!-- Isolation Forest Layer 3 - Anomaly Detection -->
+  <rule id="100112" level="8">
+    <if_sid>100100</if_sid>
+    <field name="nids.layer">isolation_forest</field>
+    <description>Hybrid NIDS [Anomaly Detection]: Unusual traffic from $(srcip) (score: $(nids.anomaly_score))</description>
+    <group>nids,ml,anomaly,zero_day,</group>
+  </rule>
+
+  <!-- ========================================== -->
+  <!-- Attack Type Specific Rules                -->
+  <!-- ========================================== -->
+
+  <!-- DoS/DDoS Attacks -->
+  <rule id="100120" level="12">
+    <if_sid>100100</if_sid>
+    <field name="nids.attack_type" type="pcre2">(?i)(dos|ddos|hulk|slowloris|goldeneye)</field>
+    <description>Hybrid NIDS [DoS/DDoS Attack]: $(nids.attack_type) from $(srcip)</description>
+    <group>nids,dos,ddos,attack,</group>
+  </rule>
+
+  <!-- Port Scanning -->
+  <rule id="100121" level="8">
+    <if_sid>100100</if_sid>
+    <field name="nids.attack_type" type="pcre2">(?i)(portscan|port_scan|scan)</field>
+    <description>Hybrid NIDS [Port Scan]: Scanning activity from $(srcip)</description>
+    <group>nids,scan,recon,</group>
+  </rule>
+
+  <!-- Brute Force Attacks -->
+  <rule id="100122" level="10">
+    <if_sid>100100</if_sid>
+    <field name="nids.attack_type" type="pcre2">(?i)(brute|patator|ssh-patator|ftp-patator)</field>
+    <description>Hybrid NIDS [Brute Force]: $(nids.attack_type) from $(srcip) to $(dstip):$(dstport)</description>
+    <group>nids,brute_force,authentication_failures,</group>
+  </rule>
+
+  <!-- Web Attacks -->
+  <rule id="100123" level="11">
+    <if_sid>100100</if_sid>
+    <field name="nids.attack_type" type="pcre2">(?i)(web|sql|xss|injection|rfi|lfi)</field>
+    <description>Hybrid NIDS [Web Attack]: $(nids.attack_type) from $(srcip)</description>
+    <group>nids,web_attack,attack,</group>
+  </rule>
+
+  <!-- Botnet Activity -->
+  <rule id="100124" level="12">
+    <if_sid>100100</if_sid>
+    <field name="nids.attack_type" type="pcre2">(?i)(botnet|bot|c2|command_control)</field>
+    <description>Hybrid NIDS [Botnet]: Potential botnet activity from $(srcip)</description>
+    <group>nids,botnet,malware,</group>
+  </rule>
+
+  <!-- Infiltration -->
+  <rule id="100125" level="13">
+    <if_sid>100100</if_sid>
+    <field name="nids.attack_type" type="pcre2">(?i)(infiltration|infiltrate|exfil)</field>
+    <description>Hybrid NIDS [Infiltration]: Data exfiltration attempt from $(srcip)</description>
+    <group>nids,infiltration,data_exfiltration,</group>
+  </rule>
+
+  <!-- Zero-Day / Anomaly -->
+  <rule id="100126" level="10">
+    <if_sid>100100</if_sid>
+    <field name="nids.attack_type">ANOMALY</field>
+    <description>Hybrid NIDS [Zero-Day]: Anomalous traffic detected from $(srcip) (score: $(nids.anomaly_score))</description>
+    <group>nids,anomaly,zero_day,</group>
+  </rule>
+
+  <!-- ========================================== -->
+  <!-- High Confidence Rules                     -->
+  <!-- ========================================== -->
+
+  <!-- Very High Confidence Detection (>95%) -->
+  <rule id="100130" level="12">
+    <if_sid>100102</if_sid>
+    <field name="nids.confidence" type="pcre2">^0\.9[5-9]|^1\.0</field>
+    <description>Hybrid NIDS [High Confidence $(nids.confidence)]: $(nids.attack_type) from $(srcip)</description>
+    <group>nids,high_confidence,attack,</group>
+  </rule>
+
+  <rule id="100131" level="13">
+    <if_sid>100103</if_sid>
+    <field name="nids.confidence" type="pcre2">^0\.9[5-9]|^1\.0</field>
+    <description>Hybrid NIDS [High Confidence $(nids.confidence)]: $(nids.attack_type) from $(srcip)</description>
+    <group>nids,high_confidence,attack,</group>
+  </rule>
+
+  <rule id="100132" level="14">
+    <if_sid>100104</if_sid>
+    <field name="nids.confidence" type="pcre2">^0\.9[5-9]|^1\.0</field>
+    <description>Hybrid NIDS [High Confidence $(nids.confidence)]: $(nids.attack_type) from $(srcip)</description>
+    <group>nids,high_confidence,attack,</group>
+  </rule>
+
+  <!-- ========================================== -->
+  <!-- Correlation Rules                         -->
+  <!-- ========================================== -->
+
+  <!-- Multiple attacks from same IP (frequency) -->
+  <rule id="100140" level="12" frequency="5" timeframe="60">
+    <if_matched_sid>100100</if_matched_sid>
+    <same_source_ip />
+    <description>Hybrid NIDS: Multiple detections from same source $(srcip) - Possible active attack</description>
+    <group>nids,multiple_attacks,correlation,</group>
+  </rule>
+
+  <!-- Escalating threat levels from same IP - HIGH threats -->
+  <rule id="100141" level="13" frequency="3" timeframe="120">
+    <if_matched_sid>100103</if_matched_sid>
+    <same_source_ip />
+    <description>Hybrid NIDS: Escalating threats from $(srcip) - Attack progression detected</description>
+    <group>nids,escalation,attack_chain,</group>
+  </rule>
+
+  <!-- Escalating threat levels from same IP - CRITICAL threats -->
+  <rule id="100142" level="14" frequency="3" timeframe="120">
+    <if_matched_sid>100104</if_matched_sid>
+    <same_source_ip />
+    <description>Hybrid NIDS: Critical attack escalation from $(srcip) - Immediate action required</description>
+    <group>nids,escalation,attack_chain,critical,</group>
+  </rule>
+
+  <!-- Scan followed by attack (attack chain) -->
+  <rule id="100143" level="14" timeframe="300">
+    <if_sid>100120,100122,100123</if_sid>
+    <if_matched_sid>100121</if_matched_sid>
+    <same_source_ip />
+    <description>Hybrid NIDS [Attack Chain]: Scan followed by attack from $(srcip)</description>
+    <group>nids,attack_chain,correlation,</group>
+  </rule>
+
+  <!-- ========================================== -->
+  <!-- Active Response Rules                     -->
+  <!-- ========================================== -->
+
+  <!-- Trigger active response for CRITICAL threats -->
+  <rule id="100150" level="14">
+    <if_sid>100104</if_sid>
+    <field name="nids.confidence" type="pcre2">^0\.[89]|^1\.0</field>
+    <description>Hybrid NIDS [AUTO-BLOCK]: Critical threat with high confidence - Blocking $(srcip)</description>
+    <group>nids,active_response,auto_block,</group>
+    <!-- Active response can be configured to trigger on this rule -->
+  </rule>
+
+  <!-- Trigger active response for DDoS -->
+  <rule id="100151" level="14">
+    <if_sid>100120</if_sid>
+    <field name="nids.threat_level">CRITICAL|HIGH</field>
+    <description>Hybrid NIDS [AUTO-BLOCK]: DDoS attack detected - Blocking $(srcip)</description>
+    <group>nids,active_response,ddos,auto_block,</group>
+  </rule>
+
+</group>
