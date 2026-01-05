@@ -95,6 +95,3 @@ Repository này đã được cấu hình `.gitignore` chặt chẽ để **lo�
 **Lưu ý:** Khi clone project này, bạn sẽ cần tải lại dataset CIC-IDS-2017 hoặc sử dụng các script thu thập dữ liệu (`scripts/capture_labeled_traffic.py`) để tạo dữ liệu mới.
 
 ---
-
-**Tác giả:** Dang Minh
-**Cập nhật:** 01/2026
