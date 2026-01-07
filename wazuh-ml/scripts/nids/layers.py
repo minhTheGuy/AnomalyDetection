@@ -143,13 +143,14 @@ def _extract_ip_info(row) -> dict:
 
 
 class XGBoostClassifier:
-    """Layer 2: XGBoost supervised classifier"""
+    """Layer 2: XGBoost supervised classifier with sliding window support"""
     
     def __init__(self, model_path: Optional[Path] = None, artifacts_path: Optional[Path] = None):
         from .config import XGBOOST_MODEL_PATH, ARTIFACTS_PATH
         self.model_path = model_path or XGBOOST_MODEL_PATH
         self.artifacts_path = artifacts_path or ARTIFACTS_PATH
         self.model = self.scaler = self.label_encoder = self.feature_names = self.target_names = None
+        self.window_size = 1  # Default to single-flow mode
         self._load_model()
     
     def _load_model(self):
@@ -158,7 +159,9 @@ class XGBoostClassifier:
                 data = joblib.load(self.model_path)
                 self.model, self.feature_names = data.get('model'), data.get('feature_columns')
                 self.target_names, self.label_mapping = data.get('target_names'), data.get('label_mapping', {})
-                logger.info(f"Loaded XGBoost from {self.model_path.name}")
+                self.window_size = data.get('window_size', 1)  # Load window size from metadata
+                logger.info(f"Loaded XGBoost from {self.model_path.name}" + 
+                           (f" (window={self.window_size})" if self.window_size > 1 else ""))
                 if self.artifacts_path.exists():
                     arts = joblib.load(self.artifacts_path)
                     self.scaler = arts.get('scaler')
@@ -166,26 +169,54 @@ class XGBoostClassifier:
         except Exception as e:
             logger.error(f"XGBoost load error: {e}")
     
+    def _create_windows(self, data: np.ndarray) -> np.ndarray:
+        """Create sliding windows from sequential data."""
+        if self.window_size <= 1:
+            return data
+        
+        n_samples = len(data)
+        if n_samples < self.window_size:
+            padding = np.tile(data[0:1], (self.window_size - n_samples, 1))
+            data = np.vstack([padding, data])
+            n_samples = len(data)
+        
+        windows = []
+        for i in range(n_samples - self.window_size + 1):
+            window = data[i:i + self.window_size]
+            windows.append(window.flatten())
+        
+        return np.array(windows)
+    
     def predict(self, df: pd.DataFrame) -> List[FlowDetection]:
         if self.model is None: return []
         try:
             X = self._prepare_features(df)
             if X is None or len(X) == 0: return []
             X_scaled = self.scaler.transform(X) if self.scaler else (X.values if hasattr(X, 'values') else X)
-            preds, probs = self.model.predict(X_scaled), self.model.predict_proba(X_scaled)
+            
+            # Apply sliding window if configured
+            X_windowed = self._create_windows(X_scaled)
+            if len(X_windowed) == 0: return []
+            
+            preds, probs = self.model.predict(X_windowed), self.model.predict_proba(X_windowed)
             labels = [self.target_names[int(p)] for p in preds] if self.target_names else [str(p) for p in preds]
             
             detections = []
-            for i, (label, prob) in enumerate(zip(labels, probs)):
+            for window_idx, (label, prob) in enumerate(zip(labels, probs)):
                 confidence = float(max(prob))
                 if str(label).upper() != 'BENIGN':
-                    ip = _extract_ip_info(df.iloc[i])
+                    # Use window_idx as the flow reference
+                    flow_idx = min(window_idx + self.window_size - 1, len(df) - 1)
+                    ip = _extract_ip_info(df.iloc[flow_idx])
                     detections.append(FlowDetection(
-                        flow_id=str(i), src_ip=ip['src_ip'], dst_ip=ip['dst_ip'],
+                        flow_id=str(window_idx), src_ip=ip['src_ip'], dst_ip=ip['dst_ip'],
                         src_port=ip['src_port'], dst_port=ip['dst_port'], protocol=ip['protocol'],
                         attack_type=str(label).upper(), confidence=confidence, layer='xgboost',
                         threat_level=self._get_threat_level(str(label), confidence)))
-            if detections: logger.info(f"XGBoost: {len(detections)} attacks")
+            
+            if detections: 
+                logger.info(f"XGBoost: {len(detections)} attacks" + 
+                           (f" (windows={len(preds)})" if self.window_size > 1 else ""))
             return detections
         except Exception as e:
             logger.error(f"XGBoost error: {e}")
@@ -193,9 +224,15 @@ class XGBoostClassifier:
     
     def _prepare_features(self, df: pd.DataFrame) -> Optional[pd.DataFrame]:
         if self.feature_names is None:
-            return df.select_dtypes(include=[np.number])
-        for col in set(self.feature_names) - set(df.columns): df[col] = 0
-        return df[self.feature_names]
+            X = df.select_dtypes(include=[np.number])
+        else:
+            for col in set(self.feature_names) - set(df.columns): 
+                df[col] = 0
+            X = df[self.feature_names].copy()
+        
+        # Clean infinity and NaN values
+        X = X.replace([np.inf, -np.inf], 0).fillna(0)
+        return X
     
     def _get_threat_level(self, attack: str, conf: float) -> ThreatLevel:
         attack = attack.lower()
@@ -395,25 +432,17 @@ class VAEDetector:
             
             # Map window indices back to flow indices
             # Each window i corresponds to flows [i, i+window_size-1]
-            # We attribute detection to the last flow in the window
             detections = []
-            detected_flows = set()  # Avoid duplicate detections
             
             for window_idx, score in enumerate(scores):
                 if score > threshold:
-                    # Map window index to flow index (last flow in window)
-                    # With padding, min flow index is 0
+                    # Use window_idx as flow reference
                     flow_idx = min(window_idx + self.window_size - 1, len(df) - 1)
-                    
-                    if flow_idx in detected_flows:
-                        continue
-                    detected_flows.add(flow_idx)
-                    
                     ip = _extract_ip_info(df.iloc[flow_idx])
                     confidence = min(1.0, score / (threshold * 3))
                     
                     detections.append(FlowDetection(
-                        flow_id=str(flow_idx),
+                        flow_id=str(window_idx),
                         src_ip=ip['src_ip'],
                         dst_ip=ip['dst_ip'],
                         src_port=ip['src_port'],

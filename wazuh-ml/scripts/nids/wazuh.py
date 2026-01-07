@@ -235,7 +235,7 @@ class WazuhClient(_WazuhAPIBase):
         
         # Log file
         from .config import LOGS_DIR
-        self.log_path = Path(self.config.get('log_path', LOGS_DIR / 'wazuh_alerts.json'))
+        self.log_path = Path(self.config.get('log_path', LOGS_DIR / 'action_logs.json'))
         
         # Determine method
         self.method = self.config.get('method', 'auto')

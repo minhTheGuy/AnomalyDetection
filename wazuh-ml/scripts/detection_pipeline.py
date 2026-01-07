@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 detection_pipeline.py - 3-Layer Hybrid NIDS Entry Point
 
@@ -112,51 +111,11 @@ def analyze_pcap(pcap_file: Path, actions: List[ActionType],
     return result
 
 
-def run_realtime(host: str, user: str, interface: str,
-                 actions: List[ActionType], duration: int,
-                 threshold: float, key_file: str = None,
-                 action_config: dict = None):
-    """Run single realtime capture and analysis cycle"""
-    
-    # Use provided action_config or create default
-    if action_config is None:
-        action_config = {
-            'enabled_actions': actions,
-            'block_threshold': 'HIGH',
-            'block_duration': 300,
-        }
-    
-    # Initialize pipeline
-    pipeline = DetectionPipeline(
-        pfsense_host=host,
-        pfsense_user=user,
-        pfsense_interface=interface,
-        pfsense_key=key_file,
-        capture_duration=duration,
-        action_config=action_config,
-        anomaly_threshold=-threshold,
-        anomaly_model='vae'
-    )
-    
-    # Generate capture filename
-    from datetime import datetime
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    pcap_file = PCAP_DIR / f"capture_{timestamp}.pcap"
-    
-    # Capture and analyze
-    if pipeline.capture.capture(duration, pcap_file):
-        result = pipeline.analyze_pcap(pcap_file)
-        # Cleanup
-        pcap_file.unlink(missing_ok=True)
-        return result
-    else:
-        logger.error("Capture failed")
-        return None
 
 
 def run_continuous(host: str, user: str, interface: str,
                    actions: List[ActionType], interval: int,
-                   threshold: float, key_file: str = None,
+                   threshold: float,
                    block_duration: int = 300, streaming: bool = False,
                    action_config: dict = None):
     """Run continuous detection loop"""
@@ -174,7 +133,6 @@ def run_continuous(host: str, user: str, interface: str,
         pfsense_host=host,
         pfsense_user=user,
         pfsense_interface=interface,
-        pfsense_key=key_file,
         capture_duration=interval,
         action_config=action_config,
         anomaly_threshold=-threshold,
@@ -238,8 +196,6 @@ Examples:
     # Mode selection
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument('--pcap', type=Path, help='Analyze PCAP file')
-    mode.add_argument('--realtime', action='store_true', 
-                      help='Single capture and analysis cycle')
     mode.add_argument('--continuous', action='store_true', 
                       help='Continuous monitoring mode')
     
@@ -265,13 +221,7 @@ Examples:
                         help='SSH username (default: from PFSENSE_USER env or admin)')
     parser.add_argument('--interface', default=os.getenv('PFSENSE_INTERFACE', 'em1'),
                         help='Network interface to capture (default: from PFSENSE_INTERFACE env or em1)')
-    # Expand ~ in key file path if provided
-    key_file_default = os.getenv('PFSENSE_KEY_FILE')
-    if key_file_default:
-        key_file_default = str(Path(key_file_default).expanduser())
-    parser.add_argument('--key-file', default=key_file_default,
-                        help='SSH private key file path (default: from PFSENSE_KEY_FILE env, optional)')
-    
+
     args = parser.parse_args()
     
     # Build action configuration using ActionConfigBuilder
@@ -291,18 +241,6 @@ Examples:
             sys.exit(1)
         analyze_pcap(args.pcap, actions, args.threshold, action_config)
     
-    elif args.realtime:
-        run_realtime(
-            host=args.host,
-            user=args.user,
-            interface=args.interface,
-            actions=actions,
-            duration=args.interval,
-            threshold=args.threshold,
-            key_file=args.key_file,
-            action_config=action_config
-        )
-    
     elif args.continuous:
         run_continuous(
             host=args.host,
@@ -311,7 +249,6 @@ Examples:
             actions=actions,
             interval=args.interval,
             threshold=args.threshold,
-            key_file=args.key_file,
             block_duration=args.block_duration,
             streaming=args.streaming,
             action_config=action_config

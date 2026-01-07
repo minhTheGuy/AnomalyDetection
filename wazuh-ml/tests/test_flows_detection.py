@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 test_flows_detection.py - Test detection pipeline with CSV flows file
 
@@ -6,8 +5,8 @@ This script loads a flows CSV file and runs it through the detection pipeline
 to test both XGBoost classification and anomaly detection models.
 
 Usage:
-    python scripts/test_flows_detection.py --flows data/test/test_flows.csv
-    python scripts/test_flows_detection.py --flows data/test/test_flows.csv --action alert --action webhook
+    python tests/test_flows_detection.py --flows data/test/test_flows.csv
+    python tests/test_flows_detection.py --flows data/test/test_flows.csv --action alert --action webhook
 """
 
 import argparse
@@ -26,6 +25,9 @@ try:
         load_dotenv(env_file)
 except ImportError:
     pass
+
+# Add scripts to path
+sys.path.insert(0, str(Path(__file__).parent.parent / 'scripts'))
 
 # Import from modular nids package
 from nids import (
@@ -51,46 +53,11 @@ def load_flows_csv(csv_path: Path) -> pd.DataFrame:
     if not csv_path.exists():
         raise FileNotFoundError(f"Flows CSV not found: {csv_path}")
     
-    # Read CSV, skipping comment lines and handling errors
-    # Use engine='python' for better error handling and to handle variable field counts
-    try:
-        # Try reading with error handling
-        df = pd.read_csv(csv_path, comment='#', low_memory=False, on_bad_lines='skip', engine='python')
-    except TypeError:
-        # Fallback for older pandas versions
-        try:
-            df = pd.read_csv(csv_path, comment='#', low_memory=False, error_bad_lines=False, warn_bad_lines=True, engine='python')
-        except:
-            df = pd.read_csv(csv_path, comment='#', low_memory=False, engine='python', sep=',', quotechar='"')
-    except Exception as e:
-        logger.warning(f"CSV read error: {e}, trying alternative method")
-        # Last resort: read line by line and pad missing fields
-        import csv
-        rows = []
-        with open(csv_path, 'r') as f:
-            reader = csv.reader(f)
-            header = next(reader)
-            expected_cols = len(header)
-            for row in reader:
-                # Skip comment lines
-                if row and row[0].startswith('#'):
-                    continue
-                # Pad row if it has fewer fields than header
-                while len(row) < expected_cols:
-                    row.append('0')
-                # Truncate if it has more fields
-                if len(row) > expected_cols:
-                    row = row[:expected_cols]
-                rows.append(row)
-        df = pd.DataFrame(rows, columns=header)
+    # Read CSV with standard pandas
+    df = pd.read_csv(csv_path, low_memory=False)
     
-    # Normalize column names (lowercase, underscores)
-    df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
-    
-    # Map column names from CICFlowMeter format to CIC-IDS-2017 format
-    # This is needed because XGBoost was trained on CIC-IDS-2017 data
-    from nids.config import FEATURE_MAPPING_REVERSE
-    df = df.rename(columns=FEATURE_MAPPING_REVERSE)
+    # Strip whitespace from column names (but preserve original format)
+    df.columns = df.columns.str.strip()
     
     # Clean data - remove any rows that are completely empty
     df = df.dropna(how='all')
@@ -179,16 +146,21 @@ def print_results(result: DetectionResult, flows_file: Path):
                 by_level[level] = []
             by_level[level].append(d)
         
-        # Print by threat level (CRITICAL first)
+        # Print by threat level (CRITICAL first) - show only top 5 per level
         for level in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']:
             if level in by_level:
-                print(f"\n  [{level}] {len(by_level[level])} unique attacks:")
-                for d in sorted(by_level[level], key=lambda x: -x.confidence):
+                detections_at_level = sorted(by_level[level], key=lambda x: -x.confidence)
+                total_at_level = len(detections_at_level)
+                total_flows = sum(d.flow_count for d in detections_at_level)
+                print(f"\n  [{level}] {total_at_level} unique attacks ({total_flows} flows):")
+                # Show only top 5
+                for d in detections_at_level[:5]:
                     print(f"    • {d.attack_type:20s} | "
                           f"Confidence: {d.confidence:.2%} | "
                           f"Layer: {d.layer:15s} | "
                           f"Flows: {d.flow_count}")
-                    print(f"      {d.src_ip}:{d.src_port} → {d.dst_ip}:{d.dst_port} ({d.protocol})")
+                if total_at_level > 5:
+                    print(f"    ... and {total_at_level - 5} more")
         
         # Summary by layer
         print(f"\n  {'─'*68}")

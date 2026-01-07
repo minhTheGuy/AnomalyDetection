@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 merge_captured_flows.py - Merge all captured flow files and label as BENIGN
 

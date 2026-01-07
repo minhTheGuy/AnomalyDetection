@@ -19,19 +19,12 @@ class PfSenseCapture:
     
     def __init__(self, host: str, user: str, interface: str = 'em0',
                  key_file: Optional[str] = None):
+        from .utils import validate_ssh_key
+        
         self.host = host
         self.user = user
         self.interface = interface
-        # Expand ~ to home directory and check if file exists
-        if key_file:
-            key_file = str(Path(key_file).expanduser())
-            if not Path(key_file).exists():
-                logger.warning(f"SSH key file not found: {key_file}. SSH will use default authentication methods.")
-                self.key_file = None
-            else:
-                self.key_file = key_file
-        else:
-            self.key_file = None
+        self.key_file = validate_ssh_key(key_file)
         self._validate_connection()
     
     def _validate_connection(self):

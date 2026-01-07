@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 test_actions.py - Test webhook, email, and wazuh action features
 
@@ -31,7 +30,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Add scripts to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent / 'scripts'))
 from nids.models import FlowDetection, ThreatLevel
 from nids.actions import ActionHandler
 from nids.action_config import ActionConfigBuilder

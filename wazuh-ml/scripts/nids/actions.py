@@ -39,7 +39,7 @@ class ActionHandler:
         self.email_config = self.config.get('email', {})
         self.wazuh_config = self.config.get('wazuh', {})
         self.wazuh_client = self.hids_correlator = None
-        self.log_file = LOGS_DIR / 'action_logs.jsonl'
+        self.log_file = LOGS_DIR / 'action_logs.json'
         LOGS_DIR.mkdir(parents=True, exist_ok=True)
         
         if self.wazuh_config or ActionType.WAZUH in self.enabled_actions:
